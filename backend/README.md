@@ -106,3 +106,37 @@ backend/
   durable verification records.
 - **Batch** / **BatchItem** — a bulk upload (peak-season importer dumps) and the
   ordered links to its submissions.
+
+## Verification result schema
+
+`app/verify` rolls the engine's individual checks into one verdict. The output
+(`VerificationResult`) is the **stable JSON contract** stored in
+`Submission.result` and rendered by the comparison UI / batch results:
+
+```python
+from app.verify import build_result, field_result_from_match, verify_warning_from_ocr
+
+fields = [field_result_from_match(m) for m in field_matches]   # + extracted fields
+warning = verify_warning_from_ocr(ocr_result)
+result = build_result(fields, warning)     # overall verdict + summary + rationale
+result.model_dump(mode="json")             # -> persist on the Submission
+```
+
+Shape:
+
+- `overall` — `pass` / `warning` / `fail` (`OverallVerdict`). `warning` is the
+  "needs review" middle state.
+- `fields[]` — per field: `field` (logical key), `status`
+  (`match` / `soft_warning` / `mismatch` / `not_checked`), `expected`, `found`,
+  `score` ∈ [0,1], and a `span` + `box` locating the matched text for the UI.
+- `government_warning` — the dedicated `GovernmentWarningResult` (its own
+  `compliant` / `altered` / `missing` vocabulary), kept separate from the fields.
+- `summary` — counts by field status; `rationale` — why the overall came out so;
+  `schema_version` — bumped on incompatible shape changes.
+
+**Aggregation rules** (`app/verify/aggregate.py`): any field `mismatch`, or a
+warning that is `altered`/`missing` → **FAIL**; otherwise any `soft_warning` →
+**WARNING**; otherwise **PASS**. `not_checked` fields (absent from the
+application) never affect the verdict. These rules are pinned against the golden
+corpus by `tests/test_corpus.py` and `tests/test_aggregate.py`, so the engine and
+the labelled expectations cannot drift apart.

@@ -1,4 +1,5 @@
-"""Schemas for the mandatory Government Health Warning verifier.
+"""Schemas for the verification engine: the Government Health Warning verifier
+and the result-aggregation contract.
 
 The warning gets a dedicated, exact-match verification path (see
 :mod:`app.verify.warning`) separate from the fuzzy field matching used for
@@ -7,6 +8,13 @@ brand/class-type. It must be **present**, carry the required statement
 (27 CFR 16.21). Three outcomes mirror the corpus golden data: a clean
 ``COMPLIANT``, an ``ALTERED`` warning (tampered wording or a title-case header —
 Jenny's catch), and an entirely ``MISSING`` warning.
+
+The aggregation schemas (:class:`FieldStatus`, :class:`OverallVerdict`,
+:class:`FieldResult`, :class:`VerificationResult`) define the **stable JSON
+contract** the comparison UI and batch results consume — see
+:mod:`app.verify.aggregate` for the roll-up rules. Enum string values are kept
+identical to ``tests.corpus.schema`` so engine output compares straight against
+the golden expectations.
 """
 
 from __future__ import annotations
@@ -80,3 +88,96 @@ class GovernmentWarningResult(BaseModel):
     # Where the header was located, for highlighting in the comparison UI.
     span: SourceSpan | None = None
     box: BoundingBox | None = None
+
+
+# --- Result aggregation contract ---------------------------------------------
+#
+# Bumped when the wire shape of VerificationResult changes incompatibly, so
+# stored Submission.result rows and the UI can detect a schema they predate.
+RESULT_SCHEMA_VERSION = 1
+
+
+class FieldStatus(enum.StrEnum):
+    """Per-field outcome of comparing the label against the application.
+
+    String values match ``tests.corpus.schema.FieldVerdict`` and the fuzzy
+    matcher's ``app.match.MatchStatus`` (which shares the first three), so a
+    :class:`app.match.FieldMatch` maps straight onto a :class:`FieldResult`.
+
+    * ``MATCH`` — present and equivalent.
+    * ``SOFT_WARNING`` — present but differing in a human-equivalent way (case /
+      punctuation only) or a near miss worth a human glance.
+    * ``MISMATCH`` — absent, or too different to be the same value.
+    * ``NOT_CHECKED`` — the application did not supply this field, so there was
+      nothing to verify against (does not affect the overall verdict).
+    """
+
+    MATCH = "match"
+    SOFT_WARNING = "soft_warning"
+    MISMATCH = "mismatch"
+    NOT_CHECKED = "not_checked"
+
+
+class OverallVerdict(enum.StrEnum):
+    """Roll-up verdict for a whole label, surfaced to the agent.
+
+    Mirrors ``tests.corpus.schema.OverallVerdict``. ``WARNING`` is the engine's
+    name for the "needs review" middle state: the label is plausibly fine but
+    something (a soft field warning) warrants a human glance before approval.
+    """
+
+    PASS = "pass"
+    WARNING = "warning"
+    FAIL = "fail"
+
+
+class FieldResult(BaseModel):
+    """One field's verification result — the per-field row of the contract.
+
+    ``field`` is the logical comparison key (matching the application columns
+    and the corpus golden field keys): ``brand_name``, ``class_type``,
+    ``alcohol_content``, ``net_contents``, ``name_and_address``,
+    ``country_of_origin``, ``vintage``, … ``expected`` is the application value;
+    ``found`` is what was recovered from the label (``None`` when nothing
+    plausible was located). ``score`` is the comparison confidence/similarity in
+    ``[0, 1]``. ``span``/``box`` locate the matched text for highlighting in the
+    comparison UI.
+    """
+
+    field: str
+    status: FieldStatus
+    expected: str | None = None
+    found: str | None = None
+    score: float = Field(default=0.0, ge=0.0, le=1.0)
+    span: SourceSpan | None = None
+    box: BoundingBox | None = None
+    # Human-readable explanation of why this status was assigned.
+    reason: str = ""
+
+
+class VerdictSummary(BaseModel):
+    """Counts of per-field statuses — a quick at-a-glance roll-up for the UI."""
+
+    match: int = 0
+    soft_warning: int = 0
+    mismatch: int = 0
+    not_checked: int = 0
+
+
+class VerificationResult(BaseModel):
+    """The complete verification output for one label: the stable JSON contract.
+
+    This is what is persisted to ``Submission.result`` and rendered by the
+    comparison UI / batch results. It bundles the overall roll-up, every
+    per-field result, the dedicated Government Health Warning result (kept
+    separate because it carries its own verdict vocabulary), a status summary,
+    and a human-readable rationale for the overall verdict.
+    """
+
+    schema_version: int = RESULT_SCHEMA_VERSION
+    overall: OverallVerdict
+    fields: list[FieldResult] = Field(default_factory=list)
+    government_warning: GovernmentWarningResult
+    summary: VerdictSummary
+    # Why the overall verdict came out the way it did (drives the headline).
+    rationale: str = ""
