@@ -221,6 +221,24 @@ ok    buzzballz_chaos         [chaos]   q=ok  brand=soft_warning abv=mismatch
 ok    makers_mark_bad_photo   [bad]     q=low  (flagged for retake)
 ```
 
+### Real COLA artwork eval (in-distribution)
+
+The third measurement closes the loop: **30 real approved COLAs (2025–2026)
+scraped from the TTB Public COLA Registry** — 10 each wine/spirits/malt — with
+the actual label artwork filed with each application and the filed form fields
+as ground truth. This is exactly the input the product is built for, as it
+exists in the wild: handwritten keg collars, rotated can wraps, a genuine 3%
+lager. Expectations are monotone (equal-or-better passes, regressions fail), so
+the set honestly encodes today's measured gaps — most notably that the
+Government Warning on can wraps/keg collars usually runs 90° to the artwork and
+is missed by OCR (found on only 10/30 real labels, vs. brand verified on
+29/30 and ABV read on 23/30). See `backend/tests/eval_cola/README.md` for
+methodology and traceability (every case carries its public TTB ID).
+
+```bash
+cd backend && pytest -m eval tests/eval_cola -s
+```
+
 ## Continuous integration & quality gates
 
 Every push to `main` and every pull request runs `.github/workflows/ci.yml`. A PR
