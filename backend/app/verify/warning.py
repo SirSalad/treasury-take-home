@@ -50,23 +50,17 @@ _WARNING_TAIL = "health problems"
 _CANONICAL_LC = GOVERNMENT_WARNING_TEXT.lower()
 
 
-def _tokens(text: str) -> list[str]:
-    """Lowercase word/number tokens (drops punctuation and casing)."""
-    return re.findall(r"[a-z0-9]+", text.lower())
+def _alnum(text: str) -> str:
+    """Lowercase alphanumeric content only — drops punctuation *and* whitespace.
+
+    Comparing on this makes the wording check insensitive to how the OCR engine
+    spaces or splits words (some engines, e.g. PP-OCRv4, run adjacent words
+    together: ``GOVERNMENTWARNING``), while still reflecting the actual letters.
+    """
+    return re.sub(r"[^a-z0-9]", "", text.lower())
 
 
-_CANONICAL_TOKENS = _tokens(GOVERNMENT_WARNING_TEXT)
-
-
-def _contains_subsequence(needle: list[str], haystack: list[str]) -> bool:
-    """Whether ``needle`` appears as a contiguous run within ``haystack``."""
-    if not needle or len(needle) > len(haystack):
-        return False
-    first = needle[0]
-    for i in range(len(haystack) - len(needle) + 1):
-        if haystack[i] == first and haystack[i : i + len(needle)] == needle:
-            return True
-    return False
+_CANONICAL_ALNUM = _alnum(GOVERNMENT_WARNING_TEXT)
 
 
 def _normalise_whitespace(text: str) -> str:
@@ -95,18 +89,20 @@ def _bound_warning_region(region: str) -> str:
 def _wording_similarity(region: str) -> float:
     """Similarity of ``region`` to the canonical statement, in ``[0, 1]``.
 
-    Scored at the **word** level, not the character level: each token counts
-    equally regardless of length, so the score reflects *how many words differ*
-    rather than how many characters. This separates the common evasions (a
-    dropped sentence, a reworded clause — several words gone) from incidental OCR
-    noise (a single garbled character within one word). Case-insensitive, since
-    header casing is judged separately. The canonical statement appearing
-    verbatim (even with trailing label text) scores 1.0.
+    Scored on alphanumeric characters (whitespace and punctuation removed), so
+    it is robust to OCR spacing/word-splitting differences while still
+    penalising real alterations — a dropped or reworded sentence changes many
+    characters, whereas an incidental single-character OCR slip barely moves the
+    ratio. Case-insensitive, since header casing is judged separately. The
+    canonical statement appearing verbatim (even amid trailing label text)
+    scores 1.0.
     """
-    region_tokens = _tokens(region)
-    if _contains_subsequence(_CANONICAL_TOKENS, region_tokens):
+    region_alnum = _alnum(region)
+    if _CANONICAL_ALNUM and _CANONICAL_ALNUM in region_alnum:
         return 1.0
-    return SequenceMatcher(None, _CANONICAL_TOKENS, region_tokens).ratio()
+    # autojunk=False: the canonical string is >200 chars, where SequenceMatcher's
+    # "popular character" heuristic would otherwise distort the ratio.
+    return SequenceMatcher(None, _CANONICAL_ALNUM, region_alnum, autojunk=False).ratio()
 
 
 def verify_government_warning(

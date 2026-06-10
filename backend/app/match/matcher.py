@@ -176,6 +176,32 @@ def score_presence(expected: str, text: str) -> PresenceScore:
             MatchStatus.MISMATCH, matched_raw, score, "no expected value to verify against"
         )
 
+    # Whitespace-insensitive containment. OCR engines (notably PP-OCRv4) often run
+    # adjacent words — or even neighbouring lines — together, so the expected value
+    # can appear with its spaces dropped and extra text fused on either side
+    # ("Product of France" → "...750mL ProductofFrance", "2021" → "Vintage2021").
+    # A dropped space is OCR noise, not a label discrepancy: if the expected
+    # character sequence appears contiguously in the OCR text with whitespace
+    # ignored, the value is present. The token-window scorer above can't see this
+    # because the merged run is a single token of the wrong length.
+    exp_nws = _ignore_whitespace(expected)
+    if exp_nws:
+        text_nws = _ignore_whitespace(text)
+        if exp_nws in text_nws:
+            return PresenceScore(
+                MatchStatus.MATCH,
+                matched_raw or expected,
+                max(score, HIGH_THRESHOLD),
+                "exact match (whitespace-insensitive)",
+            )
+        if exp_nws.lower() in text_nws.lower():
+            return PresenceScore(
+                MatchStatus.SOFT_WARNING,
+                matched_raw or expected,
+                max(score, HIGH_THRESHOLD),
+                "case/punctuation-only difference",
+            )
+
     if score < LOW_THRESHOLD:
         status = MatchStatus.MISMATCH
         reason = f"best match scored {score:.2f}, below {LOW_THRESHOLD:.2f}"

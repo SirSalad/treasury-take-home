@@ -5,7 +5,7 @@
 # download at runtime (the agency firewall blocks outbound ML endpoints).
 # Build context is the repository root (see docker/docker-compose.yml).
 
-FROM python:3.11-slim
+FROM python:3.14-slim
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -14,6 +14,7 @@ ENV PYTHONUNBUFFERED=1 \
 # opencv-python (pulled in transitively by rapidocr-onnxruntime) needs libGL
 # and glib shared libraries at runtime; they are not in the slim base image.
 RUN apt-get update \
+    && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends libgl1 libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
@@ -25,7 +26,10 @@ COPY backend/pyproject.toml backend/README.md ./
 COPY backend/app ./app
 COPY backend/alembic ./alembic
 COPY backend/alembic.ini ./
-RUN pip install .
+# Upgrade build tooling first so no known-vulnerable pip/setuptools/wheel
+# (which Trivy flags) is left in the runtime image, then install the package.
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && pip install --no-cache-dir .
 
 COPY docker/backend-entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh

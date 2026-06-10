@@ -56,6 +56,64 @@ from app.verify.warning import verify_warning_from_ocr
 # same value (and absorbs a trailing-zero / OCR rounding wobble).
 ABV_TOLERANCE_PCT = 0.05
 
+# OCR-confidence floor for review routing: a MISMATCH whose best-matching label
+# text was itself recognised below this confidence is treated as a likely OCR
+# misread (stylised/curved logo fonts are the usual culprit) and routed to
+# *review* instead of being rejected outright.
+OCR_MISMATCH_REVIEW_CONFIDENCE = 0.6
+
+
+def _nows(text: str) -> str:
+    """Lowercase with all whitespace removed (for fuzzy line correspondence)."""
+    return "".join(text.split()).lower()
+
+
+def _found_line_confidence(ocr: OcrResult, found: str) -> float | None:
+    """Recognition confidence of the OCR line that best corresponds to ``found``.
+
+    Returns ``None`` when no line overlaps ``found`` — there is then nothing to
+    attribute the discrepancy to, so the mismatch stands.
+    """
+    target = _nows(found)
+    if not target:
+        return None
+    best_conf: float | None = None
+    best_overlap = 0
+    for line in ocr.lines:
+        lt = _nows(line.text)
+        if lt and (target in lt or lt in target):
+            overlap = min(len(target), len(lt))
+            if overlap > best_overlap:
+                best_overlap, best_conf = overlap, line.confidence
+    return best_conf
+
+
+def _review_low_confidence_mismatches(
+    fields: list[FieldResult], ocr: OcrResult
+) -> list[FieldResult]:
+    """Downgrade MISMATCH → SOFT_WARNING where the label text was read with low
+    OCR confidence: a likely misread (e.g. a stylised or curved logo font) should
+    get a human glance rather than be rejected as a hard discrepancy.
+    """
+    reviewed: list[FieldResult] = []
+    for field in fields:
+        if field.status is FieldStatus.MISMATCH and field.found:
+            confidence = _found_line_confidence(ocr, field.found)
+            if confidence is not None and confidence < OCR_MISMATCH_REVIEW_CONFIDENCE:
+                field = field.model_copy(
+                    update={
+                        "status": FieldStatus.SOFT_WARNING,
+                        "reason": (
+                            f"{field.reason}; the label text here was read with low OCR "
+                            f"confidence ({confidence:.2f}) — flagged for review rather "
+                            "than rejected as a mismatch"
+                        ),
+                    }
+                )
+        reviewed.append(field)
+    return reviewed
+
+
 # A line "is" the brand/class (its display) — rather than merely mentioning it —
 # when the matched text covers most of the line at high similarity. Used to grade
 # the brand against how it is *displayed*, so an all-caps brand banner is caught
@@ -121,6 +179,10 @@ def verify_label(expected: ExpectedFields, ocr_result: OcrResult) -> Verificatio
 
     if expected.vintage:
         fields.append(_verify_presence("vintage", expected.vintage, ocr_result))
+
+    # Route likely OCR misreads (low recognition confidence) to review instead of
+    # rejecting them outright — graceful degradation for hard-to-read label fonts.
+    fields = _review_low_confidence_mismatches(fields, ocr_result)
 
     warning = verify_warning_from_ocr(ocr_result)
     return build_result(fields, warning)

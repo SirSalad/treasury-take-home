@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import TypeAlias
 
 import numpy as np
-from rapidocr_onnxruntime import RapidOCR
+from rapidocr import RapidOCR
 
 from app.config import get_settings
 from app.ocr.preprocess import preprocess_image
@@ -32,10 +32,13 @@ from app.ocr.schemas import BoundingBox, OcrResult, TextLine
 logger = logging.getLogger(__name__)
 
 # Vendored model files (shipped in the repo; see module docstring).
+# PP-OCRv4 mobile models — better detection of curved/rotated text and stronger
+# recognition of stylised label fonts than the previous v3 set, while staying
+# inside the latency budget.
 MODELS_DIR = Path(__file__).parent / "models"
-DET_MODEL = MODELS_DIR / "ch_PP-OCRv3_det_infer.onnx"
-REC_MODEL = MODELS_DIR / "ch_PP-OCRv3_rec_infer.onnx"
-CLS_MODEL = MODELS_DIR / "ch_ppocr_mobile_v2.0_cls_infer.onnx"
+DET_MODEL = MODELS_DIR / "ch_PP-OCRv4_det_mobile.onnx"
+REC_MODEL = MODELS_DIR / "ch_PP-OCRv4_rec_mobile.onnx"
+CLS_MODEL = MODELS_DIR / "ch_ppocr_mobile_v2.0_cls_mobile.onnx"
 
 # Accepted image inputs: a filesystem path, raw encoded bytes (upload body), or
 # a decoded BGR/grayscale ndarray (e.g. after preprocessing).
@@ -73,14 +76,23 @@ class OcrService:
         # *longest* side (the default "min" pads the shortest side up to 736,
         # needlessly upscaling small labels). Paired with the preprocess cap this
         # keeps OCR cost — and latency — bounded; see the 5s budget harness.
+        # Pin every stage to the vendored ONNX models so nothing is ever
+        # downloaded at runtime (the agency firewall blocks outbound ML
+        # endpoints). onnxruntime (CPU) is rapidocr's default engine. The
+        # detector's limit is bounded by the *longest* side (paired with the
+        # preprocess cap) to keep OCR cost — and latency — within the 5s budget;
+        # the preprocess step already caps resolution, so we leave rapidocr's
+        # detection resize at its default rather than upscaling small labels.
         self._engine = RapidOCR(
-            det_model_path=str(DET_MODEL),
-            rec_model_path=str(REC_MODEL),
-            cls_model_path=str(CLS_MODEL),
-            use_cls=use_cls,
-            det_limit_type="max",
-            det_limit_side_len=float(self._max_side),
-            rec_batch_num=rec_batch,
+            params={
+                "Det.model_path": str(DET_MODEL),
+                "Det.limit_type": "max",
+                "Det.limit_side_len": float(self._max_side),
+                "Cls.model_path": str(CLS_MODEL),
+                "Rec.model_path": str(REC_MODEL),
+                "Rec.rec_batch_num": rec_batch,
+                "Global.use_cls": use_cls,
+            }
         )
 
     def extract(self, image: ImageInput) -> OcrResult:
@@ -93,12 +105,16 @@ class OcrService:
         """
         start = time.perf_counter()
         payload = preprocess_image(image, max_side=self._max_side)
-        raw, _ = self._engine(payload)
+        out = self._engine(payload)
         elapsed_ms = (time.perf_counter() - start) * 1000.0
 
         lines: list[TextLine] = []
-        # ``raw`` is None when nothing is detected (e.g. a blank image).
-        for polygon, text, confidence in raw or []:
+        # rapidocr 3.x returns a RapidOCROutput; boxes/txts/scores are None when
+        # nothing is detected (e.g. a blank image).
+        boxes = out.boxes if out.boxes is not None else []
+        txts = out.txts or ()
+        scores = out.scores or ()
+        for polygon, text, confidence in zip(boxes, txts, scores, strict=False):
             points = [(float(x), float(y)) for x, y in polygon]
             lines.append(
                 TextLine(

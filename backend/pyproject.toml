@@ -15,10 +15,12 @@ dependencies = [
     "sqlalchemy>=2.0",
     "alembic>=1.13",
     "psycopg[binary]>=3.1",
-    # OCR: RapidOCR on ONNXRuntime. Pulls numpy + opencv-python transitively;
-    # numpy is also imported directly, so it is pinned explicitly. Models are
+    # OCR: rapidocr 3.x (PP-OCRv4 models) with onnxruntime as the explicit
+    # inference backend (rapidocr 3.x is backend-agnostic). Pulls opencv-python
+    # transitively; numpy is imported directly so it is pinned. Models are
     # vendored in app/ocr/models (no runtime download).
-    "rapidocr-onnxruntime>=1.2,<2",
+    "rapidocr>=3.0,<4",
+    "onnxruntime>=1.17",
     "numpy>=1.26",
 ]
 

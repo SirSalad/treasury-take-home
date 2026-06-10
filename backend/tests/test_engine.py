@@ -94,3 +94,30 @@ def test_field_results_carry_highlight_boxes() -> None:
     assert brand.status is FieldStatus.MATCH
     assert brand.box is not None
     assert brand.span is not None and brand.span.line_index == 0
+
+
+def _brand_only_ocr(text: str, confidence: float) -> OcrResult:
+    """A one-line OcrResult carrying a (mis)read of the brand at a given confidence."""
+    box = BoundingBox(x_min=0.0, y_min=0.0, x_max=400.0, y_max=20.0)
+    polygon = [(0.0, 0.0), (400.0, 0.0), (400.0, 20.0), (0.0, 20.0)]
+    line = TextLine(text=text, confidence=confidence, polygon=polygon, box=box)
+    return OcrResult(lines=[line], elapsed_ms=0.0)
+
+
+def test_low_confidence_mismatch_routes_to_review() -> None:
+    """A mismatch whose label text was read with low OCR confidence is flagged for
+    review, not rejected — graceful degradation for stylised/curved logo fonts."""
+    app = Application(brand_name="JACK DANIEL'S")
+    # The ornate logo was garbled by OCR and read with low confidence.
+    result = verify_label(app, _brand_only_ocr("XQGND BLLZ", confidence=0.40))
+    brand = next(f for f in result.fields if f.field == "brand_name")
+    assert brand.status is FieldStatus.SOFT_WARNING
+    assert "low OCR confidence" in brand.reason
+
+
+def test_high_confidence_mismatch_is_still_rejected() -> None:
+    """Control: a confidently-read mismatch remains a hard mismatch."""
+    app = Application(brand_name="JACK DANIEL'S")
+    result = verify_label(app, _brand_only_ocr("JIM BEAM", confidence=0.99))
+    brand = next(f for f in result.fields if f.field == "brand_name")
+    assert brand.status is FieldStatus.MISMATCH
