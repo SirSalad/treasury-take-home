@@ -1,0 +1,41 @@
+name: Docker build & scan
+
+# Verifies the deployable images build (the deploy is a required deliverable),
+# then scans them for OS/library CVEs. Build-only: images are NEVER pushed to
+# any registry — they exist only on the runner for the scan and are discarded.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-scan:
+    name: Build images + Trivy scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build backend image (no push)
+        run: docker build -f docker/Dockerfile.backend -t ttb-backend:ci .
+
+      - name: Build frontend image (no push)
+        run: docker build -f docker/Dockerfile.frontend -t ttb-frontend:ci .
+
+      - name: Trivy scan — backend image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ttb-backend:ci
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true # only fail on CVEs that have an available fix
+          exit-code: "1"
+
+      - name: Trivy scan — frontend image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ttb-frontend:ci
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
