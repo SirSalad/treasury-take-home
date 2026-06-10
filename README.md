@@ -6,33 +6,43 @@ fields), uploads the label artwork, and the app extracts the label's text and
 compares it against the application — flagging matches, warnings, and mismatches,
 with special handling for the mandatory Government Health Warning.
 
-> **Status:** scaffold. This README is a skeleton; sections are filled in as
-> features land.
+The product constraints come straight from the discovery interviews: **< 5s**
+results, an interface **"my 73-year-old mother could figure out"**, and **no
+outbound network calls** (everything runs locally, because the agency firewall
+blocks outbound ML endpoints).
 
 ## Stack
 
 | Layer    | Choice                                          | Why |
 | -------- | ----------------------------------------------- | --- |
 | Backend  | FastAPI (Python 3.11+)                           | Fast to build, typed, async-friendly |
-| Frontend | Vite + React + TypeScript                        | Modern DX; USWDS theming for a 50+ user base |
-| OCR      | Local, on-device (no cloud calls)                | Agency firewall blocks outbound ML endpoints |
-| DB       | Postgres                                         | Batch/queue persistence |
+| Frontend | Vite + React + TypeScript                        | Modern DX; USWDS-themed for a 50+ user base |
+| OCR      | RapidOCR on ONNXRuntime, models vendored locally | On-device inference; no cloud calls |
+| DB       | Postgres                                         | Submission/application persistence + audit trail |
 | Runtime  | Docker Compose                                   | One command to bring up DB + API + frontend |
-
-Design constraints come straight from the discovery interviews: **< 5s** results,
-an interface **"my 73-year-old mother could figure out"**, and **no outbound
-network calls** (everything runs locally).
 
 ## Repository layout
 
 ```
 .
 ├── backend/      # FastAPI service (app/, tests/), pyproject.toml
+│   ├── app/
+│   │   ├── ocr/        # RapidOCR service, preprocessing, vendored ONNX models
+│   │   ├── extract/    # deterministic regex extractors (ABV, net contents, …)
+│   │   ├── match/      # fuzzy three-state brand/class-type matcher
+│   │   ├── verify/     # verification engine, aggregation, Government Warning check
+│   │   ├── batch/      # CSV-manifest batch ingestion (library; not yet an endpoint)
+│   │   ├── api/        # POST /api/verify endpoint + request/response schemas
+│   │   └── models/     # SQLAlchemy ORM (Application, Submission)
+│   └── tests/          # unit + golden corpus + perf SLA harness
 ├── frontend/     # Vite + React + TS app
+│   └── src/
+│       ├── pages/         # VerifyPage (core flow), BatchPage (placeholder), Home
+│       ├── components/    # application form, 3-pane comparison view, layout
+│       └── lib/           # API client, validation, types
 ├── docker/       # Dockerfiles + docker-compose
-├── docs/         # Approach, decisions, assumptions
-├── README.md
-└── .pre-commit-config.yaml
+├── docs/         # perf.md (the 5s budget); approach notes
+└── README.md
 ```
 
 ## Setup
@@ -43,12 +53,16 @@ network calls** (everything runs locally).
 - Node 20+ and pnpm (or npm)
 - Docker + Docker Compose (for the full local stack)
 
+The OCR models are vendored in `backend/app/ocr/models/` and committed to the
+repo — there is **nothing to download** and the service makes no outbound calls.
+
 ### Backend
 
 ```bash
 cd backend
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
+cp .env.example .env   # optional; defaults already match docker-compose / local dev
 ```
 
 ### Frontend
@@ -60,7 +74,7 @@ pnpm install      # or: npm install
 
 ## Run
 
-### Everything (Docker Compose)
+### Everything (Docker Compose) — recommended
 
 ```bash
 docker compose -f docker/docker-compose.yml up --build
@@ -71,7 +85,7 @@ This brings up three services and waits for each to become healthy:
 | Service    | Image / build              | URL                    | Notes |
 | ---------- | -------------------------- | ---------------------- | ----- |
 | `frontend` | nginx serving the SPA      | http://localhost:8080  | Proxies `/api/*` to the backend |
-| `backend`  | FastAPI + RapidOCR         | http://localhost:8000  | `/health` probe; OCR model baked in |
+| `backend`  | FastAPI + RapidOCR         | http://localhost:8000  | `/health` probe; OCR models baked in |
 | `db`       | `postgres:16-alpine`       | `localhost:5432`       | Volume `pgdata`; db `labelverify` |
 
 Open **http://localhost:8080** to use the app. The frontend talks to the API
@@ -95,21 +109,29 @@ docker compose -f docker/docker-compose.yml down -v         # stop + drop the DB
 cd backend && source .venv/bin/activate
 uvicorn app.main:app --reload
 # health check: curl http://localhost:8000/health
+# interactive API docs: http://localhost:8000/docs
 ```
+
+A Postgres reachable at `DATABASE_URL` is required (default points at the
+docker-compose db). The first request after startup warms the OCR model unless
+`OCR_WARMUP=false`.
 
 ### Frontend (dev)
 
 ```bash
 cd frontend
-pnpm dev          # or: npm run dev
+pnpm dev          # or: npm run dev   → http://localhost:5173
 ```
+
+The dev server proxies `/api/*` to `http://localhost:8000`, so run the backend
+alongside it.
 
 ## Lint & test
 
 ```bash
 # Backend
 cd backend && source .venv/bin/activate
-ruff check . && ruff format --check . && pytest
+ruff check . && ruff format --check . && pytest        # add -m "not perf" to skip the latency gate
 
 # Frontend
 cd frontend
@@ -118,16 +140,140 @@ pnpm lint && pnpm format:check && pnpm typecheck && pnpm test
 
 ## Approach
 
-_To be documented as the verification engine and OCR pipeline land. Covers:
-field extraction strategy, fuzzy matching rules (e.g. "STONE'S THROW" vs
-"Stone's Throw"), the exact Government Warning check, and the 5s performance
-budget._
+### The verification pipeline
+
+A single label is verified along the hot path **preprocess → OCR → extract →
+verify**:
+
+1. **Preprocess** (`app/ocr/preprocess.py`) — decode the upload and cap its
+   longest side at 1600px. OCR cost scales with pixel area, so bounding the
+   working resolution is what keeps a 4000px phone photo inside the latency
+   budget; small labels are left untouched (only ever downscaled, using
+   `INTER_AREA` to preserve small-text legibility).
+2. **OCR** (`app/ocr/service.py`) — RapidOCR (detection + angle classification +
+   recognition) on ONNXRuntime, CPU-only. The angle classifier is enabled so
+   labels photographed sideways/upside-down still read. Models are vendored and
+   loaded by path; the engine is warmed at startup so the first real request
+   isn't slow.
+3. **Field comparison** (`app/verify/engine.py`) — each field the application
+   supplies is routed to the comparison strategy that fits it (below). Fields the
+   application omits are not emitted, so the result mirrors the COLA that was
+   filed.
+4. **Aggregate** (`app/verify/aggregate.py`) — per-field results plus the
+   Government Warning verdict roll up to one headline verdict.
+
+Everything after OCR is pure-Python and sub-millisecond; OCR dominates the budget.
+
+### Three comparison strategies, by field type
+
+- **Numeric — alcohol content.** ABV is compared *numerically*, not as a string.
+  A regex extractor (`app/extract/extractors.py`) recovers the percentage from
+  the label ("45% Alc./Vol.", "ALC. 45% BY VOL.", anchored so it never matches
+  the proof number), and it is compared to the application value within a 0.05%
+  tolerance. A fuzzy string compare cannot tell "45%" from "40%" — a
+  one-character, high-similarity difference that is nonetheless the most common
+  and most consequential data-entry error.
+- **Fuzzy free-text — brand name & class/type** (`app/match/matcher.py`). These
+  can't be pinned with a regex, so the expected value is looked for *somewhere*
+  in the OCR text and graded into three states with a blended character/token
+  similarity ratio:
+  - **MATCH** — present (ignoring whitespace/quote noise).
+  - **SOFT_WARNING** — present but the *surface form* differs only in case or
+    punctuation, **or** a near miss worth a human glance. This is Dave's
+    "STONE'S THROW" vs "Stone's Throw" case: obviously the same brand, but worth
+    flagging rather than silently passing. The engine prefers to grade the brand
+    against the line that *is* the brand banner, so an all-caps header is caught
+    even when the brand is spelled correctly elsewhere (e.g. in the address).
+  - **MISMATCH** — a genuinely different value.
+- **Other free-text** — net contents, name/address, country of origin, vintage
+  use the same fuzzy-presence grader (these are printed verbatim, so presence
+  matching is simple and robust to OCR noise).
+
+### The Government Health Warning (special path)
+
+The warning (`app/verify/warning.py`) gets its own near-exact verifier against
+the canonical 27 CFR 16.21 statement, because Jenny told us it has to be
+*exact*. It catches the common evasions:
+
+- **MISSING** — no `GOVERNMENT WARNING` header anywhere in the text.
+- **Altered wording** — the statement deviates from the required text (a dropped
+  sentence, a reworded clause) beyond what OCR noise explains. Scored at the
+  *word* level so a single garbled character passes but several missing words
+  fail.
+- **Title-case header** — `Government Warning` instead of the required all-caps
+  `GOVERNMENT WARNING` (Jenny's catch). Header casing is judged independently of
+  the wording, so a word-perfect body with a lowercased header still fails.
+
+### Overall verdict (worst-of)
+
+The headline verdict is the worst outcome implied by the parts:
+
+- **FAIL** — any field is a MISMATCH, **or** the warning is ALTERED/MISSING. A
+  mandatory-warning fault fails the label outright.
+- **WARNING** — no hard fault, but at least one SOFT_WARNING. Plausibly fine,
+  needs a human look.
+- **PASS** — every checked field matches and the warning is compliant.
+
+This policy is pinned by a golden-corpus test so the engine and the labelled
+fixtures cannot drift apart.
+
+### Performance — the 5s budget
+
+The discovery interviews made < 5s a hard product constraint (the prior vendor's
+30–40s pilot got abandoned). A perf harness (`backend/tests/perf/`) times
+preprocess + OCR + extract over the labelled corpus and gates p95 against the
+budget in CI. On a 6-core dev host the corpus runs ~2.4s p50, leaving roughly
+30–50% headroom. The main lever is the resolution cap; recognition cost scales
+with the number of detected text regions, so text-dense wine labels are the
+slowest. Full detail in [`docs/perf.md`](docs/perf.md).
+
+### Error handling
+
+An undecodable upload, an empty file, or a decodable image with no recognisable
+text is reported as a clean `4xx` (and recorded as a `FAILED` submission for the
+audit trail) rather than a 500 or a misleading all-mismatch verdict. Uploads are
+size-capped (20 MB) to bound memory.
 
 ## Assumptions & trade-offs
 
-- **Standalone prototype** — no COLA integration; not storing PII or sensitive
-  documents.
-- **Local-only inference** — no cloud OCR/LLM APIs, per the agency firewall.
-- **Scope** — single-label verification is the core flow; bulk upload and
-  image-quality robustness are layered on as time allows.
-- _Further trade-offs documented in `docs/` as decisions are made._
+### Scope
+
+- **Standalone prototype** — no COLA integration (out of scope per the IT
+  interview); this is a proof-of-concept that could inform future procurement.
+- **Single-label verification is the core flow** and is wired end-to-end. **Batch
+  upload** is partially built: the backend ingestion library (CSV manifest +
+  image pairing, `app/batch/`) exists and is tested, but it is **not yet exposed
+  as an API endpoint**, and the frontend batch page is a placeholder. Given the
+  time box, the single-label flow was prioritised for depth over breadth.
+- **No real authn/PII handling** — per the IT interview, nothing sensitive is
+  stored for the exercise. Uploaded images are written to a local directory and
+  referenced from the DB; a production deployment would use an object store and
+  retention policy.
+
+### Known limitations
+
+- **Bold / font-size are not verified.** Jenny noted the `GOVERNMENT WARNING`
+  header must be all-caps *and bold*, and 27 CFR 16.22 sets minimum font sizes.
+  OCR recovers *text*, not typography — bold weight and absolute font size in
+  points cannot be recovered from recognised text. The verifier checks presence,
+  wording, and the all-caps requirement, and **explicitly surfaces bold/font-size
+  as out-of-scope limitations** on the warning result rather than silently
+  passing them. A future pass could measure glyph stroke-width and box height
+  from the detector's bounding boxes to approximate these.
+- **OCR edge cases.** RapidOCR is robust to moderate skew (the angle classifier
+  handles 90°/180° rotations) and noise, but severe glare, very low resolution,
+  heavy stylised/script typefaces, or text overlaid on busy artwork can drop or
+  garble lines. The fuzzy thresholds are tuned to absorb ordinary OCR noise; a
+  badly degraded image that yields no text is reported as unreadable (so an agent
+  re-requests a better photo) rather than silently failing the label. Image
+  enhancement (deglare, contrast normalisation) beyond the resolution cap was out
+  of scope.
+- **Fuzzy thresholds are heuristic.** The MATCH/SOFT_WARNING/MISMATCH cutoffs are
+  similarity ratios tuned against the corpus, not learned probabilities. They are
+  deliberately conservative — borderline cases become a SOFT_WARNING (a human
+  glance) rather than a silent pass or a hard fail.
+- **Latency is measured best-of-N** on a CPU host, which captures the latency the
+  pipeline *can* achieve, not contention-driven tail latency under production
+  load — that's a capacity question, not a pipeline question.
+
+Further design notes live in [`docs/`](docs/).
