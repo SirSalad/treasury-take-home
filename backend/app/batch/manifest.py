@@ -109,7 +109,7 @@ def _parse_row(row_number: int, raw: dict[str | None, object]) -> ParsedRow:
     }
     application: ApplicationInput | None = None
     try:
-        application = ApplicationInput(**app_values)
+        application = ApplicationInput.model_validate(app_values)
     except ValidationError as exc:
         for err in exc.errors():
             location = ".".join(str(part) for part in err["loc"]) or "row"
