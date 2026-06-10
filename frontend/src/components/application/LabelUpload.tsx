@@ -63,6 +63,7 @@ export function LabelUpload({
         type="file"
         accept="image/*"
         className="sr-only"
+        aria-label="Upload label artwork (PNG or JPEG, up to 20 MB)"
         aria-describedby={errorId}
         aria-invalid={Boolean(error)}
         disabled={disabled}

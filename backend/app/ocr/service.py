@@ -20,6 +20,7 @@ import logging
 import time
 from functools import lru_cache
 from pathlib import Path
+from typing import TypeAlias
 
 import numpy as np
 from rapidocr_onnxruntime import RapidOCR
@@ -38,7 +39,7 @@ CLS_MODEL = MODELS_DIR / "ch_ppocr_mobile_v2.0_cls_infer.onnx"
 
 # Accepted image inputs: a filesystem path, raw encoded bytes (upload body), or
 # a decoded BGR/grayscale ndarray (e.g. after preprocessing).
-ImageInput = str | Path | bytes | np.ndarray
+ImageInput: TypeAlias = str | Path | bytes | np.ndarray
 
 
 class OcrService:

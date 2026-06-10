@@ -187,6 +187,31 @@ cd frontend
 pnpm lint && pnpm format:check && pnpm typecheck && pnpm test
 ```
 
+## Continuous integration & quality gates
+
+Every push to `main` and every pull request runs `.github/workflows/ci.yml`. A PR
+is blocked unless all gates pass:
+
+| Gate | Frontend | Backend |
+| --- | --- | --- |
+| Type safety | `tsc` (strict) | `mypy` |
+| Lint | `eslint` | `ruff check` |
+| Format | `prettier --check` | `ruff format --check` |
+| Tests | `vitest` | `pytest` |
+| Accessibility | **WCAG 2.1 AA via `axe-core`** (`src/a11y.test.tsx`) | — |
+| Build | `vite build` | — |
+
+The accessibility suite renders the Home, Verify, Batch, and result/comparison
+screens and fails CI on any WCAG 2.0/2.1 **A or AA** violation — so the federal
+accessibility bar is enforced automatically, not by hand.
+
+### Software Bill of Materials (SBOM)
+
+CI also generates a **CycloneDX SBOM** for each ecosystem (frontend npm/pnpm and
+backend Python) via [Anchore Syft](https://github.com/anchore/sbom-action) and
+uploads them as build artifacts (`sbom-frontend.cdx.json`, `sbom-backend.cdx.json`)
+for supply-chain inventory and vulnerability scanning.
+
 ## Approach
 
 ### The verification pipeline

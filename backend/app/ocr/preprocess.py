@@ -15,6 +15,7 @@ Government Health Warning is the smallest print on the label and must survive.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TypeAlias
 
 import cv2
 import numpy as np
@@ -26,7 +27,7 @@ DEFAULT_MAX_SIDE = 1600
 
 # Same input union the OCR service accepts: a path, raw encoded bytes (an upload
 # body), or an already-decoded BGR/grayscale ndarray.
-ImageInput = str | Path | bytes | np.ndarray
+ImageInput: TypeAlias = str | Path | bytes | np.ndarray
 
 
 def decode_image(image: ImageInput) -> np.ndarray:

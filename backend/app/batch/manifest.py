@@ -94,7 +94,8 @@ def _parse_row(row_number: int, raw: dict[str | None, object]) -> ParsedRow:
         if key is not None
     }
 
-    image_filename = cleaned.get(IMAGE_FILENAME_COLUMN) or None
+    raw_filename = cleaned.get(IMAGE_FILENAME_COLUMN)
+    image_filename = raw_filename if isinstance(raw_filename, str) and raw_filename else None
     errors: list[str] = []
     if not image_filename:
         errors.append(f"Missing '{IMAGE_FILENAME_COLUMN}'.")
