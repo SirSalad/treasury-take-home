@@ -55,8 +55,14 @@ app.add_middleware(
 
 
 @app.get("/health")
+@app.get("/api/health")
 def health() -> dict[str, str]:
-    """Liveness/readiness probe used by Docker Compose and the frontend."""
+    """Liveness/readiness probe.
+
+    Exposed at the bare ``/health`` for the container healthcheck (which hits the
+    backend directly) and under ``/api/health`` so the browser can reach it via
+    the same ``/api`` reverse-proxy that fronts every other endpoint.
+    """
     return {"status": "ok", "version": __version__}
 
 

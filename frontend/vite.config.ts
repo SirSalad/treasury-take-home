@@ -16,11 +16,12 @@ export default defineConfig({
     port: 5173,
     proxy: {
       // Dev convenience: forward API calls to the FastAPI backend so the
-      // frontend can use same-origin relative URLs (see src/lib/api.ts).
+      // frontend can use same-origin relative URLs (see src/lib/api.ts). The
+      // backend serves under the `/api` prefix, so it is preserved (not
+      // stripped) — matching the production nginx reverse-proxy.
       "/api": {
         target: "http://localhost:8000",
         changeOrigin: true,
-        rewrite: (p) => p.replace(/^\/api/, ""),
       },
     },
   },
