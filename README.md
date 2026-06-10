@@ -11,6 +11,23 @@ results, an interface **"my 73-year-old mother could figure out"**, and **no
 outbound network calls** (everything runs locally, because the agency firewall
 blocks outbound ML endpoints).
 
+## Live demo
+
+**🔗 https://sculpture-confident-provided-acting.trycloudflare.com**
+
+Open the URL, click **Verify a label**, fill in the application fields, and
+upload a label image (samples live in
+[`backend/tests/corpus/images/`](backend/tests/corpus/images/)) to get a
+field-by-field verdict. **Batch upload** runs the same pipeline over a CSV
+manifest + image set.
+
+The full Docker Compose stack (Postgres + FastAPI + nginx-served frontend) runs
+on a VPS; the public HTTPS URL is a Cloudflare tunnel terminating at the
+frontend, which proxies `/api/*` to the backend. See
+[Deployment](#deployment) for how it's wired. The tunnel uses a free
+quick-tunnel hostname, so the URL changes if the tunnel is restarted — the value
+above is current as of deploy.
+
 ## Stack
 
 | Layer    | Choice                                          | Why |
@@ -125,6 +142,38 @@ pnpm dev          # or: npm run dev   → http://localhost:5173
 
 The dev server proxies `/api/*` to `http://localhost:8000`, so run the backend
 alongside it.
+
+## Deployment
+
+The [live demo](#live-demo) runs the **same Docker Compose stack** above on a
+small VPS, fronted by a Cloudflare tunnel for public HTTPS — no code changes
+between local and prod.
+
+```
+reviewer ──HTTPS──▶ Cloudflare edge ──tunnel──▶ cloudflared ──▶ :8080 frontend ──/api/*──▶ :8000 backend ──▶ :5432 db
+```
+
+- **Stack** — `docker compose -f docker/docker-compose.yml up -d`. Each service
+  carries `restart: unless-stopped`, so the stack survives a host reboot.
+- **Public URL** — a [`cloudflared`](https://github.com/cloudflare/cloudflared)
+  quick tunnel exposes the frontend (`:8080`) over HTTPS. It runs as a systemd
+  service (`cloudflared-ttb.service`, `Restart=on-failure`,
+  `WantedBy=multi-user.target`) pointing at `http://localhost:8080`, so it comes
+  back after a crash or reboot:
+
+  ```bash
+  cloudflared tunnel --no-autoupdate --url http://localhost:8080
+  ```
+
+  The tunnel terminates TLS at Cloudflare's edge and forwards plain HTTP to the
+  frontend; the frontend serves the SPA and proxies `/api/*` to the backend, so
+  the browser only ever talks same-origin HTTPS.
+- **Why a tunnel** — it needs no inbound firewall rule, no certificate
+  management, and no DNS setup, which keeps the prototype deploy to a single
+  command. The trade-off is the quick-tunnel hostname is ephemeral: restarting
+  the tunnel mints a new `*.trycloudflare.com` URL. A production deploy would use
+  a named Cloudflare tunnel (or a reverse proxy + Let's Encrypt) bound to a
+  stable domain.
 
 ## Lint & test
 
