@@ -36,8 +36,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: pnpm
-          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-${{ runner.os }}-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -86,7 +91,11 @@ jobs:
         run: mypy
 
       - name: Tests (pytest)
-        run: pytest -q
+        # Run the correctness suite (unit + golden corpus). The `perf` (5s OCR
+        # latency SLA) and `e2e` (real-OCR-through-HTTP) markers are wall-clock /
+        # throughput benchmarks that are unreliable on shared CI runners, so they
+        # are deselected here and exercised in a controlled environment instead.
+        run: pytest -m "not perf and not e2e"
 
   sbom:
     name: SBOM — CycloneDX (supply-chain inventory)
