@@ -1,2 +1,4 @@
-allowBuilds:
-  esbuild: set this to true or false
+# esbuild ships prebuilt binaries via a postinstall script; approve it so
+# pnpm 11 will run lint/test/build without blocking on an ignored build.
+onlyBuiltDependencies:
+  - esbuild

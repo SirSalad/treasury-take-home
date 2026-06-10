@@ -42,3 +42,6 @@ data/local/
 
 # ---- Gas Town / beads local state ----
 .beads/
+
+# ---- Agent runtime ----
+.claude/
