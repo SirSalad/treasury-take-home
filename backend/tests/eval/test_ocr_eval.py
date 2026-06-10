@@ -126,10 +126,10 @@ def test_ocr_real_world_eval(capsys: pytest.CaptureFixture[str]) -> None:
 
         scored += 1
         mark = "FAIL" if case_fail else "ok  "
-        detail = (
-            f"q={quality.level:<3} chars={sum(len(line.text) for line in result_ocr.lines):<3} "
-            f"brand={brand_status.value if brand_status else '-'} abv={abv_status.value if abv_status else '-'}"
-        )
+        chars = sum(len(line.text) for line in result_ocr.lines)
+        brand_str = brand_status.value if brand_status else "-"
+        abv_str = abv_status.value if abv_status else "-"
+        detail = f"q={quality.level:<3} chars={chars:<3} brand={brand_str} abv={abv_str}"
         rows.append(f"  {mark}  {case['id']:26} [{case['category']:9}] {detail}")
         if case_fail:
             failures.append(f"{case['id']}: {', '.join(case_fail)}")
