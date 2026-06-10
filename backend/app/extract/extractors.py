@@ -45,16 +45,19 @@ class RawMatch:
     end: int
 
 
-# --- ABV: "45% Alc./Vol.", "ALC. 45% BY VOL.", "Alcohol 45% by volume" --------
+# --- ABV: "45% Alc./Vol.", "ALC. 45% BY VOL.", "Alcohol 45% by volume",
+#         "40% Vol." (British/EU spirits omit "Alc.") ---------------------------
 
-# Two shapes: a percentage that is immediately followed by an alcohol anchor, or
-# an alcohol anchor immediately followed by a percentage. Requiring the anchor
-# keeps it from matching unrelated percentages and, crucially, the proof number.
+# Two shapes: a percentage that is immediately followed by an alcohol/volume
+# anchor, or an alcohol anchor immediately followed by a percentage. Requiring an
+# anchor keeps it from matching unrelated percentages and, crucially, the proof
+# number. The percent-first shape also accepts a bare "Vol" anchor so EU-style
+# "40% Vol." labels (no "Alc.") are recognised.
 _ABV_RE = re.compile(
     r"""
     (?:
         (?P<pct_first>\d{1,2}(?:\.\d+)?)\s*%\s*           # "45% "
-        (?:alc|alcohol)\b                                  # ... Alc
+        (?:alc|alcohol|vol(?:ume)?)\b                       # ... Alc / Vol
       |
         \balc(?:ohol)?\.?                                  # "Alc." / "Alcohol"
         \s*(?:[./]?\s*vol(?:ume)?\.?|by\s+vol(?:ume)?)?    # optional "/Vol."

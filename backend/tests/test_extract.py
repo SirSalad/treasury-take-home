@@ -40,6 +40,10 @@ def _best_value(text: str, field: FieldName) -> str | None:
         ("Alcohol 45.5% by volume", "45.5"),
         ("40% ALC/VOL", "40"),
         ("7.5% Alc. by Vol.", "7.5"),
+        # British/EU spirits omit "Alc." — a bare "Vol" anchor (as on a real
+        # Jack Daniel's 70cl bottle: "70cl 40% Vol.").
+        ("70cl 40% Vol.", "40"),
+        ("40% vol", "40"),
     ],
 )
 def test_abv_surface_forms(text: str, expected: str) -> None:
