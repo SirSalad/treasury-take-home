@@ -8,12 +8,11 @@ from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
 
+# Importing the models package registers all tables on Base.metadata.
+import app.models  # noqa: E402, F401  (side-effect import, after Base)
 from alembic import context
 from app.config import get_settings
 from app.db import Base
-
-# Importing the models package registers all tables on Base.metadata.
-import app.models  # noqa: E402, F401  (side-effect import, after Base)
 
 # Alembic Config object, providing access to values in alembic.ini.
 config = context.config

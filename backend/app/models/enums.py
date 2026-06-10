@@ -8,14 +8,14 @@ the same models run against SQLite in tests.
 import enum
 
 
-class ProductSource(str, enum.Enum):
+class ProductSource(enum.StrEnum):
     """Origin of the product, per TTB form 5100.31 (OMB 1513-0020)."""
 
     DOMESTIC = "domestic"
     IMPORTED = "imported"
 
 
-class ProductType(str, enum.Enum):
+class ProductType(enum.StrEnum):
     """Class of alcohol beverage governed by TTB labeling rules."""
 
     WINE = "wine"
@@ -23,7 +23,7 @@ class ProductType(str, enum.Enum):
     MALT_BEVERAGE = "malt_beverage"
 
 
-class SubmissionStatus(str, enum.Enum):
+class SubmissionStatus(enum.StrEnum):
     """Lifecycle of a single label verification job."""
 
     PENDING = "pending"
@@ -32,7 +32,7 @@ class SubmissionStatus(str, enum.Enum):
     FAILED = "failed"
 
 
-class BatchStatus(str, enum.Enum):
+class BatchStatus(enum.StrEnum):
     """Lifecycle of a batch of label verification jobs."""
 
     PENDING = "pending"

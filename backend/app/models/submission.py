@@ -9,8 +9,8 @@ single uploads and as the unit of work inside a batch (see :class:`BatchItem`).
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import Enum as SAEnum
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -55,10 +55,11 @@ class Submission(TimestampMixin, Base):
     error: Mapped[str | None] = mapped_column(Text)
 
     application: Mapped["Application | None"] = relationship(back_populates="submissions")
+    # Deleting a submission removes its batch link; submissions themselves are
+    # durable verification records and outlive the batch that grouped them.
     batch_item: Mapped["BatchItem | None"] = relationship(
         back_populates="submission",
         cascade="all, delete-orphan",
-        single_parent=True,
         uselist=False,
     )
 

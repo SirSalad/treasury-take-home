@@ -7,10 +7,9 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.db import Base
-
 # Importing models registers all tables on Base.metadata.
 import app.models  # noqa: F401
+from app.db import Base
 
 
 @event.listens_for(Engine, "connect")
