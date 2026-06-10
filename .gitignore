@@ -21,6 +21,7 @@ coverage.xml
 node_modules/
 frontend/dist/
 frontend/.vite/
+*.tsbuildinfo
 *.log
 npm-debug.log*
 pnpm-debug.log*
