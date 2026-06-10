@@ -5,6 +5,7 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 from app.models.enums import ProductSource, ProductType, SubmissionStatus
+from app.ocr.quality import ImageQuality
 from app.verify.schemas import VerificationResult
 
 
@@ -51,3 +52,5 @@ class VerificationResponse(BaseModel):
     image_filename: str | None
     timing: TimingInfo
     result: VerificationResult
+    # How readable the uploaded image was, for retake guidance in the UI.
+    image_quality: ImageQuality

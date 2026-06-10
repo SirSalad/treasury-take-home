@@ -31,6 +31,7 @@ from app.models.enums import ProductSource, ProductType, SubmissionStatus
 from app.models.submission import Submission
 from app.ocr import OcrService, get_ocr_service
 from app.ocr.preprocess import decode_image
+from app.ocr.quality import assess_image_quality
 from app.verify import verify_label
 
 router = APIRouter(prefix="/api", tags=["verification"])
@@ -153,6 +154,7 @@ def verify(
         image_filename=image.filename,
         timing=TimingInfo(total_ms=elapsed_ms, ocr_ms=int(ocr_result.elapsed_ms)),
         result=result,
+        image_quality=assess_image_quality(ocr_result),
     )
 
 

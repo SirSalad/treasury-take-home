@@ -20,6 +20,7 @@ const RESPONSE: VerificationResponse = {
   image_filename: "label.png",
   timing: { total_ms: 2400, ocr_ms: 1500 },
   result: SAMPLE_RESULT,
+  image_quality: { level: "ok", mean_confidence: 0.97, text_regions: 11, message: null },
 };
 
 /** Fill the three required fields and attach an image, then submit. */

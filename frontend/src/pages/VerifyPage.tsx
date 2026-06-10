@@ -1,4 +1,4 @@
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, AlertTriangle, Loader2 } from "lucide-react";
 import * as React from "react";
 
 import { ApplicationForm } from "@/components/application/ApplicationForm";
@@ -104,6 +104,21 @@ export function VerifyPage() {
             Verify another label
           </Button>
         </div>
+        {response.image_quality.level === "low" ? (
+          <div
+            role="status"
+            className="flex items-start gap-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"
+          >
+            <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-600" aria-hidden="true" />
+            <div>
+              <p className="font-semibold">This photo was hard to read</p>
+              <p>
+                {response.image_quality.message} The verdict below may be less reliable than a clear
+                photo would give.
+              </p>
+            </div>
+          </div>
+        ) : null}
         {previewUrl ? (
           <ComparisonView
             result={response.result}

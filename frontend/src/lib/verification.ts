@@ -95,6 +95,14 @@ export interface TimingInfo {
   ocr_ms: number;
 }
 
+/** How readable the uploaded image was, for retake guidance. */
+export interface ImageQuality {
+  level: "ok" | "low";
+  mean_confidence: number;
+  text_regions: number;
+  message: string | null;
+}
+
 /** The full `POST /api/verify` response. */
 export interface VerificationResponse {
   submission_id: number;
@@ -103,6 +111,7 @@ export interface VerificationResponse {
   image_filename: string | null;
   timing: TimingInfo;
   result: VerificationResult;
+  image_quality: ImageQuality;
 }
 
 // ---- Display helpers ----------------------------------------------------
