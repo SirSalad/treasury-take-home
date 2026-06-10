@@ -66,6 +66,7 @@ addopts = "-q"
 markers = [
     "perf: real-OCR latency benchmark against the 5s budget (slow; runs in CI). Deselect with -m 'not perf'.",
     "e2e: real-OCR end-to-end check through the HTTP API (slow). Deselect with -m 'not e2e'.",
+    "eval: real-world OCR eval over a manifest of label photos (slow; fetches images). Run with -m eval.",
 ]
 
 [tool.mypy]

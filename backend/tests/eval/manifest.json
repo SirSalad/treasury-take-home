@@ -1,0 +1,107 @@
+{
+  "_about": "Real-world OCR eval cases. Images are fetched on demand from Wikimedia Commons (see `commons_file`; licences are on each file's Commons page) and cached locally — none are committed. `ground_truth` is the COLA application a human would file for the label; `expect` is the stable, reproducible outcome the pipeline should produce (quality grade, brand verdict bucket, whether the ABV is recoverable). See README 'OCR eval'.",
+  "cases": [
+    {
+      "id": "jack_daniels_eu_spirit",
+      "category": "spirit",
+      "commons_file": "Jack Daniels bottle.jpg",
+      "notes": "Ornate white-on-black label, curved 'Old No. 7' emblem, glass glare; EU 70cl bottle (no US Govt Warning).",
+      "ground_truth": {
+        "brand_name": "Jack Daniel's",
+        "class_type": "Tennessee Sour Mash Whiskey",
+        "alcohol_content_pct": 40.0,
+        "alcohol_content_text": "40% Vol.",
+        "net_contents": "70cl",
+        "name_and_address": "Jack Daniel Distillery, Lynchburg, Tennessee 37352 U.S.A."
+      },
+      "expect": { "quality": "ok", "brand_status": ["match", "soft_warning"], "abv_reads": true }
+    },
+    {
+      "id": "samuel_adams_beer",
+      "category": "beer",
+      "commons_file": "Samuel Adams Summer Ale (5914190156).jpg",
+      "notes": "Classic beer label, decent photo.",
+      "ground_truth": { "brand_name": "Samuel Adams" },
+      "expect": { "quality": "ok", "brand_status": ["match", "soft_warning"], "abv_reads": false }
+    },
+    {
+      "id": "sierra_nevada_beer",
+      "category": "beer",
+      "commons_file": "28 105 Sierra Nevada Beer Camp Tropical Ipa 2016 (145093527).jpeg",
+      "notes": "Busy seasonal label, lots of text.",
+      "ground_truth": { "brand_name": "Sierra Nevada" },
+      "expect": { "quality": "ok", "brand_status": ["match", "soft_warning"], "abv_reads": false }
+    },
+    {
+      "id": "jim_beam_bourbon",
+      "category": "spirit",
+      "commons_file": "Jim Beam White Label New.jpg",
+      "notes": "Stylised brand script; OCR reads 'JIMBEAN' (1-char slip) -> fuzzy match.",
+      "ground_truth": {
+        "brand_name": "Jim Beam",
+        "class_type": "Kentucky Straight Bourbon Whiskey"
+      },
+      "expect": { "quality": "ok", "brand_status": ["match", "soft_warning"], "abv_reads": false }
+    },
+    {
+      "id": "titos_vodka",
+      "category": "spirit",
+      "commons_file": "Tito's Vodka bottle 1.75L size.jpg",
+      "notes": "Handmade vodka, clear label.",
+      "ground_truth": { "brand_name": "Tito's Handmade Vodka" },
+      "expect": { "quality": "ok", "brand_status": ["match", "soft_warning"], "abv_reads": false }
+    },
+    {
+      "id": "barefoot_wine",
+      "category": "wine",
+      "commons_file": "Bottle and glass of Barefoot white zinfandel wine, 2012.jpg",
+      "ground_truth": { "brand_name": "Barefoot", "class_type": "White Zinfandel" },
+      "expect": { "quality": "ok", "brand_status": ["match", "soft_warning"], "abv_reads": false }
+    },
+    {
+      "id": "beringer_wine",
+      "category": "wine",
+      "commons_file": "Beringer White Zinfandel.jpg",
+      "notes": "Reads brand, 750ml, vintage 2004, 'PRODUCT OF USA'.",
+      "ground_truth": {
+        "brand_name": "Beringer",
+        "class_type": "White Zinfandel",
+        "net_contents": "750ml",
+        "vintage": "2004"
+      },
+      "expect": { "quality": "ok", "brand_status": ["match", "soft_warning"], "abv_reads": false }
+    },
+    {
+      "id": "four_loko_chaos",
+      "category": "chaos",
+      "commons_file": "Four Loko, 2010.jpg",
+      "notes": "Rainbow graffiti can. OCR reads '12.0%' but the 'ALC/VOL' anchor is split off, so the (deliberately anchor-requiring) extractor doesn't confirm the ABV, and the graffiti brand doesn't match — a documented hard case, quality still 'ok'.",
+      "ground_truth": { "brand_name": "Four Loko", "alcohol_content_pct": 12.0, "alcohol_content_text": "12.0% ALC/VOL" },
+      "expect": { "quality": "ok", "brand_status": null, "abv_reads": false }
+    },
+    {
+      "id": "buzzballz_chaos",
+      "category": "chaos",
+      "commons_file": "BuzzBallz Lime 'Rita Cocktail.jpg",
+      "notes": "Curved spherical can; reads brand+flavor, but the small ABV line on the curve is missed.",
+      "ground_truth": { "brand_name": "BuzzBallz", "alcohol_content_pct": 15.0 },
+      "expect": { "quality": "ok", "brand_status": ["match", "soft_warning"], "abv_reads": false }
+    },
+    {
+      "id": "makers_mark_bad_photo",
+      "category": "bad_photo",
+      "commons_file": "Maker's Mark 750 090PF.jpg",
+      "notes": "Bottle tilted/foreshortened on a counter, in shadow — OCR recovers ~10 chars. Should flag retake.",
+      "ground_truth": { "brand_name": "Maker's Mark" },
+      "expect": { "quality": "low", "brand_status": null, "abv_reads": false }
+    },
+    {
+      "id": "shelf_far_bad_photo",
+      "category": "bad_photo",
+      "commons_file": "Joose, Tilt, Four Loko for sale (2010).jpg",
+      "notes": "Far, cluttered shelf of many cans — too distant to read. Should flag retake.",
+      "ground_truth": { "brand_name": "Four Loko" },
+      "expect": { "quality": "low", "brand_status": null, "abv_reads": false }
+    }
+  ]
+}

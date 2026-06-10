@@ -99,7 +99,7 @@ jobs:
         # latency SLA) and `e2e` (real-OCR-through-HTTP) markers are wall-clock /
         # throughput benchmarks that are unreliable on shared CI runners, so they
         # are deselected here and exercised in a controlled environment instead.
-        run: pytest -m "not perf and not e2e"
+        run: pytest -m "not perf and not e2e and not eval"
 
   sbom:
     name: SBOM — CycloneDX (supply-chain inventory)

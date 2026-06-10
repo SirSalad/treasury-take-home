@@ -187,6 +187,28 @@ cd frontend
 pnpm lint && pnpm format:check && pnpm typecheck && pnpm test
 ```
 
+### Real-world OCR eval
+
+The unit suite uses a clean, synthetic golden corpus. A separate **eval** measures
+the pipeline on *real* label photos — Jack Daniel's, US beer/wine/spirits, wildly
+colorful RTDs (Four Loko, BuzzBallz), and deliberately bad shots — to catch OCR /
+extraction / quality regressions when the engine or rules change:
+
+```bash
+cd backend && pytest -m eval -s        # slow; fetches images from Wikimedia (cached)
+```
+
+Cases live in `tests/eval/manifest.json` (image source + ground truth + expected
+quality/verdict). Images are fetched on demand and cached under
+`tests/eval/.cache` (not committed); the eval is deselected from the default suite
+and CI. It prints a per-case scorecard, e.g.:
+
+```
+ok    jack_daniels_eu_spirit  [spirit]  q=ok  brand=soft_warning abv=match
+ok    buzzballz_chaos         [chaos]   q=ok  brand=soft_warning abv=mismatch
+ok    makers_mark_bad_photo   [bad]     q=low  (flagged for retake)
+```
+
 ## Continuous integration & quality gates
 
 Every push to `main` and every pull request runs `.github/workflows/ci.yml`. A PR
