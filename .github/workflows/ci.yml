@@ -25,24 +25,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up pnpm
-        # Version is read from the "packageManager" field in frontend/package.json
-        # (pnpm@11.2.2) so CI matches local exactly.
-        uses: pnpm/action-setup@v4
-        with:
-          package_json_file: frontend/package.json
-
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.local/share/pnpm/store
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml') }}
-          restore-keys: pnpm-store-${{ runner.os }}-
+      - name: Enable pnpm via corepack (pinned 11.2.2)
+        # Mirrors docker/Dockerfile.frontend exactly. pnpm 11.2.2 reads the
+        # settings-only pnpm-workspace.yaml (no `packages` field) without error,
+        # which pnpm/action-setup's resolved version did not.
+        run: corepack enable && corepack prepare pnpm@11.2.2 --activate
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
