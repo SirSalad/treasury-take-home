@@ -1,5 +1,5 @@
 {
-  "_about": "OUT-OF-DISTRIBUTION OCR robustness cases — real consumer/field bottle photos, NOT representative COLA submissions. The product targets pre-market COLA review, whose input is the manufacturer's clean head-on label artwork; that representative correctness is covered by the synthetic golden corpus (tests/corpus). This set deliberately uses messy real photos to confirm graceful degradation. Each `image` is committed under tests/eval/images/ (see images/ATTRIBUTION.md for source + licence); `commons_file` is the Wikimedia source / re-fetch fallback. `ground_truth` is the COLA fields a human would file; `expect` is the stable outcome the pipeline should produce (quality grade, brand verdict bucket, whether the ABV is recoverable). See README 'OCR robustness eval'.",
+  "_about": "Real label photos for OCR eval, spanning clean front-of-label shots (beer/wine/spirits) through wildly-colorful RTDs and deliberately-bad captures. NOT representative COLA submissions (the product targets pre-market COLA review of clean manufacturer label artwork, modelled by the synthetic golden corpus, tests/corpus); this set stress-tests real OCR on real artwork and confirms graceful degradation. Each image is committed under tests/eval/images/ (see images/ATTRIBUTION.md for source + licence). ground_truth is the COLA fields a human would file; expect is the stable outcome (quality grade, brand verdict bucket, ABV recoverability).",
   "cases": [
     {
       "id": "jack_daniels_eu_spirit",
@@ -221,6 +221,150 @@
       "expect": {
         "quality": "low",
         "brand_status": null,
+        "abv_reads": false
+      }
+    },
+    {
+      "id": "corona_beer",
+      "category": "beer",
+      "commons_file": "Corona Extra beer bottle (2019).png",
+      "image": "images/corona_beer.jpg",
+      "license": "CC BY-SA 4.0",
+      "author": "Bruce The Deus",
+      "notes": "Front of a Corona Extra bottle — imported lager, clear glass.",
+      "ground_truth": {
+        "brand_name": "Corona Extra",
+        "class_type": "Cerveza"
+      },
+      "expect": {
+        "quality": "ok",
+        "brand_status": [
+          "match",
+          "soft_warning"
+        ],
+        "abv_reads": false
+      }
+    },
+    {
+      "id": "gallo_cabernet",
+      "category": "wine",
+      "commons_file": "Gallo Family Cabernet (OFF 8500000005002)",
+      "image": "images/gallo_cabernet.jpg",
+      "license": "CC BY-SA",
+      "author": "Open Food Facts contributors",
+      "notes": "Gallo Family Vineyards Cabernet Sauvignon front label.",
+      "ground_truth": {
+        "brand_name": "Gallo Family",
+        "class_type": "Cabernet Sauvignon"
+      },
+      "expect": {
+        "quality": "ok",
+        "brand_status": [
+          "match",
+          "soft_warning"
+        ],
+        "abv_reads": false
+      }
+    },
+    {
+      "id": "jameson_whiskey",
+      "category": "spirit",
+      "commons_file": "Jameson Irish Whiskey (11898467796).jpg",
+      "image": "images/jameson_whiskey.jpg",
+      "license": "CC BY 2.0",
+      "author": "Michael Bentley",
+      "notes": "Jameson Irish Whiskey front label.",
+      "ground_truth": {
+        "brand_name": "Jameson",
+        "class_type": "Irish Whiskey"
+      },
+      "expect": {
+        "quality": "ok",
+        "brand_status": [
+          "match",
+          "soft_warning"
+        ],
+        "abv_reads": false
+      }
+    },
+    {
+      "id": "seven_deadly_zins",
+      "category": "wine",
+      "commons_file": "7 Deadly Zins (OFF 0652935100012)",
+      "image": "images/seven_deadly_zins.jpg",
+      "license": "CC BY-SA",
+      "author": "Open Food Facts contributors",
+      "notes": "7 Deadly Zins Lodi Old Vine Zinfandel — brand, varietal and vintage all print clearly.",
+      "ground_truth": {
+        "brand_name": "7 Deadly Zins",
+        "class_type": "Zinfandel",
+        "vintage": "2017"
+      },
+      "expect": {
+        "quality": "ok",
+        "brand_status": [
+          "match",
+          "soft_warning"
+        ],
+        "abv_reads": false
+      }
+    },
+    {
+      "id": "smirnoff_vodka",
+      "category": "spirit",
+      "commons_file": "Smirnoff Vodka bottle front.jpg",
+      "image": "images/smirnoff_vodka.jpg",
+      "license": "CC BY-SA 4.0",
+      "author": "Alex P. Kok",
+      "notes": "Smirnoff vodka front label; net contents 'ONE LITER' reads.",
+      "ground_truth": {
+        "brand_name": "Smirnoff",
+        "class_type": "Vodka"
+      },
+      "expect": {
+        "quality": "ok",
+        "brand_status": [
+          "match",
+          "soft_warning"
+        ],
+        "abv_reads": false
+      }
+    },
+    {
+      "id": "crown_royal",
+      "category": "spirit",
+      "commons_file": "Crown Royal Cask No. 16 whiskey.jpg",
+      "image": "images/crown_royal.jpg",
+      "license": "CC BY 2.0",
+      "author": "Flickr user @joefoodie",
+      "notes": "Crown Royal — ornate gold-on-purple script; OCR garbles it, so it flags low/retake.",
+      "ground_truth": {
+        "brand_name": "Crown Royal"
+      },
+      "expect": {
+        "quality": "low",
+        "brand_status": null,
+        "abv_reads": false
+      }
+    },
+    {
+      "id": "yellowtail_wine",
+      "category": "wine",
+      "commons_file": "Yellowtail.jpg",
+      "image": "images/yellowtail_wine.jpg",
+      "license": "CC BY-SA 3.0",
+      "author": "Byung do jung",
+      "notes": "[yellow tail] Shiraz — the all-lowercase stylised logo is hard; the brand is recovered fuzzily.",
+      "ground_truth": {
+        "brand_name": "yellow tail",
+        "class_type": "Shiraz"
+      },
+      "expect": {
+        "quality": "ok",
+        "brand_status": [
+          "match",
+          "soft_warning"
+        ],
         "abv_reads": false
       }
     }

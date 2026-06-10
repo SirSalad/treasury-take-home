@@ -194,23 +194,25 @@ clean, head-on **label artwork**. That representative correctness is measured by
 the **synthetic golden corpus** (`tests/corpus`, run by the unit suite) — clean,
 generated labels that mirror a COLA submission.
 
-This separate **eval** is the opposite on purpose: real, messy **consumer/field
-bottle photos** — Jack Daniel's, US beer/wine/spirits, wildly colorful RTDs (Four
-Loko, BuzzBallz), bad shots — that would *not* be filed with the TTB. It is a
-**robustness / graceful-degradation** check (not a COLA-accuracy number): it
-confirms that on out-of-distribution inputs the pipeline still fuzzy-matches
-brands, reads regulated fields where legible, and flags unreadable photos for
-retake rather than producing a confident wrong verdict.
+This separate **eval** is the opposite on purpose: ~18 real **photos of real
+labels** spanning clean front-of-label shots (Jack Daniel's, Jameson, Smirnoff,
+Corona, Gallo, 7 Deadly Zins, Tito's, Sam Adams…) through wildly colorful RTDs
+(Four Loko, BuzzBallz) to deliberately bad captures (a tilted Maker's Mark, a far
+shelf) — none of which would be filed with the TTB. It is a **robustness /
+graceful-degradation** check (not a COLA-accuracy number): it confirms that on
+out-of-distribution inputs the pipeline still fuzzy-matches brands, reads
+regulated fields where legible, and flags unreadable photos for retake rather than
+producing a confident wrong verdict.
 
 ```bash
-cd backend && pytest -m eval -s        # slow (real OCR over ~11 images); runs offline
+cd backend && pytest -m eval -s        # slow (real OCR over ~18 labels); runs offline
 ```
 
 Cases live in `tests/eval/manifest.json` (ground truth + expected quality/verdict).
 The photos are committed under `tests/eval/images/` so it runs offline and
-deterministically — see `tests/eval/images/ATTRIBUTION.md` for each image's
-Wikimedia Commons source and licence (`commons_file` is only used to re-fetch if a
-local image is missing). The eval is deselected from the default suite and CI. It
+deterministically — see `tests/eval/images/ATTRIBUTION.md` for each image's source
+and licence (`commons_file` is only used to re-fetch if a local image is missing).
+The eval is deselected from the default suite and CI. It
 prints a per-case scorecard, e.g.:
 
 ```
