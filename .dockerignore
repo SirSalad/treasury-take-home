@@ -1,0 +1,38 @@
+# Keep Docker build contexts (repo root) small and reproducible. Dependencies
+# and build artifacts are reinstalled/rebuilt inside the images.
+
+# ---- Python ----
+**/__pycache__/
+**/*.py[cod]
+**/*.egg-info/
+**/.venv/
+**/venv/
+**/.pytest_cache/
+**/.ruff_cache/
+**/.mypy_cache/
+.coverage
+
+# ---- Node / frontend ----
+**/node_modules/
+frontend/dist/
+frontend/.vite/
+**/*.tsbuildinfo
+
+# ---- Env / secrets ----
+**/.env
+**/.env.*
+!**/.env.example
+
+# ---- VCS / tooling / runtime ----
+.git/
+.gitignore
+.beads/
+.claude/
+.runtime/
+.pre-commit-config.yaml
+docs/
+**/*.log
+.DS_Store
+
+# ---- Docker (not needed inside the build context) ----
+docker/docker-compose.yml

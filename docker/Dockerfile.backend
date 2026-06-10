@@ -1,0 +1,36 @@
+# Backend image: FastAPI + RapidOCR (ONNXRuntime), served by uvicorn.
+#
+# The OCR models are vendored in the package (app/ocr/models) and shipped via
+# setuptools package-data, so the image is fully self-contained — no model
+# download at runtime (the agency firewall blocks outbound ML endpoints).
+# Build context is the repository root (see docker/docker-compose.yml).
+
+FROM python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1
+
+# opencv-python (pulled in transitively by rapidocr-onnxruntime) needs libGL
+# and glib shared libraries at runtime; they are not in the slim base image.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgl1 libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install the package (and its deps). Copying the project metadata + sources
+# together keeps the build simple; the models ride along as package-data.
+COPY backend/pyproject.toml backend/README.md ./
+COPY backend/app ./app
+COPY backend/alembic ./alembic
+COPY backend/alembic.ini ./
+RUN pip install .
+
+COPY docker/backend-entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+EXPOSE 8000
+
+# Entrypoint runs DB migrations, then starts the API (which warms OCR at boot).
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

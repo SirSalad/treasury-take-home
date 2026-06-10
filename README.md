@@ -66,9 +66,28 @@ pnpm install      # or: npm install
 docker compose -f docker/docker-compose.yml up --build
 ```
 
-This will bring up Postgres, the API, and the frontend with a passing health
-check. _(Compose lands with the Docker issue; until then, run the two services
-manually below.)_
+This brings up three services and waits for each to become healthy:
+
+| Service    | Image / build              | URL                    | Notes |
+| ---------- | -------------------------- | ---------------------- | ----- |
+| `frontend` | nginx serving the SPA      | http://localhost:8080  | Proxies `/api/*` to the backend |
+| `backend`  | FastAPI + RapidOCR         | http://localhost:8000  | `/health` probe; OCR model baked in |
+| `db`       | `postgres:16-alpine`       | `localhost:5432`       | Volume `pgdata`; db `labelverify` |
+
+Open **http://localhost:8080** to use the app. The frontend talks to the API
+same-origin through nginx, so there are no CORS or outbound calls. On boot the
+backend applies Alembic migrations and warms the OCR model (hence the ~40s
+`start_period` on its health check); the frontend waits for the backend to be
+healthy before it starts.
+
+Useful variants:
+
+```bash
+docker compose -f docker/docker-compose.yml up --build -d   # detached
+docker compose -f docker/docker-compose.yml logs -f backend # follow API logs
+docker compose -f docker/docker-compose.yml down            # stop
+docker compose -f docker/docker-compose.yml down -v         # stop + drop the DB volume
+```
 
 ### Backend (dev)
 

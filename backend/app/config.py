@@ -5,9 +5,10 @@ Settings are read from the environment (and an optional ``.env`` file). See
 """
 
 from functools import lru_cache
+from typing import Annotated
 
 from pydantic import field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -23,7 +24,11 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/labelverify"
 
     # Comma-separated list of origins allowed to call the API (CORS).
-    cors_origins: list[str] = ["http://localhost:5173"]
+    # NoDecode: pydantic-settings otherwise JSON-decodes list fields from the
+    # environment before validators run, which would reject the documented
+    # comma-separated form (e.g. CORS_ORIGINS=http://a,http://b). With NoDecode
+    # the raw string reaches `_split_origins` below.
+    cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:5173"]
 
     # Warm the OCR model at startup so the first request isn't slow. Disable in
     # tests or fast-iteration runs where the startup cost isn't worth paying.
