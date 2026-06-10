@@ -29,6 +29,11 @@ MAX_LOW_CONFIDENCE_FRACTION = 0.15
 # Fewer detected text regions than this on a label suggests detection largely
 # failed (heavy blur / glare).
 MIN_TEXT_REGIONS = 3
+# A real alcohol label carries plenty of text (brand, class, ABV, net contents,
+# bottler, warning). Recognising fewer than this many characters total means OCR
+# mostly failed — typically a bad photo (tilted/foreshortened/in shadow). Tuned
+# from a real-label sample: a failed read returned ~10 chars; clean reads 50+.
+MIN_TOTAL_CHARS = 25
 
 RETAKE_MESSAGE = (
     "Some of the label was hard to read. For the most reliable check, retake the "
@@ -73,6 +78,7 @@ def assess_image_quality(ocr: OcrResult) -> ImageQuality:
         weighted_confidence < LOW_MEAN_CONFIDENCE
         or garbled_fraction > MAX_LOW_CONFIDENCE_FRACTION
         or len(lines) < MIN_TEXT_REGIONS
+        or total_chars < MIN_TOTAL_CHARS
     )
     return ImageQuality(
         level="low" if poor else "ok",

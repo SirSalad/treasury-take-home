@@ -43,3 +43,13 @@ def test_garbled_low_confidence_read_is_low() -> None:
     q = assess_image_quality(ocr)
     assert q.level == "low"
     assert q.message and "retake" in q.message.lower()
+
+
+def test_very_little_text_is_low() -> None:
+    # A tilted/foreshortened bad photo where OCR recovers only a few characters,
+    # even at decent confidence, should prompt a retake (real Maker's Mark case).
+    ocr = OcrResult(
+        lines=[_line("Make", 0.94), _line("K", 0.85), _line("WHIIS", 0.80)], elapsed_ms=0.0
+    )
+    q = assess_image_quality(ocr)
+    assert q.level == "low"
