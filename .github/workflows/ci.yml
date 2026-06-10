@@ -28,7 +28,9 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # pnpm 11.2.2 requires Node >= 22.13 (uses node:sqlite). Match the
+          # node:22-slim base in docker/Dockerfile.frontend.
+          node-version: 22
 
       - name: Enable pnpm via corepack (pinned 11.2.2)
         # Mirrors docker/Dockerfile.frontend exactly. pnpm 11.2.2 reads the
