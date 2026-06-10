@@ -298,6 +298,183 @@ CASES: list[CorpusCase] = [
             rationale="The mandatory government health warning is absent.",
         ),
     ),
+    # ---- Edge: malt beverage, anchor-before ABV + US net contents (clean pass) ----
+    CorpusCase(
+        id="craft_ipa_us_beer_pass",
+        title="HOPWORKS BREWING IPA — clean malt-beverage pass",
+        description=(
+            "A craft beer whose ABV is printed in the anchor-before 'ALC. 5.5% BY "
+            "VOL' form with a US-style 'PT/FL OZ' net contents — surface forms the "
+            "distilled-spirits examples don't exercise. Everything matches."
+        ),
+        image="images/craft_ipa_us_beer_pass.png",
+        application={
+            "serial_number": "24-101",
+            "source": "domestic",
+            "product_type": "malt_beverage",
+            "brand_name": "Hopworks Brewing",
+            "class_type": "India Pale Ale",
+            "alcohol_content_pct": 5.5,
+            "alcohol_content_text": "ALC. 5.5% BY VOL",
+            "net_contents": "1 PT 9.4 FL OZ",
+            "name_and_address": "Brewed and bottled by Hopworks Brewing Co., Portland, OR",
+        },
+        label={
+            "brand_name": "Hopworks Brewing",
+            "class_type": "India Pale Ale",
+            "alcohol_content_text": "ALC. 5.5% BY VOL",
+            "net_contents": "1 PT 9.4 FL OZ",
+            "name_and_address": "Brewed and bottled by Hopworks Brewing Co., Portland, OR",
+            "government_warning": GOVERNMENT_WARNING_TEXT,
+        },
+        golden=Golden(
+            overall=OverallVerdict.PASS,
+            fields={
+                "brand_name": FieldVerdict.MATCH,
+                "class_type": FieldVerdict.MATCH,
+                "alcohol_content": FieldVerdict.MATCH,
+                "net_contents": FieldVerdict.MATCH,
+                "name_and_address": FieldVerdict.MATCH,
+            },
+            government_warning=WarningVerdict.COMPLIANT,
+            rationale="All fields match across alternate ABV/net-contents surface forms.",
+        ),
+    ),
+    # ---- Edge: class printed in all caps vs title-case application (soft warning) ----
+    CorpusCase(
+        id="class_all_caps_soft_warning",
+        title="HARBOR MIST — all-caps class, otherwise clean",
+        description=(
+            "The class/type is printed in all caps ('CABERNET SAUVIGNON') while the "
+            "application files it title-case — a cosmetic difference that should be "
+            "a soft warning (review), not a mismatch, mirroring the brand-case rule."
+        ),
+        image="images/class_all_caps_soft_warning.png",
+        application={
+            "serial_number": "24-104",
+            "source": "domestic",
+            "product_type": "wine",
+            "brand_name": "Harbor Mist",
+            "class_type": "Cabernet Sauvignon",
+            "alcohol_content_pct": 14.0,
+            "alcohol_content_text": "14% Alc./Vol.",
+            "net_contents": "750 mL",
+            "vintage": "2019",
+            "name_and_address": "Produced and bottled by Harbor Mist Cellars, Napa, CA",
+        },
+        label={
+            "brand_name": "Harbor Mist",
+            "class_type": "CABERNET SAUVIGNON",
+            "alcohol_content_text": "14% Alc./Vol.",
+            "net_contents": "750 mL",
+            "vintage": "2019",
+            "name_and_address": "Produced and bottled by Harbor Mist Cellars, Napa, CA",
+            "government_warning": GOVERNMENT_WARNING_TEXT,
+        },
+        golden=Golden(
+            overall=OverallVerdict.WARNING,
+            fields={
+                "brand_name": FieldVerdict.MATCH,
+                "class_type": FieldVerdict.SOFT_WARNING,
+                "alcohol_content": FieldVerdict.MATCH,
+                "net_contents": FieldVerdict.MATCH,
+                "vintage": FieldVerdict.MATCH,
+                "name_and_address": FieldVerdict.MATCH,
+            },
+            government_warning=WarningVerdict.COMPLIANT,
+            rationale="Class differs only in casing — a soft warning, not a mismatch.",
+        ),
+    ),
+    # ---- Edge: government warning with a dropped clause (altered/fail) ----
+    CorpusCase(
+        id="reworded_warning_dropped_clause",
+        title="CEDAR HOLLOW — warning missing the (2) clause",
+        description=(
+            "All product fields match, but the printed government warning drops the "
+            "entire '(2) Consumption…' sentence — a wording alteration (not just "
+            "casing) the engine must flag as altered."
+        ),
+        image="images/reworded_warning_dropped_clause.png",
+        application={
+            "serial_number": "24-105",
+            "source": "domestic",
+            "product_type": "distilled_spirits",
+            "brand_name": "Cedar Hollow",
+            "class_type": "Straight Bourbon Whiskey",
+            "alcohol_content_pct": 45.0,
+            "alcohol_content_text": "45% Alc./Vol.",
+            "net_contents": "750 mL",
+            "name_and_address": "Distilled by Cedar Hollow Distillery, Loretto, KY",
+        },
+        label={
+            "brand_name": "Cedar Hollow",
+            "class_type": "Straight Bourbon Whiskey",
+            "alcohol_content_text": "45% Alc./Vol.",
+            "net_contents": "750 mL",
+            "name_and_address": "Distilled by Cedar Hollow Distillery, Loretto, KY",
+            "government_warning": (
+                "GOVERNMENT WARNING: (1) According to the Surgeon General, women "
+                "should not drink alcoholic beverages during pregnancy because of "
+                "the risk of birth defects."
+            ),
+        },
+        golden=Golden(
+            overall=OverallVerdict.FAIL,
+            fields={
+                "brand_name": FieldVerdict.MATCH,
+                "class_type": FieldVerdict.MATCH,
+                "alcohol_content": FieldVerdict.MATCH,
+                "net_contents": FieldVerdict.MATCH,
+                "name_and_address": FieldVerdict.MATCH,
+            },
+            government_warning=WarningVerdict.ALTERED,
+            rationale="The warning omits the mandatory (2) consumption clause.",
+        ),
+    ),
+    # ---- Edge: wine vintage mismatch (hard fail) ----
+    CorpusCase(
+        id="vintage_mismatch_wine",
+        title="LAUREL CREEK — 2021 filed, 2020 printed",
+        description=(
+            "A wine whose declared vintage (2021) does not match the printed vintage "
+            "(2020). Everything else matches; the vintage discrepancy is a fail."
+        ),
+        image="images/vintage_mismatch_wine.png",
+        application={
+            "serial_number": "24-106",
+            "source": "domestic",
+            "product_type": "wine",
+            "brand_name": "Laurel Creek",
+            "class_type": "Pinot Noir",
+            "alcohol_content_pct": 13.5,
+            "alcohol_content_text": "13.5% Alc./Vol.",
+            "net_contents": "750 mL",
+            "vintage": "2021",
+            "name_and_address": "Produced and bottled by Laurel Creek Winery, Salem, OR",
+        },
+        label={
+            "brand_name": "Laurel Creek",
+            "class_type": "Pinot Noir",
+            "alcohol_content_text": "13.5% Alc./Vol.",
+            "net_contents": "750 mL",
+            "vintage": "2020",
+            "name_and_address": "Produced and bottled by Laurel Creek Winery, Salem, OR",
+            "government_warning": GOVERNMENT_WARNING_TEXT,
+        },
+        golden=Golden(
+            overall=OverallVerdict.FAIL,
+            fields={
+                "brand_name": FieldVerdict.MATCH,
+                "class_type": FieldVerdict.MATCH,
+                "alcohol_content": FieldVerdict.MATCH,
+                "net_contents": FieldVerdict.MATCH,
+                "vintage": FieldVerdict.MISMATCH,
+                "name_and_address": FieldVerdict.MATCH,
+            },
+            government_warning=WarningVerdict.COMPLIANT,
+            rationale="Declared vintage 2021 does not match printed 2020.",
+        ),
+    ),
 ]
 
 

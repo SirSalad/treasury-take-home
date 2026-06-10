@@ -12,9 +12,12 @@ Comparison strategies
   looked for *somewhere* in the OCR text and graded into match / soft-warning /
   mismatch (see :mod:`app.match`). Case-only differences become soft warnings.
 * **Other free-text** (``net_contents``, ``name_and_address``,
-  ``country_of_origin``, ``vintage``) — the same fuzzy presence grader. On the
-  label these are printed verbatim, so presence-matching the application value
-  against the OCR text is both simple and robust to OCR noise.
+  ``country_of_origin``) — the same fuzzy presence grader. On the label these are
+  printed verbatim, so presence-matching the application value against the OCR
+  text is both simple and robust to OCR noise.
+* **Exact** (``vintage``) — a 4-digit year is matched verbatim: ``2020`` vs
+  ``2021`` is a different vintage, not OCR noise, so a year that is not present on
+  the label is a hard mismatch rather than a ~0.75-similarity soft warning.
 * **Numeric** (``alcohol_content``) — ABV is compared *numerically* via the
   deterministic extractor, because a fuzzy string compare cannot tell "45%" from
   "40%" (a one-character, high-similarity difference that is nonetheless the most
@@ -178,7 +181,7 @@ def verify_label(expected: ExpectedFields, ocr_result: OcrResult) -> Verificatio
         fields.append(_verify_presence("country_of_origin", expected.country_of_origin, ocr_result))
 
     if expected.vintage:
-        fields.append(_verify_presence("vintage", expected.vintage, ocr_result))
+        fields.append(_verify_vintage(expected.vintage, ocr_result))
 
     # Route likely OCR misreads (low recognition confidence) to review instead of
     # rejecting them outright — graceful degradation for hard-to-read label fonts.
@@ -259,6 +262,47 @@ def _verify_presence(field: str, expected: str, ocr: OcrResult) -> FieldResult:
         span=span,
         box=box,
         reason=presence.reason,
+    )
+
+
+def _verify_vintage(expected: str, ocr: OcrResult) -> FieldResult:
+    """Verify the vintage by *exact* year, not fuzzy presence.
+
+    A vintage is a 4-digit year: ``2020`` vs ``2021`` is a different vintage, not
+    OCR noise, so it must be a hard mismatch rather than the ~0.75-similarity soft
+    warning a fuzzy string compare would give. The expected year matches only if
+    it appears verbatim on the label; otherwise the field mismatches (surfacing
+    whatever year, if any, the label does print).
+    """
+    want = (expected or "").strip()
+    # Digit boundaries (not \b): OCR often fuses the year to adjacent text
+    # ("Vintage2021"), where \b would fail since a letter→digit junction is not a
+    # word boundary. (?<!\d)…(?!\d) still rejects a partial number (e.g. "20215").
+    if want and re.search(rf"(?<!\d){re.escape(want)}(?!\d)", ocr.full_text):
+        span, box = _locate(ocr, want)
+        return FieldResult(
+            field="vintage",
+            status=FieldStatus.MATCH,
+            expected=expected,
+            found=want,
+            score=1.0,
+            span=span,
+            box=box,
+            reason="exact vintage match",
+        )
+    printed = re.search(r"(?<!\d)(?:19|20)\d{2}(?!\d)", ocr.full_text)
+    found = printed.group(0) if printed else None
+    span, box = _locate(ocr, found) if found else (None, None)
+    reason = f"vintage {want} not found on the label" + (f" (label shows {found})" if found else "")
+    return FieldResult(
+        field="vintage",
+        status=FieldStatus.MISMATCH,
+        expected=expected,
+        found=found,
+        score=0.0,
+        span=span,
+        box=box,
+        reason=reason,
     )
 
 

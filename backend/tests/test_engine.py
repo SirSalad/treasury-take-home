@@ -121,3 +121,23 @@ def test_high_confidence_mismatch_is_still_rejected() -> None:
     result = verify_label(app, _brand_only_ocr("JIM BEAM", confidence=0.99))
     brand = next(f for f in result.fields if f.field == "brand_name")
     assert brand.status is FieldStatus.MISMATCH
+
+
+def test_vintage_exact_year_matches() -> None:
+    """The declared vintage present verbatim on the label is a clean match."""
+    from app.verify.engine import _verify_vintage
+
+    ocr = OcrResult(lines=[_line("Laurel Creek", 0.0), _line("Vintage 2021", 24.0)], elapsed_ms=0.0)
+    result = _verify_vintage("2021", ocr)
+    assert result.status is FieldStatus.MATCH
+
+
+def test_vintage_wrong_year_is_hard_mismatch() -> None:
+    """A different printed year is a mismatch (not a fuzzy soft warning), and the
+    label's actual year is surfaced for the reviewer."""
+    from app.verify.engine import _verify_vintage
+
+    ocr = OcrResult(lines=[_line("Laurel Creek", 0.0), _line("Vintage 2020", 24.0)], elapsed_ms=0.0)
+    result = _verify_vintage("2021", ocr)
+    assert result.status is FieldStatus.MISMATCH
+    assert result.found == "2020"
