@@ -57,3 +57,6 @@ known-first-party = ["app"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+markers = [
+    "perf: real-OCR latency benchmark against the 5s budget (slow; runs in CI). Deselect with -m 'not perf'.",
+]

@@ -63,6 +63,22 @@ Two deliberate constraints:
 The OCR tests run the real models against `tests/fixtures/sample_label.png`
 (regenerate with `python tests/fixtures/generate_sample_label.py`).
 
+## Performance (the 5s budget)
+
+A `< 5s` per-label result is a hard product constraint. `tests/perf/` benchmarks
+the full **preprocess → OCR → extract** path over the corpus and gates p95
+against the budget; today's headroom is ~30–50% on a CPU host. See
+[`docs/perf.md`](../docs/perf.md) for methodology and tuning levers.
+
+```bash
+python -m tests.perf.report          # p50/p95 report (CLI)
+pytest -m perf                       # the SLA gate (runs in the full suite too)
+pytest -m "not perf"                 # skip it for fast iteration
+```
+
+Knobs: `OCR_MAX_SIDE` (upload resolution cap, default 1600), `OCR_REC_BATCH_NUM`
+(default 8), and `PERF_BUDGET_MS` / `PERF_REPEATS` for the gate.
+
 ## Lint & test
 
 ```bash

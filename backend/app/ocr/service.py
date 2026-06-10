@@ -24,6 +24,8 @@ from pathlib import Path
 import numpy as np
 from rapidocr_onnxruntime import RapidOCR
 
+from app.config import get_settings
+from app.ocr.preprocess import preprocess_image
 from app.ocr.schemas import BoundingBox, OcrResult, TextLine
 
 logger = logging.getLogger(__name__)
@@ -47,32 +49,49 @@ class OcrService:
     :func:`get_ocr_service`.
     """
 
-    def __init__(self, *, use_cls: bool = True) -> None:
+    def __init__(
+        self,
+        *,
+        use_cls: bool = True,
+        max_side: int | None = None,
+        rec_batch_num: int | None = None,
+    ) -> None:
         for model in (DET_MODEL, REC_MODEL, CLS_MODEL):
             if not model.exists():
                 raise FileNotFoundError(
                     f"OCR model missing: {model}. Models must be vendored locally "
                     "(no runtime download is permitted)."
                 )
+        settings = get_settings()
+        self._max_side = settings.ocr_max_side if max_side is None else max_side
+        rec_batch = settings.ocr_rec_batch_num if rec_batch_num is None else rec_batch_num
         # use_cls enables the angle classifier so text photographed upside-down
         # or sideways is still read — labels are often shot at odd angles.
+        #
+        # det_limit_type="max" bounds the detector's working resolution by the
+        # *longest* side (the default "min" pads the shortest side up to 736,
+        # needlessly upscaling small labels). Paired with the preprocess cap this
+        # keeps OCR cost — and latency — bounded; see the 5s budget harness.
         self._engine = RapidOCR(
             det_model_path=str(DET_MODEL),
             rec_model_path=str(REC_MODEL),
             cls_model_path=str(CLS_MODEL),
             use_cls=use_cls,
+            det_limit_type="max",
+            det_limit_side_len=float(self._max_side),
+            rec_batch_num=rec_batch,
         )
 
     def extract(self, image: ImageInput) -> OcrResult:
         """Run OCR on ``image`` and return recognised lines with boxes.
 
-        ``image`` may be a path, raw encoded bytes, or a decoded ndarray.
+        ``image`` may be a path, raw encoded bytes, or a decoded ndarray. It is
+        run through :func:`app.ocr.preprocess.preprocess_image` first (decode +
+        resolution cap) so the timed path matches production's
+        *preprocess → OCR → extract* pipeline.
         """
-        # RapidOCR's loader does not accept a Path; normalise to str.
-        payload: str | bytes | np.ndarray
-        payload = str(image) if isinstance(image, Path) else image
-
         start = time.perf_counter()
+        payload = preprocess_image(image, max_side=self._max_side)
         raw, _ = self._engine(payload)
         elapsed_ms = (time.perf_counter() - start) * 1000.0
 

@@ -34,6 +34,16 @@ class Settings(BaseSettings):
     # tests or fast-iteration runs where the startup cost isn't worth paying.
     ocr_warmup: bool = True
 
+    # Longest-side cap (px) applied to uploads before OCR. Bounds worst-case
+    # latency on large phone photos without touching already-small labels; see
+    # app.ocr.preprocess. Default leaves the ~900px corpus untouched.
+    ocr_max_side: int = 1600
+
+    # Recognition batch size. Multi-line labels (the corpus tops out at ~13
+    # lines) recognise faster when their text crops are batched through the
+    # recogniser together rather than in the RapidOCR default groups of 6.
+    ocr_rec_batch_num: int = 8
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _split_origins(cls, value: object) -> object:
