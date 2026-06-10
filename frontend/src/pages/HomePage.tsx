@@ -27,7 +27,7 @@ export function HomePage() {
         </p>
         <div className="flex flex-wrap items-center gap-3">
           <Button asChild size="lg">
-            <Link to="/">
+            <Link to="/verify">
               Start a verification
               <ArrowRight />
             </Link>
