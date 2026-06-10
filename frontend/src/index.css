@@ -1,0 +1,74 @@
+/* Public Sans — USWDS's typeface, self-hosted via @fontsource so the app
+   never reaches out to a font CDN (the agency firewall blocks outbound). */
+@import "@fontsource/public-sans/400.css";
+@import "@fontsource/public-sans/600.css";
+@import "@fontsource/public-sans/700.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * Design tokens.
+ *
+ * HSL channels (so Tailwind can apply opacity) mapped from the USWDS color
+ * system. The federal palette is centered on USWDS "primary" blue (#005ea2)
+ * with a neutral gray surface, and the verification-status trio — match
+ * (green #00a91c), warning (gold #ffbe2e), mismatch (red #d83933) — is the
+ * heart of the comparison UI.
+ */
+@layer base {
+  :root {
+    /* Surfaces & text */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 11%; /* USWDS ink #1b1b1b */
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 11%;
+
+    /* Brand */
+    --primary: 205 100% 32%; /* USWDS primary blue #005ea2 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 94%; /* USWDS gray-5 #f0f0f0 */
+    --secondary-foreground: 0 0% 11%;
+
+    /* Neutrals */
+    --muted: 0 0% 94%;
+    --muted-foreground: 0 0% 36%; /* USWDS gray-60 #5c5c5c */
+    --accent: 204 60% 92%; /* light blue tint */
+    --accent-foreground: 211 61% 30%; /* USWDS primary-darker #1a4480 */
+
+    /* Status / form */
+    --destructive: 2 68% 52%; /* USWDS red #d83933 */
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 80%; /* USWDS gray-30 #adadad-ish */
+    --input: 0 0% 64%; /* USWDS gray-40 for form outlines */
+    --ring: 205 100% 32%;
+
+    /* Verification-status tokens (match / warning / mismatch) */
+    --match: 130 100% 33%; /* USWDS green-cool #00a91c */
+    --match-foreground: 0 0% 100%;
+    --match-muted: 130 55% 94%;
+
+    --warning: 41 100% 59%; /* USWDS gold #ffbe2e */
+    --warning-foreground: 0 0% 11%;
+    --warning-muted: 41 100% 94%;
+
+    --mismatch: 2 68% 52%; /* USWDS red #d83933 */
+    --mismatch-foreground: 0 0% 100%;
+    --mismatch-muted: 2 80% 96%;
+
+    --radius: 0.25rem; /* USWDS uses tight, squared corners */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
