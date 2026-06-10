@@ -12,8 +12,10 @@ For each case it asserts the *stable, reproducible* outcomes:
   * that a readable brand verifies as match/soft-warning (not a false mismatch),
   * that the ABV is recovered where the label prints it legibly.
 
-Images are cached under ``tests/eval/.cache`` (gitignored); a case whose image
-can't be fetched is reported as SKIPPED rather than failing the run.
+Each case's image is committed under ``tests/eval/images/`` (see
+``images/ATTRIBUTION.md`` for source + licence), so the eval runs offline; the
+``commons_file`` is only refetched (and cached under ``.cache``) if the committed
+image is missing. A case whose image is unavailable is SKIPPED, not failed.
 """
 
 from __future__ import annotations
@@ -86,7 +88,9 @@ def test_ocr_real_world_eval(capsys: pytest.CaptureFixture[str]) -> None:
     scored = 0
 
     for case in cases:
-        path = _fetch(case["commons_file"])
+        # Committed image first (offline); fall back to Commons only if missing.
+        local = _HERE / case["image"]
+        path = local if local.exists() else _fetch(case["commons_file"])
         if path is None:
             skipped += 1
             rows.append(f"  SKIP  {case['id']:26} (image unavailable)")

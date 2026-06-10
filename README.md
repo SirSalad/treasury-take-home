@@ -195,13 +195,15 @@ colorful RTDs (Four Loko, BuzzBallz), and deliberately bad shots — to catch OC
 extraction / quality regressions when the engine or rules change:
 
 ```bash
-cd backend && pytest -m eval -s        # slow; fetches images from Wikimedia (cached)
+cd backend && pytest -m eval -s        # slow (real OCR over ~11 images); runs offline
 ```
 
-Cases live in `tests/eval/manifest.json` (image source + ground truth + expected
-quality/verdict). Images are fetched on demand and cached under
-`tests/eval/.cache` (not committed); the eval is deselected from the default suite
-and CI. It prints a per-case scorecard, e.g.:
+Cases live in `tests/eval/manifest.json` (ground truth + expected quality/verdict).
+The label photos are committed under `tests/eval/images/` so the eval runs offline
+and deterministically — see `tests/eval/images/ATTRIBUTION.md` for each image's
+Wikimedia Commons source and licence (the manifest's `commons_file` is only used to
+re-fetch if a local image is missing). The eval is deselected from the default
+suite and CI. It prints a per-case scorecard, e.g.:
 
 ```
 ok    jack_daniels_eu_spirit  [spirit]  q=ok  brand=soft_warning abv=match
