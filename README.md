@@ -187,23 +187,31 @@ cd frontend
 pnpm lint && pnpm format:check && pnpm typecheck && pnpm test
 ```
 
-### Real-world OCR eval
+### OCR robustness eval (out-of-distribution)
 
-The unit suite uses a clean, synthetic golden corpus. A separate **eval** measures
-the pipeline on *real* label photos — Jack Daniel's, US beer/wine/spirits, wildly
-colorful RTDs (Four Loko, BuzzBallz), and deliberately bad shots — to catch OCR /
-extraction / quality regressions when the engine or rules change:
+The product targets **pre-market COLA review**, whose input is the manufacturer's
+clean, head-on **label artwork**. That representative correctness is measured by
+the **synthetic golden corpus** (`tests/corpus`, run by the unit suite) — clean,
+generated labels that mirror a COLA submission.
+
+This separate **eval** is the opposite on purpose: real, messy **consumer/field
+bottle photos** — Jack Daniel's, US beer/wine/spirits, wildly colorful RTDs (Four
+Loko, BuzzBallz), bad shots — that would *not* be filed with the TTB. It is a
+**robustness / graceful-degradation** check (not a COLA-accuracy number): it
+confirms that on out-of-distribution inputs the pipeline still fuzzy-matches
+brands, reads regulated fields where legible, and flags unreadable photos for
+retake rather than producing a confident wrong verdict.
 
 ```bash
 cd backend && pytest -m eval -s        # slow (real OCR over ~11 images); runs offline
 ```
 
 Cases live in `tests/eval/manifest.json` (ground truth + expected quality/verdict).
-The label photos are committed under `tests/eval/images/` so the eval runs offline
-and deterministically — see `tests/eval/images/ATTRIBUTION.md` for each image's
-Wikimedia Commons source and licence (the manifest's `commons_file` is only used to
-re-fetch if a local image is missing). The eval is deselected from the default
-suite and CI. It prints a per-case scorecard, e.g.:
+The photos are committed under `tests/eval/images/` so it runs offline and
+deterministically — see `tests/eval/images/ATTRIBUTION.md` for each image's
+Wikimedia Commons source and licence (`commons_file` is only used to re-fetch if a
+local image is missing). The eval is deselected from the default suite and CI. It
+prints a per-case scorecard, e.g.:
 
 ```
 ok    jack_daniels_eu_spirit  [spirit]  q=ok  brand=soft_warning abv=match

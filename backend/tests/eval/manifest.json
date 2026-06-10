@@ -1,5 +1,5 @@
 {
-  "_about": "Real-world OCR eval cases. Each `image` is committed under tests/eval/images/ (see images/ATTRIBUTION.md for source + licence); `commons_file` records the Wikimedia Commons source and is used only as a fallback if the local image is missing. `ground_truth` is the COLA application a human would file for the label; `expect` is the stable, reproducible outcome the pipeline should produce (quality grade, brand verdict bucket, whether the ABV is recoverable). See README 'OCR eval'.",
+  "_about": "OUT-OF-DISTRIBUTION OCR robustness cases — real consumer/field bottle photos, NOT representative COLA submissions. The product targets pre-market COLA review, whose input is the manufacturer's clean head-on label artwork; that representative correctness is covered by the synthetic golden corpus (tests/corpus). This set deliberately uses messy real photos to confirm graceful degradation. Each `image` is committed under tests/eval/images/ (see images/ATTRIBUTION.md for source + licence); `commons_file` is the Wikimedia source / re-fetch fallback. `ground_truth` is the COLA fields a human would file; `expect` is the stable outcome the pipeline should produce (quality grade, brand verdict bucket, whether the ABV is recoverable). See README 'OCR robustness eval'.",
   "cases": [
     {
       "id": "jack_daniels_eu_spirit",

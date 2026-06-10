@@ -1,11 +1,18 @@
-"""Real-world OCR eval: scores OCR + extraction + quality against a manifest of
-actual label photos (Jack Daniel's, US beer/wine/spirits, wildly-colorful RTDs,
-and deliberately-bad photos).
+"""Out-of-distribution OCR robustness eval over real bottle photos.
 
-Unlike the synthetic golden corpus (clean, generated labels), this measures the
-pipeline on messy real images — ornate fonts, curved cans, rainbow graphics,
-glare, bad angles. It is marked ``eval`` and deselected by default (it is slow
-and fetches images from Wikimedia Commons); run it with ``pytest -m eval``.
+SCOPE: the product target is *pre-market COLA review*, whose input is the
+bottler/importer's clean, head-on **label artwork** — exactly what the synthetic
+golden corpus (``tests/corpus``, exercised by the unit suite) models, and the
+representative measure of COLA correctness. This suite is deliberately the
+opposite: messy, real **consumer/field bottle photos** (Jack Daniel's, US
+beer/wine/spirits, wildly-colorful RTDs, and bad shots) that would *not* be filed
+with the TTB. It is a robustness / graceful-degradation check, not a COLA-accuracy
+measurement — it confirms the pipeline degrades sensibly on inputs outside its
+intended distribution (brands still fuzzy-match, regulated fields read where
+legible, and unreadable photos flag for retake rather than producing a confident
+wrong verdict).
+
+Marked ``eval`` and deselected by default; run it with ``pytest -m eval``.
 
 For each case it asserts the *stable, reproducible* outcomes:
   * the image-quality grade (ok vs. low/retake),
@@ -78,7 +85,7 @@ def _fetch(commons_file: str) -> Path | None:
     return None
 
 
-def test_ocr_real_world_eval(capsys: pytest.CaptureFixture[str]) -> None:
+def test_ocr_robustness_out_of_distribution(capsys: pytest.CaptureFixture[str]) -> None:
     cases = _load_cases()
     ocr = get_ocr_service()
 
