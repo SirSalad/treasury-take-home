@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     # Comma-separated list of origins allowed to call the API (CORS).
     cors_origins: list[str] = ["http://localhost:5173"]
 
+    # Warm the OCR model at startup so the first request isn't slow. Disable in
+    # tests or fast-iteration runs where the startup cost isn't worth paying.
+    ocr_warmup: bool = True
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _split_origins(cls, value: object) -> object:

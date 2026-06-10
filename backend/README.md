@@ -35,6 +35,34 @@ alembic check
 The driver is psycopg 3, so connection URLs use the `postgresql+psycopg://`
 scheme.
 
+## OCR
+
+Text extraction uses [RapidOCR](https://github.com/RapidAI/RapidOCR) on
+ONNXRuntime (PP-OCRv3 detection + recognition, plus an angle classifier). The
+service lives in `app/ocr/`:
+
+```python
+from app.ocr import get_ocr_service
+
+result = get_ocr_service().extract(image)   # path | bytes | numpy ndarray
+result.full_text          # all lines, top-to-bottom
+result.lines[0].text      # recognised text
+result.lines[0].box       # axis-aligned BoundingBox (+ .polygon for rotation)
+result.lines[0].confidence
+```
+
+Two deliberate constraints:
+
+- **Models are pinned locally** in `app/ocr/models/*.onnx` and loaded by explicit
+  path. The TTB network blocks outbound traffic, so nothing is downloaded at
+  runtime.
+- **The model is warmed at startup** (FastAPI lifespan) so the first real request
+  doesn't pay the multi-second session-init cost. Set `OCR_WARMUP=false` to skip
+  it during fast-iteration runs.
+
+The OCR tests run the real models against `tests/fixtures/sample_label.png`
+(regenerate with `python tests/fixtures/generate_sample_label.py`).
+
 ## Lint & test
 
 ```bash
@@ -55,6 +83,7 @@ backend/
 │   ├── main.py          # app factory + CORS + /health
 │   ├── config.py        # pydantic-settings Settings
 │   ├── db.py            # engine, session factory, declarative Base
+│   ├── ocr/             # RapidOCR service + schemas + vendored ONNX models
 │   └── models/          # ORM models
 │       ├── application.py   # COLA / TTB 5100.31 (1513-0020) expected fields
 │       ├── submission.py    # one label image: status, timing, result JSON

@@ -12,6 +12,11 @@ dependencies = [
     "sqlalchemy>=2.0",
     "alembic>=1.13",
     "psycopg[binary]>=3.1",
+    # OCR: RapidOCR on ONNXRuntime. Pulls numpy + opencv-python transitively;
+    # numpy is also imported directly, so it is pinned explicitly. Models are
+    # vendored in app/ocr/models (no runtime download).
+    "rapidocr-onnxruntime>=1.2,<2",
+    "numpy>=1.26",
 ]
 
 [project.optional-dependencies]
@@ -19,6 +24,8 @@ dev = [
     "pytest>=8.2",
     "httpx>=0.27",
     "ruff>=0.5",
+    # Used only to (re)generate the synthetic sample label fixture.
+    "pillow>=10",
 ]
 
 [build-system]
@@ -28,6 +35,10 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["app*"]
+
+[tool.setuptools.package-data]
+# Ship the vendored OCR models inside the package so installs are self-contained.
+"app.ocr" = ["models/*.onnx"]
 
 [tool.ruff]
 line-length = 100
