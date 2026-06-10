@@ -2,7 +2,6 @@ import { CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import {
-  OVERALL_VERDICT_COLOR,
   OVERALL_VERDICT_LABEL,
   type OverallVerdict,
   type VerdictSummary,
@@ -45,7 +44,6 @@ interface VerdictBannerProps {
  */
 export function VerdictBanner({ verdict, rationale, summary, className }: VerdictBannerProps) {
   const Icon = ICONS[verdict];
-  const color = OVERALL_VERDICT_COLOR[verdict];
 
   return (
     <div
@@ -71,11 +69,7 @@ export function VerdictBanner({ verdict, rationale, summary, className }: Verdic
       {summary && (
         <dl className="flex shrink-0 gap-4 sm:flex-col sm:gap-1 sm:text-right">
           <SummaryCount label="Matched" value={summary.match} className={ACCENT.pass} />
-          <SummaryCount
-            label="To review"
-            value={summary.soft_warning}
-            className={ACCENT.warning}
-          />
+          <SummaryCount label="To review" value={summary.soft_warning} className={ACCENT.warning} />
           <SummaryCount label="Mismatched" value={summary.mismatch} className={ACCENT.fail} />
         </dl>
       )}

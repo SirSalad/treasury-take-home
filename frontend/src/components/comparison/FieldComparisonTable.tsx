@@ -1,14 +1,22 @@
-import { MapPin } from "lucide-react";
+import { MapPin, MinusCircle } from "lucide-react";
 
 import { StatusBadge } from "@/components/StatusBadge";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { FIELD_STATUS_COLOR, fieldLabel, type FieldResult } from "@/lib/verification";
+import {
+  FIELD_STATUS_COLOR,
+  FIELD_STATUS_LABEL,
+  fieldLabel,
+  type FieldResult,
+} from "@/lib/verification";
 
 // Left accent bar color per status, so each row's verdict reads down the edge.
+// `not_checked` gets a neutral edge — it had nothing to compare against.
 const ACCENT: Record<string, string> = {
   match: "border-l-match",
   warning: "border-l-warning",
   mismatch: "border-l-mismatch",
+  not_checked: "border-l-border",
 };
 
 interface FieldComparisonTableProps {
@@ -26,11 +34,7 @@ interface FieldComparisonTableProps {
  * the link). Built as a description-list-like grid so the two value columns
  * stay aligned and the structure is announced to screen readers.
  */
-export function FieldComparisonTable({
-  fields,
-  activeField,
-  onSelect,
-}: FieldComparisonTableProps) {
+export function FieldComparisonTable({ fields, activeField, onSelect }: FieldComparisonTableProps) {
   return (
     <div className="overflow-hidden rounded-lg border">
       <div className="grid grid-cols-[1fr_1fr] gap-px bg-border text-sm">
@@ -43,6 +47,7 @@ export function FieldComparisonTable({
       </div>
       <ul className="divide-y">
         {fields.map((field) => {
+          const notChecked = field.status === "not_checked";
           const color = FIELD_STATUS_COLOR[field.status];
           const isActive = field.field === activeField;
           const locatable = Boolean(field.box);
@@ -52,7 +57,7 @@ export function FieldComparisonTable({
             <div
               className={cn(
                 "grid grid-cols-[1fr_1fr] gap-x-4 border-l-4 px-4 py-3 text-left",
-                ACCENT[color],
+                ACCENT[field.status],
                 isActive && "bg-accent/40",
               )}
             >
@@ -66,20 +71,24 @@ export function FieldComparisonTable({
               </div>
               <div className="min-w-0 space-y-1">
                 <div className="flex items-center gap-2">
-                  <StatusBadge status={color} />
+                  {notChecked ? (
+                    <Badge variant="outline" className="gap-1 text-muted-foreground">
+                      <MinusCircle className="size-3.5" aria-hidden="true" />
+                      {FIELD_STATUS_LABEL.not_checked}
+                    </Badge>
+                  ) : (
+                    <StatusBadge status={color} />
+                  )}
                   {locatable && (
-                    <MapPin
-                      className="size-3.5 text-muted-foreground"
-                      aria-hidden="true"
-                    />
+                    <MapPin className="size-3.5 text-muted-foreground" aria-hidden="true" />
                   )}
                 </div>
                 <p className="break-words text-base text-foreground">
-                  {field.found ?? <span className="text-muted-foreground">Not found</span>}
+                  {field.found ?? (
+                    <span className="text-muted-foreground">{notChecked ? "—" : "Not found"}</span>
+                  )}
                 </p>
-                {field.reason && (
-                  <p className="text-xs text-muted-foreground">{field.reason}</p>
-                )}
+                {field.reason && <p className="text-xs text-muted-foreground">{field.reason}</p>}
               </div>
             </div>
           );
