@@ -13,8 +13,15 @@ def _line(text: str, confidence: float) -> TextLine:
 
 
 def test_clean_read_is_ok() -> None:
-    ocr = OcrResult(lines=[_line("OLD TOM DISTILLERY", 0.98), _line("Kentucky Bourbon", 0.97),
-                           _line("45% Alc./Vol.", 0.96), _line("750 mL", 0.99)], elapsed_ms=0.0)
+    ocr = OcrResult(
+        lines=[
+            _line("OLD TOM DISTILLERY", 0.98),
+            _line("Kentucky Bourbon", 0.97),
+            _line("45% Alc./Vol.", 0.96),
+            _line("750 mL", 0.99),
+        ],
+        elapsed_ms=0.0,
+    )
     q = assess_image_quality(ocr)
     assert q.level == "ok"
     assert q.message is None
@@ -29,8 +36,10 @@ def test_no_text_is_low_with_retake_prompt() -> None:
 
 def test_garbled_low_confidence_read_is_low() -> None:
     # A blurry photo where much of the recognised text is low-confidence.
-    ocr = OcrResult(lines=[_line("0LD T0M D1ST", 0.41), _line("Kentcky B0urbn", 0.38),
-                           _line("45% Alc", 0.95)], elapsed_ms=0.0)
+    ocr = OcrResult(
+        lines=[_line("0LD T0M D1ST", 0.41), _line("Kentcky B0urbn", 0.38), _line("45% Alc", 0.95)],
+        elapsed_ms=0.0,
+    )
     q = assess_image_quality(ocr)
     assert q.level == "low"
     assert q.message and "retake" in q.message.lower()

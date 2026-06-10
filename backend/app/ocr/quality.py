@@ -65,9 +65,7 @@ def assess_image_quality(ocr: OcrResult) -> ImageQuality:
         )
 
     total_chars = sum(len(line.text) for line in lines) or 1
-    weighted_confidence = (
-        sum(line.confidence * len(line.text) for line in lines) / total_chars
-    )
+    weighted_confidence = sum(line.confidence * len(line.text) for line in lines) / total_chars
     garbled_chars = sum(len(line.text) for line in lines if line.confidence < LOW_CONFIDENCE_CHAR)
     garbled_fraction = garbled_chars / total_chars
 
