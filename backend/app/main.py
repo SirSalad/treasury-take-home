@@ -13,6 +13,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
+from app.api import verify_router
 from app.config import get_settings
 from app.ocr import get_ocr_service
 
@@ -57,3 +58,6 @@ app.add_middleware(
 def health() -> dict[str, str]:
     """Liveness/readiness probe used by Docker Compose and the frontend."""
     return {"status": "ok", "version": __version__}
+
+
+app.include_router(verify_router)

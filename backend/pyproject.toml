@@ -6,6 +6,9 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.111",
+    # Required by FastAPI to parse multipart/form-data (the verify endpoint
+    # accepts a file upload alongside the application form fields).
+    "python-multipart>=0.0.9",
     "uvicorn[standard]>=0.30",
     "pydantic>=2.7",
     "pydantic-settings>=2.3",
@@ -59,4 +62,5 @@ testpaths = ["tests"]
 addopts = "-q"
 markers = [
     "perf: real-OCR latency benchmark against the 5s budget (slow; runs in CI). Deselect with -m 'not perf'.",
+    "e2e: real-OCR end-to-end check through the HTTP API (slow). Deselect with -m 'not e2e'.",
 ]

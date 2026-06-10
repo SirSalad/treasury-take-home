@@ -63,6 +63,45 @@ Two deliberate constraints:
 The OCR tests run the real models against `tests/fixtures/sample_label.png`
 (regenerate with `python tests/fixtures/generate_sample_label.py`).
 
+## Verification API
+
+`POST /api/verify` is the single-label endpoint. It accepts the label image plus
+the expected COLA fields as `multipart/form-data`, runs the full
+**preprocess → OCR → extract → verify** path, persists an `Application` + a
+`Submission` (with timing), and returns the verdict contract.
+
+```bash
+curl -sS http://localhost:8000/api/verify \
+  -F image=@label.png \
+  -F brand_name='OLD TOM DISTILLERY' \
+  -F source=domestic -F product_type=distilled_spirits \
+  -F class_type='Kentucky Straight Bourbon Whiskey' \
+  -F alcohol_content_pct=45 \
+  -F net_contents='750 mL' \
+  -F name_and_address='Bottled by Old Tom Distillery, Bardstown, KY'
+```
+
+Only `brand_name` is required; every other field is verified when supplied (so
+the result's per-field set mirrors the COLA filed). The response is a
+`VerificationResponse`: the `submission_id`, `timing` (`total_ms` / `ocr_ms`), and
+the `result` (`overall` PASS/WARNING/FAIL, per-field `FieldResult`s with
+highlight boxes, the Government Health Warning verdict, a summary, and a
+rationale — see `app/verify/schemas.py`).
+
+The engine (`app/verify/engine.py`) routes each field to the right strategy:
+fuzzy presence for free text (brand, class/type, net contents, address, country,
+vintage), **numeric** comparison for ABV (a string compare can't tell 45% from
+40%), and the dedicated near-exact path for the warning.
+
+Errors are clean, not 500s: an empty upload is `400`; an undecodable file or an
+image with no recognised text is `422` (and the latter is recorded as a `FAILED`
+submission for the audit trail).
+
+`tests/perf/test_verify_e2e.py` (marked `e2e`) drives the whole corpus through
+the HTTP endpoint with real OCR, asserting both the golden verdicts and the 5s
+budget; the fast `tests/test_api_verify.py` stubs OCR to cover wiring and
+validation.
+
 ## Performance (the 5s budget)
 
 A `< 5s` per-label result is a hard product constraint. `tests/perf/` benchmarks
@@ -99,7 +138,11 @@ backend/
 │   ├── main.py          # app factory + CORS + /health
 │   ├── config.py        # pydantic-settings Settings
 │   ├── db.py            # engine, session factory, declarative Base
+│   ├── api/             # HTTP layer: POST /api/verify router + request/response schemas
 │   ├── ocr/             # RapidOCR service + schemas + vendored ONNX models
+│   ├── extract/         # deterministic regex field extractors (ABV, net contents, …)
+│   ├── match/           # fuzzy free-text matching (brand / class-type)
+│   ├── verify/          # warning verifier + aggregation + end-to-end engine
 │   └── models/          # ORM models
 │       ├── application.py   # COLA / TTB 5100.31 (1513-0020) expected fields
 │       ├── submission.py    # one label image: status, timing, result JSON

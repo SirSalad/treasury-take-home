@@ -22,6 +22,7 @@ different value falls through to ``MISMATCH``.
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 from difflib import SequenceMatcher
 
 from app.match.schemas import FieldMatch, FuzzyFieldName, MatchStatus
@@ -56,11 +57,23 @@ def _fold_quotes(text: str) -> str:
 def _light_normalise(text: str) -> str:
     """Fold quotes and collapse whitespace, *preserving* case and punctuation.
 
-    Used to tell an exact hit from a cosmetic (case/punctuation-only) one: if the
-    aggressively-normalised forms match but these don't, the difference is purely
-    surface and the result is demoted to a soft warning.
+    Used by the windowing tie-break to prefer a window matching the expected
+    surface form.
     """
     return re.sub(r"\s+", " ", _fold_quotes(text)).strip()
+
+
+def _ignore_whitespace(text: str) -> str:
+    """Fold quotes and drop *all* whitespace, preserving case and punctuation.
+
+    Used to tell a clean hit from a cosmetic (case/punctuation-only) one. Dropping
+    every space — not merely collapsing runs — means an OCR word-merge
+    ("OLD TOM DISTILLERY" detected as "OLD TOMDISTILLERY") still reads as a match:
+    the casing and letters are identical, only the detector's word segmentation
+    differs. A genuine case or punctuation change survives this fold and is
+    demoted to a soft warning.
+    """
+    return re.sub(r"\s+", "", _fold_quotes(text))
 
 
 def _normalise(text: str) -> str:
@@ -127,24 +140,40 @@ def _best_window(expected: str, tokens: list[str]) -> tuple[float, str]:
     return best_score, best_raw
 
 
-def match_field(field: FuzzyFieldName, expected: str, text: str) -> FieldMatch:
-    """Fuzzy-match an expected free-text value against recognised label text.
+@dataclass(frozen=True)
+class PresenceScore:
+    """How well an expected value is present in a block of OCR text.
 
-    ``expected`` is the application value; ``text`` is the OCR output (any
-    newline-joined block). Returns a graded :class:`FieldMatch`.
+    The field-agnostic core of fuzzy verification: a graded :class:`MatchStatus`,
+    the best-matching window of OCR text (``matched_text``), the similarity
+    ``score`` in ``[0, 1]``, and a human-readable ``reason``. :func:`match_field`
+    wraps this for the named free-text fields; the verification engine reuses it
+    directly for the other text fields (net contents, address, …) without
+    forcing them into :class:`FuzzyFieldName`.
+    """
+
+    status: MatchStatus
+    matched_text: str
+    score: float
+    reason: str
+
+
+def score_presence(expected: str, text: str) -> PresenceScore:
+    """Grade how well ``expected`` appears somewhere in ``text``.
+
+    The shared three-state grader behind all fuzzy field verification. ``text``
+    is the OCR output (any newline-joined block). An empty ``expected`` is a
+    mismatch (nothing to verify against). A high score whose surface form differs
+    only in case/punctuation is demoted to a soft warning, mirroring the
+    brand-name nuance ("STONE'S THROW" vs "Stone's Throw").
     """
     expected = (expected or "").strip()
     tokens = re.findall(r"\S+", text)
     score, matched_raw = _best_window(expected, tokens)
 
     if not expected:
-        return FieldMatch(
-            field=field,
-            status=MatchStatus.MISMATCH,
-            expected=expected,
-            matched_text=matched_raw,
-            score=score,
-            reason="no expected value to verify against",
+        return PresenceScore(
+            MatchStatus.MISMATCH, matched_raw, score, "no expected value to verify against"
         )
 
     if score < LOW_THRESHOLD:
@@ -153,7 +182,7 @@ def match_field(field: FuzzyFieldName, expected: str, text: str) -> FieldMatch:
     elif score < HIGH_THRESHOLD:
         status = MatchStatus.SOFT_WARNING
         reason = f"near match ({score:.2f}); review for OCR noise or wording drift"
-    elif _light_normalise(expected) == _light_normalise(matched_raw):
+    elif _ignore_whitespace(expected) == _ignore_whitespace(matched_raw):
         status = MatchStatus.MATCH
         reason = "exact match (ignoring whitespace)"
     else:
@@ -161,13 +190,23 @@ def match_field(field: FuzzyFieldName, expected: str, text: str) -> FieldMatch:
         status = MatchStatus.SOFT_WARNING
         reason = "case/punctuation-only difference"
 
+    return PresenceScore(status, matched_raw, score, reason)
+
+
+def match_field(field: FuzzyFieldName, expected: str, text: str) -> FieldMatch:
+    """Fuzzy-match an expected free-text value against recognised label text.
+
+    ``expected`` is the application value; ``text`` is the OCR output (any
+    newline-joined block). Returns a graded :class:`FieldMatch`.
+    """
+    presence = score_presence(expected, text)
     return FieldMatch(
         field=field,
-        status=status,
-        expected=expected,
-        matched_text=matched_raw,
-        score=score,
-        reason=reason,
+        status=presence.status,
+        expected=(expected or "").strip(),
+        matched_text=presence.matched_text,
+        score=presence.score,
+        reason=presence.reason,
     )
 
 

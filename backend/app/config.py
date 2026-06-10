@@ -44,6 +44,11 @@ class Settings(BaseSettings):
     # recogniser together rather than in the RapidOCR default groups of 6.
     ocr_rec_batch_num: int = 8
 
+    # Directory where uploaded label images are stored. The Submission row keeps
+    # only a reference (path); the bytes live here. Created on first write. A
+    # local dir suffices for the prototype; swap for an object store in prod.
+    upload_dir: str = "uploads"
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _split_origins(cls, value: object) -> object:

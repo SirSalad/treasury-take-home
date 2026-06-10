@@ -10,6 +10,8 @@ Public API:
 * :func:`verify_government_warning` — verify the warning in a string of OCR text.
 * :func:`verify_warning_from_ocr` — verify over an :class:`~app.ocr.schemas.OcrResult`,
   attaching the source line/box.
+* :func:`verify_label` — the end-to-end engine: compare an OCR result against the
+  expected COLA and return a :class:`VerificationResult`.
 * :func:`build_result` — roll per-field results + the warning into the stable
   :class:`VerificationResult` contract.
 * :func:`aggregate_verdict` — the overall PASS / WARNING / FAIL rule on its own.
@@ -27,6 +29,7 @@ from app.verify.aggregate import (
     field_result_from_match,
     summarise,
 )
+from app.verify.engine import ExpectedFields, verify_label
 from app.verify.schemas import (
     GOVERNMENT_WARNING_TEXT,
     RESULT_SCHEMA_VERSION,
@@ -43,6 +46,7 @@ from app.verify.warning import verify_government_warning, verify_warning_from_oc
 __all__ = [
     "GOVERNMENT_WARNING_TEXT",
     "RESULT_SCHEMA_VERSION",
+    "ExpectedFields",
     "FieldResult",
     "FieldStatus",
     "GovernmentWarningResult",
@@ -55,5 +59,6 @@ __all__ = [
     "field_result_from_match",
     "summarise",
     "verify_government_warning",
+    "verify_label",
     "verify_warning_from_ocr",
 ]
