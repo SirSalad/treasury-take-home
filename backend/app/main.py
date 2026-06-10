@@ -1,17 +1,28 @@
 """FastAPI application entrypoint.
 
-This is an intentionally minimal skeleton: it exposes a health check so the
-scaffold's lint/test gates run green. Domain routes (verification, batch, etc.)
-are added by their respective issues.
+Wires up configuration (pydantic-settings), CORS, and the health check. Domain
+routes (verification, batch, etc.) are added by their respective issues.
 """
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
+from app.config import get_settings
+
+settings = get_settings()
 
 app = FastAPI(
     title="TTB Label Verification API",
     version=__version__,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
