@@ -16,12 +16,26 @@ interface LabelUploadProps {
   disabled?: boolean;
 }
 
+/** Largest label image we accept, mirroring the "up to 20 MB" hint. */
+const MAX_BYTES = 20 * 1024 * 1024;
+
 /** Human-readable file size, e.g. "412 KB". */
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   const kb = bytes / 1024;
   if (kb < 1024) return `${Math.round(kb)} KB`;
   return `${(kb / 1024).toFixed(1)} MB`;
+}
+
+/** Validate a picked file against the advertised constraints. */
+function rejectionReason(file: File): string | null {
+  if (!file.type.startsWith("image/")) {
+    return "That file isn’t an image. Upload a PNG or JPEG of the label.";
+  }
+  if (file.size > MAX_BYTES) {
+    return `That image is ${formatSize(file.size)}, over the 20 MB limit. Try a smaller file.`;
+  }
+  return null;
 }
 
 /**
@@ -39,19 +53,29 @@ export function LabelUpload({
 }: LabelUploadProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = React.useState(false);
-  const errorId = error ? "label-upload-error" : undefined;
+  // Client-side validation message (wrong type / too big). The parent's `error`
+  // prop (e.g. "attach an image before submitting") takes precedence over it.
+  const [localError, setLocalError] = React.useState<string | undefined>();
+  const shownError = error ?? localError;
+  const errorId = shownError ? "label-upload-error" : undefined;
 
   function handleFiles(files: FileList | null) {
     const file = files?.[0] ?? null;
-    if (file && file.type.startsWith("image/")) {
-      onChange(file);
-    } else if (file) {
-      // A non-image was dropped; reject it but keep any prior selection.
+    if (!file) return;
+    const reason = rejectionReason(file);
+    if (reason) {
+      // Reject the bad file and explain why, rather than silently ignoring it.
+      setLocalError(reason);
       onChange(null);
+      if (inputRef.current) inputRef.current.value = "";
+      return;
     }
+    setLocalError(undefined);
+    onChange(file);
   }
 
   function clear() {
+    setLocalError(undefined);
     onChange(null);
     if (inputRef.current) inputRef.current.value = "";
   }
@@ -65,7 +89,7 @@ export function LabelUpload({
         className="sr-only"
         aria-label="Upload label artwork (PNG or JPEG, up to 20 MB)"
         aria-describedby={errorId}
-        aria-invalid={Boolean(error)}
+        aria-invalid={Boolean(shownError)}
         disabled={disabled}
         onChange={(e) => handleFiles(e.target.files)}
       />
@@ -74,7 +98,7 @@ export function LabelUpload({
         <div
           className={cn(
             "flex items-center gap-4 rounded-md border bg-card p-3",
-            error ? "border-destructive" : "border-input",
+            shownError ? "border-destructive" : "border-input",
           )}
         >
           <img
@@ -115,7 +139,9 @@ export function LabelUpload({
           className={cn(
             "flex w-full flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed px-6 py-10 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
             dragging && "border-primary bg-primary/5",
-            error ? "border-destructive" : "border-input hover:border-primary hover:bg-muted/50",
+            shownError
+              ? "border-destructive"
+              : "border-input hover:border-primary hover:bg-muted/50",
           )}
         >
           <ImageUp className="size-8 text-muted-foreground" aria-hidden="true" />
@@ -126,14 +152,14 @@ export function LabelUpload({
         </button>
       )}
 
-      {error && (
+      {shownError && (
         <p
           id={errorId}
           role="alert"
           className="flex items-center gap-1 text-sm font-medium text-destructive"
         >
           <AlertCircle className="size-4 shrink-0" aria-hidden="true" />
-          {error}
+          {shownError}
         </p>
       )}
     </div>

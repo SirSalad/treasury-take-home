@@ -71,4 +71,18 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
+
+  /* Honor the OS "reduce motion" setting — spinners and transitions collapse
+     to near-instant for users who get motion sickness or distraction from
+     animation (WCAG 2.3.3 / Section 508). */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
