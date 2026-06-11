@@ -23,7 +23,11 @@ export function Layout() {
       </a>
       <GovBanner />
       <Header />
-      <main id="main-content" tabIndex={-1} className="container flex-1 py-8 focus:outline-none">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="mx-auto w-full max-w-[1480px] flex-1 px-7 py-6 focus:outline-none"
+      >
         <Outlet />
       </main>
       <Footer />

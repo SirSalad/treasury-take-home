@@ -1,41 +1,35 @@
-import { AlertCircle, AlertTriangle, Loader2 } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import * as React from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 import { ApplicationForm } from "@/components/application/ApplicationForm";
 import { LabelUpload } from "@/components/application/LabelUpload";
-import { ComparisonView } from "@/components/comparison/ComparisonView";
-import { Button } from "@/components/ui/button";
 import { ApiError, api } from "@/lib/api";
 import {
   EMPTY_APPLICATION_FORM,
   type ApplicationForm as ApplicationFormData,
 } from "@/lib/application";
-import type { VerificationResponse } from "@/lib/verification";
 
-/** The single-label flow's lifecycle: collect input, run, show the verdict. */
-type Phase =
-  | { name: "input" }
-  | { name: "submitting" }
-  | { name: "result"; response: VerificationResponse }
-  | { name: "error"; message: string };
+/** The single-label flow's lifecycle: collect input, run, hand off to review. */
+type Phase = { name: "input" } | { name: "submitting" } | { name: "error"; message: string };
 
 /**
- * The single-label verification flow, end to end: the agent enters the expected
- * COLA application data, uploads the label artwork, and submits. While the
- * backend preprocesses, OCRs, and verifies, a loading state shows; on success
- * the color-coded 3-pane comparison renders with the wall-clock time; on a bad
- * upload or unreadable image, a friendly error invites another try without
+ * New Label Verification (claude-design): the agent enters the expected COLA
+ * application data, uploads the label artwork, and submits. While the backend
+ * reads the label an animated scanning card shows; on success the flow lands
+ * on the review screen for that submission, where the verdict and the decision
+ * panel live. On a bad upload, a friendly error invites another try without
  * losing the entered data.
  */
 export function VerifyPage() {
+  const navigate = useNavigate();
   const [phase, setPhase] = React.useState<Phase>({ name: "input" });
   const [form, setForm] = React.useState<ApplicationFormData>(EMPTY_APPLICATION_FORM);
   const [image, setImage] = React.useState<File | null>(null);
   const [imageError, setImageError] = React.useState<string | undefined>();
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
 
-  // Hold an object URL for the selected image so it can be previewed in the
-  // picker and reused as pane 3 of the comparison. Revoked when it changes.
+  // Hold an object URL for the selected image so the picker can preview it.
   React.useEffect(() => {
     if (!image) {
       setPreviewUrl(null);
@@ -63,7 +57,7 @@ export function VerifyPage() {
     setPhase({ name: "submitting" });
     try {
       const response = await api.verify(image, values, controller.signal);
-      setPhase({ name: "result", response });
+      navigate(`/review/${response.submission_id}`);
     } catch (err) {
       if (controller.signal.aborted) return;
       const message =
@@ -76,109 +70,80 @@ export function VerifyPage() {
     }
   }
 
-  function backToInput() {
-    setPhase({ name: "input" });
-  }
-
-  if (phase.name === "result") {
-    const { response } = phase;
-    const seconds = (response.timing.total_ms / 1000).toFixed(1);
-    return (
-      <div className="space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight text-foreground">
-              Verification result
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {response.image_filename ? (
-                <>
-                  <span className="font-medium text-foreground">{response.image_filename}</span>{" "}
-                  ·{" "}
-                </>
-              ) : null}
-              Processed in {seconds}s
-            </p>
-          </div>
-          <Button variant="outline" onClick={backToInput}>
-            Verify another label
-          </Button>
-        </div>
-        {response.image_quality.level === "low" ? (
-          <div
-            role="status"
-            className="flex items-start gap-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"
-          >
-            <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-600" aria-hidden="true" />
-            <div>
-              <p className="font-semibold">This photo was hard to read</p>
-              <p>
-                {response.image_quality.message} The verdict below may be less reliable than a clear
-                photo would give.
-              </p>
-            </div>
-          </div>
-        ) : null}
-        {previewUrl ? (
-          <ComparisonView
-            result={response.result}
-            imageSrc={previewUrl}
-            imageAlt={response.image_filename ?? "Uploaded label"}
-          />
-        ) : null}
-      </div>
-    );
-  }
-
   if (phase.name === "submitting") {
     return (
-      <div
-        className="flex flex-col items-center justify-center gap-4 py-24 text-center"
-        role="status"
-        aria-live="polite"
-      >
-        <Loader2 className="size-10 animate-spin text-primary" aria-hidden="true" />
-        <div className="space-y-1">
-          <p className="text-lg font-semibold text-foreground">Verifying the label…</p>
-          <p className="text-sm text-muted-foreground">
-            Reading the artwork and comparing it against the application. This usually takes a few
+      <div className="mx-auto max-w-[620px] py-14" role="status" aria-live="polite">
+        <div className="rounded-[14px] border border-[#d6d7d9] bg-white p-[34px] text-center shadow-[0_10px_30px_rgba(17,46,81,.08)]">
+          <div
+            className="relative mx-auto mb-6 w-[230px] overflow-hidden rounded-md border border-[#d9d4c4]"
+            style={{ aspectRatio: ".78" }}
+          >
+            {previewUrl ? (
+              <img
+                src={previewUrl}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-[#f3ead2] to-[#e9dcbd]" />
+            )}
+            <div
+              aria-hidden="true"
+              className="absolute left-0 right-0 h-[3px]"
+              style={{
+                background: "linear-gradient(90deg, transparent, #226e2a, transparent)",
+                boxShadow: "0 0 14px 3px rgba(46,133,64,.55)",
+                animation: "scanmove 1.1s linear infinite",
+              }}
+            />
+          </div>
+          <p className="mb-1.5 text-[19px] font-extrabold text-fed-navy">Reading the label…</p>
+          <p className="text-sm text-fed-gray">
+            Extracting the text and checking it against the application. This usually takes a few
             seconds.
           </p>
         </div>
+        {/* The scan-line keyframes live with the page that uses them. */}
+        <style>{`@keyframes scanmove { 0% { top: 2%; } 100% { top: 96%; } }`}</style>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <header className="space-y-2">
-        <h2 className="text-2xl font-bold tracking-tight text-foreground">Verify a label</h2>
-        <p className="max-w-2xl text-muted-foreground">
-          Enter the details from the TTB label application (Form 5100.31) and upload the label
-          artwork. The app reads the label and checks it against what you entered, then shows a
-          color-coded, side-by-side verdict.
-        </p>
-      </header>
+    <div className="mx-auto max-w-[980px] pb-10">
+      <Link
+        to="/"
+        className="mb-4 inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-fed-blue"
+      >
+        ← Back to Queue
+      </Link>
+      <h2 className="mb-1.5 text-[30px] font-extrabold tracking-[-.6px] text-fed-navy">
+        New Label Verification
+      </h2>
+      <p className="mb-6 text-[14.5px] text-fed-gray">
+        Enter the application details (TTB Form 5100.31), drop the label artwork below, and results
+        come back in a few seconds.
+      </p>
 
       {phase.name === "error" && (
         <div
           role="alert"
-          className="flex items-start gap-3 rounded-md border border-destructive bg-mismatch-muted p-4"
+          className="mb-6 flex items-start gap-3 rounded-xl border border-[#f3c9cb] bg-[#fef6f6] p-4"
         >
-          <AlertCircle className="mt-0.5 size-5 shrink-0 text-destructive" aria-hidden="true" />
+          <AlertCircle className="mt-0.5 size-5 shrink-0 text-fed-red" aria-hidden="true" />
           <div className="space-y-1">
-            <h3 className="font-bold text-destructive">Could not verify the label</h3>
-            <p className="text-sm text-foreground">{phase.message}</p>
-            <p className="text-sm text-muted-foreground">
+            <h3 className="font-bold text-fed-red-deep">Could not verify the label</h3>
+            <p className="text-sm text-fed-ink">{phase.message}</p>
+            <p className="text-sm text-fed-gray">
               Your entries are kept below — adjust them or the image and try again.
             </p>
           </div>
         </div>
       )}
 
-      <section className="space-y-2">
-        <h3 className="text-lg font-bold text-foreground">Label artwork</h3>
-        <p className="text-sm text-muted-foreground">
+      <section className="mb-7">
+        <h3 className="mb-2 text-lg font-bold text-fed-ink">Label artwork</h3>
+        <p className="mb-2 text-sm text-fed-gray">
           Upload a photo or scan of the physical label. This is the “actual” side of the comparison.
         </p>
         <LabelUpload value={image} onChange={setImage} previewUrl={previewUrl} error={imageError} />

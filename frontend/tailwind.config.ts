@@ -75,6 +75,38 @@ export default {
           foreground: "hsl(var(--mismatch-foreground))",
           muted: "hsl(var(--mismatch-muted))",
         },
+        // Federal reviewer-workspace palette (claude-design mockup). Literal
+        // hexes rather than HSL vars: these are fixed brand colors, not
+        // theme-switchable surfaces.
+        fed: {
+          navy: "#162e51",
+          "navy-light": "#1a3760",
+          "navy-deep": "#0b1d38",
+          gold: "#ffbe2e",
+          blue: "#005ea2",
+          "blue-dark": "#16406f",
+          "blue-wash": "#eff5fb",
+          green: "#226e2a",
+          "green-wash": "#eaf4ec",
+          amber: "#7a5a00",
+          "amber-wash": "#faf3d1",
+          red: "#cd2026",
+          "red-deep": "#b50909",
+          "red-wash": "#fdeced",
+          ink: "#1b1b1b",
+          slate: "#3d4551",
+          gray: "#5b616b",
+          "gray-light": "#6e767e",
+          line: "#e4e8ec",
+          "line-soft": "#edeff1",
+          "head-bg": "#f4f5f6",
+          page: "#f3f6f8",
+        },
+      },
+      boxShadow: {
+        card: "0 1px 2px rgba(20,33,61,.04), 0 3px 8px rgba(20,33,61,.06)",
+        "card-lift": "0 8px 22px rgba(20,33,61,.13)",
+        header: "0 2px 12px rgba(20,33,61,.14)",
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -8,7 +8,7 @@
  */
 
 import type { ApplicationForm } from "@/lib/application";
-import type { VerificationResponse } from "@/lib/verification";
+import type { VerificationResponse, VerificationResult } from "@/lib/verification";
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "/api").replace(/\/$/, "");
 
@@ -116,6 +116,41 @@ export interface HealthResponse {
   version: string;
 }
 
+/** The reviewer's recorded judgment on a submission. */
+export type ReviewDecision = "approve" | "request_changes" | "request_info";
+
+/** One row of the review queue (mirrors `SubmissionRow` on the backend). */
+export interface SubmissionRow {
+  id: number;
+  created_at: string | null;
+  status: "pending" | "processing" | "completed" | "failed";
+  brand_name: string | null;
+  applicant: string | null;
+  class_type: string | null;
+  overall: "pass" | "warning" | "fail" | null;
+  warning_verdict: "compliant" | "altered" | "missing" | null;
+  processing_ms: number | null;
+  image_filename: string | null;
+  decision: ReviewDecision | null;
+  decided_at: string | null;
+}
+
+/** Queue counts for the stat cards (mirrors `QueueStats`). */
+export interface QueueStats {
+  pending: number;
+  flagged: number;
+  cleared_week: number;
+  avg_scan_ms: number | null;
+}
+
+/** Full submission detail: queue row + persisted result + application. */
+export interface SubmissionDetail extends SubmissionRow {
+  result: VerificationResult | null;
+  error: string | null;
+  decision_note: string | null;
+  application: Record<string, string | number | null> | null;
+}
+
 // ---- Endpoints ----------------------------------------------------------
 
 export const api = {
@@ -136,6 +171,40 @@ export const api = {
     return request<VerificationResponse>("/verify", {
       method: "POST",
       body: buildVerifyForm(image, application),
+      signal,
+    });
+  },
+
+  /** Recent submissions for the review queue, newest first. */
+  submissions(signal?: AbortSignal): Promise<SubmissionRow[]> {
+    return request<SubmissionRow[]>("/submissions", { signal });
+  },
+
+  /** Counts for the stat cards above the queue. */
+  queueStats(signal?: AbortSignal): Promise<QueueStats> {
+    return request<QueueStats>("/submissions/stats", { signal });
+  },
+
+  /** One submission with its persisted verification result. */
+  submission(id: number, signal?: AbortSignal): Promise<SubmissionDetail> {
+    return request<SubmissionDetail>(`/submissions/${id}`, { signal });
+  },
+
+  /** URL of the stored label image for a submission (for <img src>). */
+  submissionImageUrl(id: number): string {
+    return `${BASE_URL}/submissions/${id}/image`;
+  },
+
+  /** Record the reviewer's decision on a submission. */
+  recordDecision(
+    id: number,
+    decision: ReviewDecision,
+    note: string | null,
+    signal?: AbortSignal,
+  ): Promise<SubmissionDetail> {
+    return request<SubmissionDetail>(`/submissions/${id}/decision`, {
+      method: "POST",
+      body: { decision, note: note || null },
       signal,
     });
   },

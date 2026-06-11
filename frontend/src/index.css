@@ -1,8 +1,10 @@
 /* Public Sans — USWDS's typeface, self-hosted via @fontsource so the app
    never reaches out to a font CDN (the agency firewall blocks outbound). */
 @import "@fontsource/public-sans/400.css";
+@import "@fontsource/public-sans/500.css";
 @import "@fontsource/public-sans/600.css";
 @import "@fontsource/public-sans/700.css";
+@import "@fontsource/public-sans/800.css";
 
 @tailwind base;
 @tailwind components;
@@ -20,7 +22,7 @@
 @layer base {
   :root {
     /* Surfaces & text */
-    --background: 0 0% 100%;
+    --background: 204 24% 96%; /* #f3f6f8 workspace gray-blue */
     --foreground: 0 0% 11%; /* USWDS ink #1b1b1b */
     --card: 0 0% 100%;
     --card-foreground: 0 0% 11%;

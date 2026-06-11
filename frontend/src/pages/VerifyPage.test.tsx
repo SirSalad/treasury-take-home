@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "@/lib/api";
@@ -14,7 +15,7 @@ vi.mock("@/lib/api", async () => {
 });
 
 const RESPONSE: VerificationResponse = {
-  submission_id: 1,
+  submission_id: 42,
   application_id: 1,
   status: "completed",
   image_filename: "label.png",
@@ -22,6 +23,19 @@ const RESPONSE: VerificationResponse = {
   result: SAMPLE_RESULT,
   image_quality: { level: "ok", mean_confidence: 0.97, text_regions: 11, message: null },
 };
+
+/** Render the page inside a router, with a probe route for the review screen. */
+function renderPage() {
+  return render(
+    <MemoryRouter initialEntries={["/verify"]}>
+      <Routes>
+        <Route path="/verify" element={<VerifyPage />} />
+        <Route path="/" element={<p>queue probe</p>} />
+        <Route path="/review/:id" element={<p>review probe</p>} />
+      </Routes>
+    </MemoryRouter>,
+  );
+}
 
 /** Fill the three required fields and attach an image, then submit. */
 function fillAndSubmit({ withImage = true }: { withImage?: boolean } = {}) {
@@ -53,34 +67,33 @@ afterEach(() => {
 
 describe("VerifyPage flow", () => {
   it("blocks submit and explains when no label image is attached", () => {
-    render(<VerifyPage />);
+    renderPage();
     fillAndSubmit({ withImage: false });
     expect(verify).not.toHaveBeenCalled();
     expect(screen.getByText(/Add the label image/i)).toBeDefined();
   });
 
-  it("shows a loading state then the timed comparison on success", async () => {
+  it("shows the scanning state then lands on the review screen on success", async () => {
     let resolve!: (value: VerificationResponse) => void;
     verify.mockReturnValue(new Promise<VerificationResponse>((r) => (resolve = r)));
 
-    render(<VerifyPage />);
+    renderPage();
     fillAndSubmit();
 
-    // Loading state is announced while the request is in flight.
-    expect(await screen.findByText(/Verifying the label/i)).toBeDefined();
+    // Scanning state is announced while the request is in flight.
+    expect(await screen.findByText(/Reading the label/i)).toBeDefined();
 
     resolve(RESPONSE);
 
-    // Result renders with the wall-clock time and the verdict banner.
-    expect(await screen.findByText(/Processed in 2\.4s/i)).toBeDefined();
-    expect(screen.getByRole("heading", { name: /Verification result/i })).toBeDefined();
+    // Success hands off to the review screen for the new submission.
+    expect(await screen.findByText(/review probe/i)).toBeDefined();
     expect(verify).toHaveBeenCalledOnce();
   });
 
   it("surfaces a friendly error and keeps the entered data on failure", async () => {
     verify.mockRejectedValue(new ApiError(422, "No text could be recognised in the image."));
 
-    render(<VerifyPage />);
+    renderPage();
     fillAndSubmit();
 
     expect(await screen.findByText(/No text could be recognised/i)).toBeDefined();
