@@ -7,8 +7,11 @@
  * same-origin by default sidesteps CORS and the agency's outbound firewall.
  */
 
+import type { components } from "@/lib/api.gen";
 import type { ApplicationForm } from "@/lib/application";
 import type { VerificationResponse, VerificationResult } from "@/lib/verification";
+
+type ApiSchemas = components["schemas"];
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "/api").replace(/\/$/, "");
 
@@ -109,66 +112,35 @@ function buildVerifyForm(images: File[], application: ApplicationForm): FormData
   return data;
 }
 
-// ---- Response shapes (mirror the backend) -------------------------------
+// ---- Response shapes (generated from the backend's OpenAPI spec) ---------
+// `pnpm gen:api` regenerates src/lib/api.gen.ts from backend/openapi.json;
+// these aliases keep the established names. CI fails when either is stale.
 
-export interface HealthResponse {
-  status: string;
-  version: string;
-}
+export type HealthResponse = { status: string; version: string };
 
 /** The reviewer's recorded judgment on a submission. */
-export type ReviewDecision = "approve" | "request_changes" | "request_info";
+export type ReviewDecision = ApiSchemas["ReviewDecision"];
 
 /** One row of the review queue (mirrors `SubmissionRow` on the backend). */
-export interface SubmissionRow {
-  id: number;
-  created_at: string | null;
-  status: "pending" | "processing" | "completed" | "failed";
-  brand_name: string | null;
-  applicant: string | null;
-  class_type: string | null;
-  overall: "pass" | "warning" | "fail" | null;
-  warning_verdict: "compliant" | "altered" | "missing" | null;
-  processing_ms: number | null;
-  image_filename: string | null;
-  decision: ReviewDecision | null;
-  decided_at: string | null;
-}
+export type SubmissionRow = ApiSchemas["SubmissionRow"];
 
 /** Queue counts for the stat cards (mirrors `QueueStats`). */
-export interface QueueStats {
-  pending: number;
-  flagged: number;
-  cleared_week: number;
-  avg_scan_ms: number | null;
-}
+export type QueueStats = ApiSchemas["QueueStats"];
 
 /** One image of a submission's label set (mirrors `SubmissionImageRow`). */
-export interface SubmissionImageRow {
-  index: number;
-  filename: string | null;
-  kind: string | null;
-}
+export type SubmissionImageRow = ApiSchemas["SubmissionImageRow"];
 
-/** Full submission detail: queue row + persisted result + application. */
-export interface SubmissionDetail extends SubmissionRow {
+/**
+ * Full submission detail: queue row + persisted result + application. The
+ * backend stores `result` as an opaque JSON column, so the spec types it
+ * loosely; the client refines it to the result contract it actually is.
+ */
+export type SubmissionDetail = Omit<ApiSchemas["SubmissionDetail"], "result"> & {
   result: VerificationResult | null;
-  error: string | null;
-  decision_note: string | null;
-  application: Record<string, string | number | null> | null;
-  /** The filing's label set; the result's `image_index` values refer to these. */
-  images: SubmissionImageRow[];
-}
+};
 
 /** One row of the append-only audit trail (mirrors `AuditEventRow`). */
-export interface AuditEvent {
-  id: number;
-  created_at: string | null;
-  action: string;
-  actor: string;
-  submission_id: number | null;
-  detail: Record<string, unknown> | null;
-}
+export type AuditEvent = ApiSchemas["AuditEventRow"];
 
 // ---- Endpoints ----------------------------------------------------------
 
@@ -195,9 +167,13 @@ export const api = {
     });
   },
 
-  /** Recent submissions for the review queue, newest first. */
+  /**
+   * Submissions for the review queue, newest first. Fetches the full window
+   * (up to the API cap) — search, filters, and pagination are client-side, so
+   * they must cover the whole queue, not one server page.
+   */
   submissions(signal?: AbortSignal): Promise<SubmissionRow[]> {
-    return request<SubmissionRow[]>("/submissions", { signal });
+    return request<SubmissionRow[]>("/submissions?limit=1000", { signal });
   },
 
   /** Counts for the stat cards above the queue. */
@@ -231,7 +207,9 @@ export const api = {
 
   /** Append-only audit trail, newest first; optionally scoped to one submission. */
   audit(submissionId?: number, signal?: AbortSignal): Promise<AuditEvent[]> {
-    const query = submissionId != null ? `?submission_id=${submissionId}` : "";
+    // Scoped to one submission for the activity timeline; otherwise the full
+    // log window (client-side search/pagination needs the whole set).
+    const query = submissionId != null ? `?submission_id=${submissionId}` : "?limit=2000";
     return request<AuditEvent[]>(`/audit${query}`, { signal });
   },
 };

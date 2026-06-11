@@ -236,8 +236,10 @@ export function QueuePage() {
           valueColor="#226e2a"
         />
         <StatCard
-          value={stats?.avg_scan_ms != null ? `${(stats.avg_scan_ms / 1000).toFixed(1)}s` : "–"}
-          label="Avg. scan time"
+          value={
+            stats?.median_scan_ms != null ? `${(stats.median_scan_ms / 1000).toFixed(1)}s` : "–"
+          }
+          label="Median scan time"
           accent="#5b616b"
         />
       </div>
@@ -254,6 +256,7 @@ export function QueuePage() {
       <DataTable
         columns={COLUMNS}
         rows={rows}
+        pageSize={25}
         getRowKey={(row) => row.id}
         onRowClick={(row) => navigate(`/review/${row.id}`)}
         rowAriaLabel={(row) =>

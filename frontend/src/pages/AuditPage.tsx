@@ -119,6 +119,7 @@ export function AuditPage() {
       <DataTable
         columns={COLUMNS}
         rows={events}
+        pageSize={50}
         getRowKey={(event) => event.id}
         search={{
           ariaLabel: "Search the audit log by event, details, or submission",

@@ -72,7 +72,7 @@ export function ReviewPage() {
   const allRegions = useMemo<Array<ImageRegion & { imageIndex: number }>>(() => {
     if (!result) return [];
     const out: Array<ImageRegion & { imageIndex: number }> = [];
-    for (const field of result.fields) {
+    for (const field of result.fields ?? []) {
       if (field.box) {
         out.push({
           key: field.field,
@@ -110,9 +110,16 @@ export function ReviewPage() {
 
   const highlight = activeKey ?? selectedKey;
 
-  // Selecting a checklist row jumps to the image that carries its box.
+  // Selecting a checklist row (or a box) jumps to the image that carries it
+  // and focuses it — the image auto-zooms and centers on the region.
+  // Deselecting zooms back out to the fitted view.
   function selectKey(key: string) {
-    setSelectedKey((cur) => (cur === key ? null : key));
+    const deselecting = selectedKey === key;
+    setSelectedKey(deselecting ? null : key);
+    if (deselecting) {
+      setZoom(1);
+      return;
+    }
     const region = allRegions.find((r) => r.key === key);
     if (region) setActiveImage(region.imageIndex);
   }
@@ -266,7 +273,7 @@ export function ReviewPage() {
               <button
                 type="button"
                 aria-label="Zoom in"
-                onClick={() => setZoom((z) => Math.min(2, Math.round((z + 0.25) * 4) / 4))}
+                onClick={() => setZoom((z) => Math.min(4, Math.round((z + 0.25) * 4) / 4))}
                 className="h-7 w-7 rounded-[5px] border border-[#d6d7d9] bg-[#f7f8f9] text-[15px] leading-none text-fed-gray hover:bg-fed-blue-wash"
               >
                 +
@@ -308,18 +315,22 @@ export function ReviewPage() {
               })}
             </div>
           )}
-          <div className="flex items-center justify-center overflow-auto bg-[#41464d] p-3">
-            <div style={{ transform: `scale(${zoom})`, transition: "transform .18s" }}>
-              <LabelImage
-                key={activeImage}
-                src={api.submissionImageUrl(detail.id, activeImage)}
-                alt={`Label image ${activeImage + 1} for ${detail.brand_name ?? "submission"}`}
-                regions={regions}
-                activeKey={highlight}
-                onSelect={selectKey}
-                imgClassName="h-auto w-auto max-h-[calc(100vh-230px)]"
-              />
-            </div>
+          {/* Layout-affecting zoom (no CSS transform): the image's real size
+              grows, so this container gains true scroll range and a focused
+              region can be centered with scrollIntoView. */}
+          <div className="flex max-h-[calc(100vh-230px)] items-start justify-center overflow-auto bg-[#41464d] p-3">
+            <LabelImage
+              key={activeImage}
+              src={api.submissionImageUrl(detail.id, activeImage)}
+              alt={`Label image ${activeImage + 1} for ${detail.brand_name ?? "submission"}`}
+              regions={regions}
+              activeKey={highlight}
+              focusKey={selectedKey}
+              zoom={zoom}
+              onAutoZoom={setZoom}
+              onSelect={selectKey}
+              imgClassName="h-auto w-auto max-h-[calc(100vh-260px)]"
+            />
           </div>
           <p className="flex items-center gap-[7px] border-t border-[#e6e8ea] px-4 py-2 text-[11px] text-fed-gray">
             <span
@@ -335,7 +346,7 @@ export function ReviewPage() {
         {/* MIDDLE: checklist + warning hero */}
         <div className="flex flex-col gap-3">
           <ReviewChecklist
-            fields={result.fields}
+            fields={result.fields ?? []}
             regionNumbers={regionNumbers}
             activeKey={highlight}
             onActivate={setActiveKey}

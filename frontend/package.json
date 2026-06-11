@@ -13,7 +13,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc -b --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "gen:api": "openapi-typescript ../backend/openapi.json -o src/lib/api.gen.ts",
+    "gen:api:check": "openapi-typescript ../backend/openapi.json -o /tmp/api.gen.check.ts && diff -u src/lib/api.gen.ts /tmp/api.gen.check.ts"
   },
   "dependencies": {
     "@fontsource/public-sans": "^5.1.0",
@@ -42,6 +44,7 @@
     "eslint-plugin-react-refresh": "^0.4.9",
     "globals": "^15.9.0",
     "jsdom": "^25.0.0",
+    "openapi-typescript": "^7.13.0",
     "postcss": "^8.4.49",
     "prettier": "^3.3.3",
     "tailwindcss": "^3.4.15",

@@ -42,7 +42,7 @@ const ROWS: SubmissionRow[] = [
   row({ id: 3, brand_name: "Hopworks", overall: "pass" }), // pending
 ];
 
-const STATS: QueueStats = { pending: 1, flagged: 1, cleared_week: 1, avg_scan_ms: 3000 };
+const STATS: QueueStats = { pending: 1, flagged: 1, cleared_week: 1, median_scan_ms: 3000 };
 
 function rowOrder(): string[] {
   // Each data row is a role=button with an aria-label naming the brand.

@@ -100,7 +100,7 @@ def test_stats_count_pending_flagged_and_cleared(session_factory, tmp_path) -> N
     assert stats["pending"] == 2
     assert stats["flagged"] == 1
     assert stats["cleared_week"] == 0
-    assert stats["avg_scan_ms"] is not None
+    assert stats["median_scan_ms"] is not None
 
     client.post(f"/api/submissions/{pass_id}/decision", json={"decision": "approve"})
     stats = client.get("/api/submissions/stats").json()

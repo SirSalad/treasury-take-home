@@ -46,7 +46,7 @@ class AuditEventRow(BaseModel):
 @router.get("", response_model=list[AuditEventRow])
 def list_events(
     db: Annotated[Session, Depends(get_db)],
-    limit: Annotated[int, Query(ge=1, le=500)] = 100,
+    limit: Annotated[int, Query(ge=1, le=2000)] = 100,
     submission_id: Annotated[int | None, Query()] = None,
 ) -> list[AuditEventRow]:
     """Newest-first audit trail, optionally scoped to one submission."""

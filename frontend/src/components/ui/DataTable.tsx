@@ -1,13 +1,14 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 /**
  * A reusable workspace table: a CSS-grid table with optional per-column
- * sorting, a search box, filter dropdowns, a live result count, and
- * loading / empty / no-match states — all in the federal style. The Review
- * Queue and the Audit Log are both built from it.
+ * sorting, a search box, filter dropdowns, a live result count, pagination,
+ * and loading / empty / no-match states — all in the federal style. The
+ * Review Queue and the Audit Log are both built from it.
  *
- * Columns declare their own grid track width and cell renderer; sorting and
- * filtering are client-side over the provided rows.
+ * Columns declare their own grid track width and cell renderer; sorting,
+ * filtering, and paging are client-side over the provided rows, so search and
+ * filters always cover the whole set, not just the visible page.
  */
 
 export interface DataTableColumn<T> {
@@ -48,6 +49,8 @@ interface DataTableProps<T> {
   emptyState?: ReactNode;
   /** Shown when filters/search exclude every row. */
   noMatchMessage?: string;
+  /** Rows per page; omit to render everything on one page. */
+  pageSize?: number;
 }
 
 function compareValues(a: string | number, b: string | number): number {
@@ -68,11 +71,18 @@ export function DataTable<T>({
   loadingMessage = "Loading…",
   emptyState,
   noMatchMessage = "No rows match your filters.",
+  pageSize,
 }: DataTableProps<T>) {
   const [query, setQuery] = useState("");
   const [filterValues, setFilterValues] = useState<Record<string, string>>({});
   const [sortKey, setSortKey] = useState<string | null>(defaultSort?.key ?? null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">(defaultSort?.dir ?? "asc");
+  const [page, setPage] = useState(0);
+
+  // A new search/filter/sort means a new result set: jump back to page one.
+  useEffect(() => {
+    setPage(0);
+  }, [query, filterValues, sortKey, sortDir]);
 
   const gridStyle = { gridTemplateColumns: columns.map((c) => c.width).join(" ") };
   const filterOf = (key: string) => filterValues[key] ?? "all";
@@ -112,6 +122,16 @@ export function DataTable<T>({
   }
 
   const showFilterBar = Boolean(search) || filters.length > 0;
+
+  // Page the filtered/sorted rows; clamp so shrinking results never strand the
+  // pager past the end.
+  const pageCount = pageSize ? Math.max(1, Math.ceil(visible.length / pageSize)) : 1;
+  const currentPage = Math.min(page, pageCount - 1);
+  const paged = pageSize
+    ? visible.slice(currentPage * pageSize, (currentPage + 1) * pageSize)
+    : visible;
+  const rangeStart = visible.length === 0 ? 0 : currentPage * (pageSize ?? visible.length) + 1;
+  const rangeEnd = rangeStart === 0 ? 0 : rangeStart + paged.length - 1;
 
   return (
     <div>
@@ -208,7 +228,7 @@ export function DataTable<T>({
             {noMatchMessage}
           </p>
         )}
-        {visible.map((row) => {
+        {paged.map((row, index) => {
           const interactive = Boolean(onRowClick);
           return (
             <div
@@ -229,6 +249,8 @@ export function DataTable<T>({
                   }
                 : {})}
               className={`grid items-center gap-0 border-b border-fed-line-soft px-[18px] py-3 last:border-b-0 ${
+                index % 2 === 1 ? "bg-[#f7f8f9]" : "bg-white"
+              } ${
                 interactive
                   ? "cursor-pointer transition-colors hover:bg-fed-blue-wash hover:shadow-[inset_3px_0_0_#005ea2] focus-visible:bg-fed-blue-wash focus-visible:shadow-[inset_3px_0_0_#005ea2] focus-visible:outline-none"
                   : ""
@@ -243,6 +265,39 @@ export function DataTable<T>({
           );
         })}
       </div>
+
+      {pageSize !== undefined && visible.length > pageSize && (
+        <nav
+          aria-label="Pagination"
+          className="mt-3 flex items-center justify-between gap-3 text-[13px] text-fed-gray"
+        >
+          <span aria-live="polite">
+            Showing {rangeStart}–{rangeEnd} of {visible.length}{" "}
+            {visible.length === 1 ? countNoun[0] : countNoun[1]}
+          </span>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setPage(Math.max(0, currentPage - 1))}
+              disabled={currentPage === 0}
+              className="rounded-md border border-[#c4c8cc] bg-white px-3 py-1.5 text-[13px] font-semibold text-fed-ink hover:bg-fed-blue-wash disabled:pointer-events-none disabled:opacity-45"
+            >
+              ‹ Previous
+            </button>
+            <span className="px-1.5 tabular-nums">
+              Page {currentPage + 1} of {pageCount}
+            </span>
+            <button
+              type="button"
+              onClick={() => setPage(Math.min(pageCount - 1, currentPage + 1))}
+              disabled={currentPage >= pageCount - 1}
+              className="rounded-md border border-[#c4c8cc] bg-white px-3 py-1.5 text-[13px] font-semibold text-fed-ink hover:bg-fed-blue-wash disabled:pointer-events-none disabled:opacity-45"
+            >
+              Next ›
+            </button>
+          </div>
+        </nav>
+      )}
     </div>
   );
 }

@@ -16,6 +16,7 @@ from __future__ import annotations
 import enum
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from statistics import median
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -63,7 +64,9 @@ class QueueStats(BaseModel):
     pending: int
     flagged: int
     cleared_week: int
-    avg_scan_ms: int | None
+    # Median, not mean: rescue passes give scan time a long tail (a handful of
+    # hard labels run 20s+), and the mean would overstate the typical scan.
+    median_scan_ms: int | None
 
 
 class SubmissionImageRow(BaseModel):
@@ -135,7 +138,7 @@ def _row(submission: Submission) -> SubmissionRow:
 @router.get("", response_model=list[SubmissionRow])
 def list_submissions(
     db: Annotated[Session, Depends(get_db)],
-    limit: Annotated[int, Query(ge=1, le=200)] = 50,
+    limit: Annotated[int, Query(ge=1, le=1000)] = 50,
 ) -> list[SubmissionRow]:
     """Most recent submissions, newest first."""
     rows = db.scalars(
@@ -168,16 +171,23 @@ def queue_stats(db: Annotated[Session, Depends(get_db)]) -> QueueStats:
         )
         or 0
     )
-    avg_ms = db.scalar(
-        select(func.avg(Submission.processing_ms)).where(
-            Submission.status == SubmissionStatus.COMPLETED
+    # In Python (not percentile_cont) so the in-memory SQLite tests behave the
+    # same as Postgres; the completed set is small at this scale.
+    times = sorted(
+        t
+        for t in db.scalars(
+            select(Submission.processing_ms).where(
+                Submission.status == SubmissionStatus.COMPLETED,
+                Submission.processing_ms.is_not(None),
+            )
         )
+        if t is not None  # the SQL filter already excludes these; this narrows the type
     )
     return QueueStats(
         pending=pending,
         flagged=flagged,
         cleared_week=cleared_week,
-        avg_scan_ms=int(avg_ms) if avg_ms is not None else None,
+        median_scan_ms=int(median(times)) if times else None,
     )
 
 
