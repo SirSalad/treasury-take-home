@@ -108,21 +108,43 @@ def verify_label_image(
     # Frames the warning may live in: (image, frame→original mapper, OCR read).
     frames: list[tuple[np.ndarray, _PointMapper | None, OcrResult]] = [(base, None, primary)]
 
-    if _wants_rotation_rescue(result):
+    def _rotate_and_merge(
+        current: VerificationResult,
+        still_wanted: Callable[[VerificationResult], bool] = _wants_rotation_rescue,
+    ) -> VerificationResult:
         for rotated, mapper in _rotations(base):
             frame_ocr = ocr.extract(rotated)
             if not frame_ocr.lines:
                 continue
             frames.append((rotated, mapper, frame_ocr))
             rescue = verify_label(expected, _remap_result(frame_ocr, mapper))
-            result = _merge_results(result, rescue)
-            if not _wants_rotation_rescue(result):
+            current = _merge_results(current, rescue)
+            if not still_wanted(current):
                 break
+        return current
+
+    if _wants_rotation_rescue(result):
+        result = _rotate_and_merge(result)
 
     if result.government_warning.verdict is not WarningVerdict.COMPLIANT:
         rescued = _zoom_rescue_warning(frames, result.government_warning, ocr)
         if rescued is not None:
             result = build_result(result.fields, rescued)
+
+    # The warning must not depend on *other* fields failing to earn its rescue:
+    # when it is still ALTERED after the zoom and the rotation frames were never
+    # produced (every other field verified cleanly), rotate now for the
+    # warning's own sake and re-run the zoom over the new frames — a rotated
+    # read often recovers the statement line the straight pass dropped.
+    if result.government_warning.verdict is not WarningVerdict.COMPLIANT and len(frames) == 1:
+        result = _rotate_and_merge(
+            result,
+            still_wanted=lambda r: r.government_warning.verdict is not WarningVerdict.COMPLIANT,
+        )
+        if result.government_warning.verdict is not WarningVerdict.COMPLIANT and len(frames) > 1:
+            rescued = _zoom_rescue_warning(frames[1:], result.government_warning, ocr)
+            if rescued is not None:
+                result = build_result(result.fields, rescued)
 
     return result, primary
 
