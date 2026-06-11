@@ -5,10 +5,12 @@ what is printed, so a perfect tool should verify every field. ``manifest.json``
 records that correct verdict per field in ``golden`` — the ground truth the
 pipeline is scored **true/false** against, not the pipeline's own past output.
 
-Scoring takes the best verdict per field across the *full set* of label images,
-because a COLA submission is the set of affixed labels (the Government Warning
-usually sits on the back label, ABV on the front, …) and a reviewer sees them
-all.
+Each case is verified through the production multi-image path
+(:func:`app.verify.pipeline.verify_label_images`): the case's full set of label
+images is read and merged on best verdict per field, because a COLA submission
+is the set of affixed labels (the Government Warning usually sits on the back
+label, ABV on the front, …) and a reviewer sees them all. The eval and the API
+share this code path, so the measured accuracy is the product's accuracy.
 
 This is the honest accuracy measure on real data: it does **not** hide OCR
 limitations behind monotone baselines. The test prints a full scorecard listing
@@ -30,15 +32,11 @@ import pytest
 
 from app.api.schemas import ApplicationInput
 from app.ocr.service import get_ocr_service
-from app.verify.pipeline import verify_label_image
+from app.verify.pipeline import verify_label_images
 
 pytestmark = pytest.mark.eval
 
 _HERE = Path(__file__).parent
-
-# Best (lowest-rank) verdict wins when a field appears across several images.
-_FIELD_RANK = {"match": 0, "soft_warning": 1, "mismatch": 2, "absent": 3}
-_WARN_RANK = {"compliant": 0, "altered": 1, "missing": 2}
 
 # Minimum number of cases the pipeline must verify correctly per field — the
 # current measured accuracy. Raise these as OCR improves; never lower them.
@@ -49,11 +47,6 @@ _ACCURACY_FLOORS = {
     "net_contents": 27,
     "government_warning": 29,
 }
-
-
-def _best(values: list[str], rank: dict[str, int]) -> str:
-    present = [v for v in values if v in rank]
-    return min(present, key=lambda v: rank[v]) if present else "absent"
 
 
 def _field_ok(field: str, golden: str, actual: str) -> bool:
@@ -88,23 +81,15 @@ def test_cola_golden_accuracy() -> None:
 
     for case in manifest["cases"]:
         application = _application(case)
-        brand: list[str] = []
-        abv: list[str] = []
-        net: list[str] = []
-        warn: list[str] = []
-        for image in case["images"]:
-            verdict, _ = verify_label_image(application, str(_HERE / image["file"]), ocr=ocr)
-            by_field = {f.field: f.status.value for f in verdict.fields}
-            brand.append(by_field.get("brand_name", "absent"))
-            abv.append(by_field.get("alcohol_content", "absent"))
-            net.append(by_field.get("net_contents", "absent"))
-            warn.append(verdict.government_warning.verdict.value)
+        images = [str(_HERE / image["file"]) for image in case["images"]]
+        verdict, _ = verify_label_images(application, images, ocr=ocr)
 
+        by_field = {f.field: f.status.value for f in verdict.fields}
         actual = {
-            "brand_name": _best(brand, _FIELD_RANK),
-            "alcohol_content": _best(abv, _FIELD_RANK),
-            "net_contents": _best(net, _FIELD_RANK),
-            "government_warning": _best(warn, _WARN_RANK),
+            "brand_name": by_field.get("brand_name", "absent"),
+            "alcohol_content": by_field.get("alcohol_content", "absent"),
+            "net_contents": by_field.get("net_contents", "absent"),
+            "government_warning": verdict.government_warning.verdict.value,
         }
 
         marks: list[str] = []

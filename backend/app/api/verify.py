@@ -1,8 +1,10 @@
-"""Single-label verification endpoint.
+"""Label verification endpoint.
 
-``POST /api/verify`` accepts a label image plus the expected COLA fields
-(multipart form), runs the production hot path — preprocess -> OCR -> extract ->
-verify — persists a :class:`app.models.submission.Submission` (and the
+``POST /api/verify`` accepts a filing's label image set (repeated ``images``
+multipart parts — front, back, neck — or a single ``image`` for older clients)
+plus the expected COLA fields, runs the production hot path — preprocess ->
+OCR -> extract -> verify, merged per field across the set — persists a
+:class:`app.models.submission.Submission` (and the
 :class:`app.models.application.Application` it was checked against), and returns
 the verdict contract with timing.
 
@@ -24,16 +26,22 @@ from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from app.api.audit import record_event
-from app.api.schemas import ApplicationInput, TimingInfo, VerificationResponse
+from app.api.schemas import (
+    ApplicationInput,
+    TimingInfo,
+    VerificationImageInfo,
+    VerificationResponse,
+)
 from app.config import Settings, get_settings
 from app.db import get_db
 from app.models.application import Application
 from app.models.enums import ProductSource, ProductType, SubmissionStatus
 from app.models.submission import Submission
+from app.models.submission_image import SubmissionImage
 from app.ocr import OcrService, get_ocr_service
 from app.ocr.preprocess import decode_image
 from app.ocr.quality import assess_image_quality
-from app.verify import verify_label_image
+from app.verify import verify_label_images
 
 router = APIRouter(prefix="/api", tags=["verification"])
 
@@ -80,61 +88,101 @@ def _application_input(
         ) from exc
 
 
+# Upper bound on label images per verification: a COLA's attachments rarely
+# exceed front/back/neck/strip; the cap bounds worst-case OCR cost.
+MAX_IMAGES = 6
+
+
 @router.post("/verify", response_model=VerificationResponse)
 def verify(
-    image: Annotated[UploadFile, File(description="The label image to verify.")],
     application: Annotated[ApplicationInput, Depends(_application_input)],
     db: Annotated[Session, Depends(get_db)],
     settings: Annotated[Settings, Depends(get_settings)],
     ocr: Annotated[OcrService, Depends(get_ocr_service)],
+    image: Annotated[
+        UploadFile | None, File(description="A single label image (older clients).")
+    ] = None,
+    images: Annotated[
+        list[UploadFile] | None,
+        File(description="The filing's label images in order (front, back, …)."),
+    ] = None,
 ) -> VerificationResponse:
-    """Verify one label image against its expected application data."""
-    data = image.file.read()
-    if not data:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty image upload.")
-    if len(data) > MAX_UPLOAD_BYTES:
+    """Verify a filing's label image set against its expected application data.
+
+    Accepts the full set of label images a COLA carries (repeated ``images``
+    parts) — the mandatory content is split across them (warning on the back,
+    ABV on the front) — or a single ``image`` for older clients. Fields merge
+    on best verdict across the set; the result records which image each
+    verdict came from.
+    """
+    uploads = ([image] if image is not None else []) + list(images or [])
+    if not uploads:
         raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"Image exceeds the {MAX_UPLOAD_BYTES // (1024 * 1024)} MB limit.",
+            status_code=status.HTTP_400_BAD_REQUEST, detail="No label image was uploaded."
+        )
+    if len(uploads) > MAX_IMAGES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"At most {MAX_IMAGES} label images per verification.",
         )
 
-    # Validate the image is decodable before doing anything expensive, so a bad
-    # upload is a clean 422 rather than an OCR-time crash.
-    try:
-        decode_image(data)
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Uploaded file is not a readable image.",
-        ) from exc
+    datas: list[bytes] = []
+    for position, upload in enumerate(uploads):
+        data = upload.file.read()
+        if not data:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Image {position + 1} is an empty upload.",
+            )
+        if len(data) > MAX_UPLOAD_BYTES:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=(
+                    f"Image {position + 1} exceeds the "
+                    f"{MAX_UPLOAD_BYTES // (1024 * 1024)} MB limit."
+                ),
+            )
+        # Validate decodability before doing anything expensive, so a bad
+        # upload is a clean 422 rather than an OCR-time crash.
+        try:
+            decode_image(data)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Image {position + 1} is not a readable image file.",
+            ) from exc
+        datas.append(data)
 
-    image_ref = _store_upload(settings.upload_dir, image.filename, data)
+    image_refs = [
+        _store_upload(settings.upload_dir, upload.filename, data)
+        for upload, data in zip(uploads, datas, strict=True)
+    ]
     app_row = _persist_application(db, application)
 
     started = datetime.now(UTC)
     start = time.perf_counter()
-    # The adaptive pipeline: one OCR pass for clean labels, with conditional
-    # rotation/zoom rescue passes when mandatory content (notably the
-    # Government Warning) is not recovered. ocr_result is the first-pass read.
-    result, ocr_result = verify_label_image(application, data, ocr=ocr)
+    # The adaptive pipeline per image (one OCR pass for clean labels, with
+    # conditional rotation/zoom rescue passes), merged on best verdict per
+    # field across the filing's label set.
+    result, reads = verify_label_images(application, datas, ocr=ocr)
 
-    if not ocr_result.lines:
-        # Decodable but no text recovered: treat as unreadable rather than
-        # silently returning an all-mismatch verdict on a blank/garbled image.
+    if all(not read.lines for read in reads):
+        # Decodable but no text recovered anywhere: treat as unreadable rather
+        # than silently returning an all-mismatch verdict on blank images.
         elapsed_ms = int((time.perf_counter() - start) * 1000)
         _persist_submission(
             db,
             app_row,
-            image=image,
-            image_ref=image_ref,
+            uploads=uploads,
+            image_refs=image_refs,
             status=SubmissionStatus.FAILED,
             started_at=started,
             processing_ms=elapsed_ms,
-            error="No text could be recognised in the image.",
+            error="No text could be recognised in the uploaded image(s).",
         )
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="No text could be recognised in the image.",
+            detail="No text could be recognised in the uploaded image(s).",
         )
 
     elapsed_ms = int((time.perf_counter() - start) * 1000)
@@ -142,22 +190,30 @@ def verify(
     submission = _persist_submission(
         db,
         app_row,
-        image=image,
-        image_ref=image_ref,
+        uploads=uploads,
+        image_refs=image_refs,
         status=SubmissionStatus.COMPLETED,
         started_at=started,
         processing_ms=elapsed_ms,
         result=result.model_dump(mode="json"),
     )
 
+    qualities = [assess_image_quality(read) for read in reads]
+    # Retake guidance keys off the least readable image: a blurry back label
+    # warrants a retake even when the front read fine.
+    worst = min(qualities, key=lambda q: (q.level != "low", q.mean_confidence))
     return VerificationResponse(
         submission_id=submission.id,
         application_id=app_row.id,
         status=submission.status,
-        image_filename=image.filename,
-        timing=TimingInfo(total_ms=elapsed_ms, ocr_ms=int(ocr_result.elapsed_ms)),
+        image_filename=uploads[0].filename,
+        images=[
+            VerificationImageInfo(index=i, filename=upload.filename, quality=quality)
+            for i, (upload, quality) in enumerate(zip(uploads, qualities, strict=True))
+        ],
+        timing=TimingInfo(total_ms=elapsed_ms, ocr_ms=int(sum(read.elapsed_ms for read in reads))),
         result=result,
-        image_quality=assess_image_quality(ocr_result),
+        image_quality=worst,
     )
 
 
@@ -187,26 +243,40 @@ def _persist_submission(
     db: Session,
     application: Application,
     *,
-    image: UploadFile,
-    image_ref: str,
+    uploads: list[UploadFile],
+    image_refs: list[str],
     status: SubmissionStatus,
     started_at: datetime,
     processing_ms: int,
     result: dict | None = None,
     error: str | None = None,
 ) -> Submission:
-    """Insert and commit the submission record for this verification."""
+    """Insert and commit the submission record for this verification.
+
+    The submission's legacy image columns mirror the first image; the full
+    label set is stored as ordered :class:`SubmissionImage` rows, which is what
+    the result's ``image_index`` values refer to.
+    """
     submission = Submission(
         application=application,
-        image_ref=image_ref,
-        image_filename=image.filename,
-        content_type=image.content_type,
+        image_ref=image_refs[0],
+        image_filename=uploads[0].filename,
+        content_type=uploads[0].content_type,
         status=status,
         started_at=started_at,
         completed_at=datetime.now(UTC),
         processing_ms=processing_ms,
         result=result,
         error=error,
+        images=[
+            SubmissionImage(
+                position=position,
+                image_ref=ref,
+                image_filename=upload.filename,
+                content_type=upload.content_type,
+            )
+            for position, (upload, ref) in enumerate(zip(uploads, image_refs, strict=True))
+        ],
     )
     db.add(submission)
     db.flush()  # assign the submission id so the audit row can reference it
@@ -216,7 +286,8 @@ def _persist_submission(
         submission_id=submission.id,
         detail={
             "brand_name": application.brand_name,
-            "image_filename": image.filename,
+            "image_filename": uploads[0].filename,
+            "image_count": len(uploads),
             "processing_ms": processing_ms,
             "overall": (result or {}).get("overall"),
             "error": error,

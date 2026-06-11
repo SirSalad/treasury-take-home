@@ -30,6 +30,7 @@ def test_all_core_tables_registered() -> None:
     assert set(Base.metadata.tables) == {
         "applications",
         "submissions",
+        "submission_images",
         "batches",
         "batch_items",
         "audit_events",

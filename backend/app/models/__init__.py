@@ -14,6 +14,7 @@ from app.models.enums import (
     SubmissionStatus,
 )
 from app.models.submission import Submission
+from app.models.submission_image import SubmissionImage
 
 __all__ = [
     "Application",
@@ -24,5 +25,6 @@ __all__ = [
     "ProductSource",
     "ProductType",
     "Submission",
+    "SubmissionImage",
     "SubmissionStatus",
 ]

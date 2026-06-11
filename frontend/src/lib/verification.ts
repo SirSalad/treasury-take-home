@@ -15,7 +15,7 @@
 import type { VerificationStatus } from "@/lib/status";
 
 /** Wire-shape version; bumped by the backend when the contract changes. */
-export const RESULT_SCHEMA_VERSION = 1;
+export const RESULT_SCHEMA_VERSION = 2;
 
 /** Per-field outcome of comparing the label against the application. */
 export type FieldStatus = "match" | "soft_warning" | "mismatch" | "not_checked";
@@ -56,6 +56,8 @@ export interface FieldResult {
   score: number;
   span: SourceSpan | null;
   box: BoundingBox | null;
+  /** Which of the submission's images carried this verdict (null = single image). */
+  image_index: number | null;
   reason: string;
 }
 
@@ -69,6 +71,8 @@ export interface GovernmentWarningResult {
   limitations: string[];
   span: SourceSpan | null;
   box: BoundingBox | null;
+  /** Which of the submission's images carried this verdict (null = single image). */
+  image_index: number | null;
 }
 
 /** Counts of per-field statuses — a quick at-a-glance roll-up. */
@@ -103,14 +107,23 @@ export interface ImageQuality {
   message: string | null;
 }
 
+/** One image of the verified filing, with its readability grade. */
+export interface VerificationImageInfo {
+  index: number;
+  filename: string | null;
+  quality: ImageQuality;
+}
+
 /** The full `POST /api/verify` response. */
 export interface VerificationResponse {
   submission_id: number;
   application_id: number | null;
   status: SubmissionStatus;
   image_filename: string | null;
+  images: VerificationImageInfo[];
   timing: TimingInfo;
   result: VerificationResult;
+  /** Worst readability across the uploaded images (retake guidance). */
   image_quality: ImageQuality;
 }
 

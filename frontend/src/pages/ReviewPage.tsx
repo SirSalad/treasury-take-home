@@ -40,6 +40,7 @@ export function ReviewPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [activeImage, setActiveImage] = useState(0);
   const [zoom, setZoom] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [decisionError, setDecisionError] = useState<string | null>(null);
@@ -62,9 +63,15 @@ export function ReviewPage() {
 
   const result = detail?.result ?? null;
 
-  const regions = useMemo<ImageRegion[]>(() => {
+  // The filing's label set; legacy details without an images list still show
+  // their one image. Old results (schema v1) carry no image_index — treat as 0.
+  const images = detail?.images?.length
+    ? detail.images
+    : [{ index: 0, filename: detail?.image_filename ?? null, kind: null }];
+
+  const allRegions = useMemo<Array<ImageRegion & { imageIndex: number }>>(() => {
     if (!result) return [];
-    const out: ImageRegion[] = [];
+    const out: Array<ImageRegion & { imageIndex: number }> = [];
     for (const field of result.fields) {
       if (field.box) {
         out.push({
@@ -72,6 +79,7 @@ export function ReviewPage() {
           box: field.box,
           status: FIELD_STATUS_COLOR[field.status],
           label: fieldLabel(field.field),
+          imageIndex: field.image_index ?? 0,
         });
       }
     }
@@ -81,18 +89,33 @@ export function ReviewPage() {
         box: result.government_warning.box,
         status: WARNING_VERDICT_COLOR[result.government_warning.verdict],
         label: "Government Health Warning",
+        imageIndex: result.government_warning.image_index ?? 0,
       });
     }
     return out;
   }, [result]);
 
+  // Boxes are drawn only on the image they were found on.
+  const regions = useMemo<ImageRegion[]>(
+    () => allRegions.filter((region) => region.imageIndex === activeImage),
+    [allRegions, activeImage],
+  );
+
+  // Numbered across the whole set (not per image) so checklist refs are stable.
   const regionNumbers = useMemo(() => {
     const numbers = new Map<string, number>();
-    regions.forEach((region, index) => numbers.set(region.key, index + 1));
+    allRegions.forEach((region, index) => numbers.set(region.key, index + 1));
     return numbers;
-  }, [regions]);
+  }, [allRegions]);
 
   const highlight = activeKey ?? selectedKey;
+
+  // Selecting a checklist row jumps to the image that carries its box.
+  function selectKey(key: string) {
+    setSelectedKey((cur) => (cur === key ? null : key));
+    const region = allRegions.find((r) => r.key === key);
+    if (region) setActiveImage(region.imageIndex);
+  }
 
   function submitDecision(decision: ReviewDecision, note: string) {
     setSubmitting(true);
@@ -171,7 +194,10 @@ export function ReviewPage() {
     ["Applicant", detail.applicant ?? "—"],
     ["Product Type", String(application.product_type ?? "—").replace(/_/g, " ")],
     ["Class / Type", detail.class_type ?? "—"],
-    ["Image", detail.image_filename ?? "—"],
+    [
+      images.length > 1 ? "Images" : "Image",
+      images.length > 1 ? `${images.length} labels` : (detail.image_filename ?? "—"),
+    ],
   ];
 
   return (
@@ -225,7 +251,9 @@ export function ReviewPage() {
             height so it fills the screen without pushing the page taller. */}
         <div className="flex flex-col overflow-hidden rounded-[10px] border border-fed-line bg-white shadow-card">
           <div className="flex items-center justify-between border-b border-[#e6e8ea] px-4 py-2.5">
-            <h3 className="text-[13.5px] font-bold text-fed-navy">Submitted Label</h3>
+            <h3 className="text-[13.5px] font-bold text-fed-navy">
+              {images.length > 1 ? "Submitted Labels" : "Submitted Label"}
+            </h3>
             <div className="flex gap-1.5">
               <button
                 type="button"
@@ -245,14 +273,50 @@ export function ReviewPage() {
               </button>
             </div>
           </div>
+          {images.length > 1 && (
+            <div
+              role="tablist"
+              aria-label="Label images"
+              className="flex gap-1 border-b border-[#e6e8ea] bg-[#f7f8f9] px-3 py-1.5"
+            >
+              {images.map((img, i) => {
+                const boxCount = allRegions.filter((r) => r.imageIndex === i).length;
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeImage === i}
+                    title={img.filename ?? undefined}
+                    onClick={() => setActiveImage(i)}
+                    className={
+                      "rounded-md px-3 py-1 text-[12px] font-semibold " +
+                      (activeImage === i
+                        ? "bg-fed-blue text-white"
+                        : "text-fed-gray hover:bg-fed-blue-wash")
+                    }
+                  >
+                    Image {i + 1}
+                    {img.kind ? ` · ${img.kind}` : ""}
+                    {boxCount > 0 && (
+                      <span className="ml-1.5 rounded-full bg-black/15 px-1.5 text-[10.5px] tabular-nums">
+                        {boxCount}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
           <div className="flex items-center justify-center overflow-auto bg-[#41464d] p-3">
             <div style={{ transform: `scale(${zoom})`, transition: "transform .18s" }}>
               <LabelImage
-                src={api.submissionImageUrl(detail.id)}
-                alt={`Label image for ${detail.brand_name ?? "submission"}`}
+                key={activeImage}
+                src={api.submissionImageUrl(detail.id, activeImage)}
+                alt={`Label image ${activeImage + 1} for ${detail.brand_name ?? "submission"}`}
                 regions={regions}
                 activeKey={highlight}
-                onSelect={(key) => setSelectedKey((cur) => (cur === key ? null : key))}
+                onSelect={selectKey}
                 imgClassName="h-auto w-auto max-h-[calc(100vh-230px)]"
               />
             </div>
@@ -262,7 +326,9 @@ export function ReviewPage() {
               aria-hidden="true"
               className="inline-block h-[9px] w-[9px] rounded-[2px] bg-fed-green"
             />
-            Hover a checklist row to see where it was found on the label.
+            {images.length > 1
+              ? "Click a checklist row to jump to the image where it was found."
+              : "Hover a checklist row to see where it was found on the label."}
           </p>
         </div>
 
@@ -273,7 +339,7 @@ export function ReviewPage() {
             regionNumbers={regionNumbers}
             activeKey={highlight}
             onActivate={setActiveKey}
-            onSelect={(key) => setSelectedKey((cur) => (cur === key ? null : key))}
+            onSelect={selectKey}
           />
           <WarningHero result={result.government_warning} />
         </div>

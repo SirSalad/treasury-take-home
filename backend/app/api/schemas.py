@@ -43,14 +43,29 @@ class TimingInfo(BaseModel):
     ocr_ms: int
 
 
+class VerificationImageInfo(BaseModel):
+    """One image of the verified filing, with its readability grade."""
+
+    index: int
+    filename: str | None
+    quality: ImageQuality
+
+
 class VerificationResponse(BaseModel):
-    """The API response for a single label verification."""
+    """The API response for one verification (a filing's full label set).
+
+    ``image_filename`` mirrors the first image for older clients; ``images``
+    lists every uploaded label with its per-image readability. The result's
+    fields carry ``image_index`` into this list.
+    """
 
     submission_id: int
     application_id: int | None
     status: SubmissionStatus
     image_filename: str | None
+    images: list[VerificationImageInfo]
     timing: TimingInfo
     result: VerificationResult
-    # How readable the uploaded image was, for retake guidance in the UI.
+    # Worst readability across the uploaded images — retake guidance: a blurry
+    # back label warrants a retake even when the front read fine.
     image_quality: ImageQuality

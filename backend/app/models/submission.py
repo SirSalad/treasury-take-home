@@ -1,9 +1,11 @@
 """Submission model: a single label-verification job.
 
-One uploaded label image, the expected :class:`Application` it is checked
-against (optional), processing status/timing, and the verification ``result``
-JSON produced by the OCR + matching pipeline. Submissions are used both for
-single uploads and as the unit of work inside a batch (see :class:`BatchItem`).
+One filing's label image set (front/back/neck — see
+:class:`app.models.submission_image.SubmissionImage`), the expected
+:class:`Application` it is checked against (optional), processing
+status/timing, and the verification ``result`` JSON produced by the OCR +
+matching pipeline. Submissions are used both for single uploads and as the
+unit of work inside a batch (see :class:`BatchItem`).
 """
 
 from datetime import datetime
@@ -20,6 +22,7 @@ from app.models.types import JSONType, TimestampMixin
 if TYPE_CHECKING:
     from app.models.application import Application
     from app.models.batch import BatchItem
+    from app.models.submission_image import SubmissionImage
 
 
 class Submission(TimestampMixin, Base):
@@ -34,6 +37,8 @@ class Submission(TimestampMixin, Base):
     )
 
     # Reference to the stored image (path or object-store key) plus metadata.
+    # For multi-image submissions these mirror the first image of ``images``;
+    # single-image writers (seed, batch ingest) populate only these columns.
     image_ref: Mapped[str] = mapped_column(String(512), nullable=False)
     image_filename: Mapped[str | None] = mapped_column(String(255))
     content_type: Mapped[str | None] = mapped_column(String(128))
@@ -61,6 +66,13 @@ class Submission(TimestampMixin, Base):
     decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     application: Mapped["Application | None"] = relationship(back_populates="submissions")
+    # The filing's full label set (front/back/neck), in upload order. Empty for
+    # legacy/single-image rows, whose image lives on ``image_ref`` directly.
+    images: Mapped[list["SubmissionImage"]] = relationship(
+        back_populates="submission",
+        cascade="all, delete-orphan",
+        order_by="SubmissionImage.position",
+    )
     # Deleting a submission removes its batch link; submissions themselves are
     # durable verification records and outlive the batch that grouped them.
     batch_item: Mapped["BatchItem | None"] = relationship(

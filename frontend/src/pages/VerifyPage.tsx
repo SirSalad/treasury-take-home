@@ -25,28 +25,28 @@ export function VerifyPage() {
   const navigate = useNavigate();
   const [phase, setPhase] = React.useState<Phase>({ name: "input" });
   const [form, setForm] = React.useState<ApplicationFormData>(EMPTY_APPLICATION_FORM);
-  const [image, setImage] = React.useState<File | null>(null);
+  const [images, setImages] = React.useState<File[]>([]);
   const [imageError, setImageError] = React.useState<string | undefined>();
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
 
-  // Hold an object URL for the selected image so the picker can preview it.
+  // Hold an object URL for the first image so the scanning card can preview it.
   React.useEffect(() => {
-    if (!image) {
+    if (!images.length) {
       setPreviewUrl(null);
       return;
     }
-    const url = URL.createObjectURL(image);
+    const url = URL.createObjectURL(images[0]);
     setPreviewUrl(url);
     return () => URL.revokeObjectURL(url);
-  }, [image]);
+  }, [images]);
 
   // Abort an in-flight request if the user navigates away mid-verification.
   const abortRef = React.useRef<AbortController | null>(null);
   React.useEffect(() => () => abortRef.current?.abort(), []);
 
   async function runVerification(values: ApplicationFormData) {
-    if (!image) {
-      setImageError("Add the label image to verify against the application.");
+    if (!images.length) {
+      setImageError("Add at least one label image to verify against the application.");
       return;
     }
     setImageError(undefined);
@@ -56,7 +56,7 @@ export function VerifyPage() {
     abortRef.current = controller;
     setPhase({ name: "submitting" });
     try {
-      const response = await api.verify(image, values, controller.signal);
+      const response = await api.verify(images, values, controller.signal);
       navigate(`/review/${response.submission_id}`);
     } catch (err) {
       if (controller.signal.aborted) return;
@@ -144,9 +144,11 @@ export function VerifyPage() {
       <section className="mb-7">
         <h3 className="mb-2 text-lg font-bold text-fed-ink">Label artwork</h3>
         <p className="mb-2 text-sm text-fed-gray">
-          Upload a photo or scan of the physical label. This is the “actual” side of the comparison.
+          Upload the filing’s label images — front, back, neck — as photos or scans. The mandatory
+          content is split across them (the Government Warning usually sits on the back label), so
+          including the full set is what lets every field verify.
         </p>
-        <LabelUpload value={image} onChange={setImage} previewUrl={previewUrl} error={imageError} />
+        <LabelUpload value={images} onChange={setImages} error={imageError} />
       </section>
 
       <ApplicationForm initialValue={form} onSubmit={runVerification} />

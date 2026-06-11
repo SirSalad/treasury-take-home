@@ -19,7 +19,12 @@ import numpy as np
 from app.api.schemas import ApplicationInput
 from app.ocr.schemas import BoundingBox, OcrResult, TextLine
 from app.verify import GOVERNMENT_WARNING_TEXT, FieldStatus, WarningVerdict
-from app.verify.pipeline import _remap_result, _rotations, verify_label_image
+from app.verify.pipeline import (
+    _remap_result,
+    _rotations,
+    verify_label_image,
+    verify_label_images,
+)
 
 # --- Geometry: rotation mappers ------------------------------------------------
 
@@ -188,3 +193,85 @@ def test_tampered_warning_not_rescued_into_compliance() -> None:
     sideways = cv2.rotate(_render_label(tampered), cv2.ROTATE_90_CLOCKWISE)
     result, _ = verify_label_image(_application(), sideways)
     assert result.government_warning.verdict is not WarningVerdict.COMPLIANT
+
+
+# --- Multi-image: a filing's full label set --------------------------------------
+
+
+def _render_front() -> np.ndarray:
+    """A front label: brand, class, ABV, net contents — no warning."""
+    canvas = np.full((400, 1000, 3), 255, dtype=np.uint8)
+    cv2.putText(canvas, "OLD TOM DISTILLERY", (40, 90), cv2.FONT_HERSHEY_SIMPLEX, 1.4, (0, 0, 0), 3)
+    cv2.putText(
+        canvas,
+        "Kentucky Straight Bourbon Whiskey",
+        (40, 160),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.9,
+        (0, 0, 0),
+        2,
+    )
+    cv2.putText(
+        canvas,
+        "45% Alc./Vol. (90 Proof)   750 mL",
+        (40, 230),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.9,
+        (0, 0, 0),
+        2,
+    )
+    return canvas
+
+
+def _render_back(abv_line: str | None = None) -> np.ndarray:
+    """A back label: the Government Warning (and optionally an ABV statement)."""
+    canvas = np.full((520, 1000, 3), 255, dtype=np.uint8)
+    if abv_line:
+        cv2.putText(canvas, abv_line, (40, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 0), 2)
+    words = GOVERNMENT_WARNING_TEXT.split()
+    line, y = "", 160
+    for word in words:
+        if len(line) + len(word) > 55:
+            cv2.putText(canvas, line, (40, y), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 0), 2)
+            line, y = "", y + 40
+        line = f"{line} {word}".strip()
+    if line:
+        cv2.putText(canvas, line, (40, y), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 0), 2)
+    return canvas
+
+
+def test_filing_image_set_merges_front_and_back() -> None:
+    # The warning lives on the back label, ABV/brand on the front — exactly how
+    # real COLAs split their content. The merged verdict must verify everything
+    # and record which image each field came from.
+    result, reads = verify_label_images(_application(), [_render_front(), _render_back()])
+
+    assert len(reads) == 2
+    assert result.government_warning.verdict is WarningVerdict.COMPLIANT
+    assert result.government_warning.image_index == 1
+    by_field = {f.field: f for f in result.fields}
+    assert by_field["alcohol_content"].status is FieldStatus.MATCH
+    assert by_field["alcohol_content"].image_index == 0
+    assert by_field["brand_name"].image_index == 0
+
+
+def test_images_with_conflicting_abv_flag_a_disagreement() -> None:
+    # Front prints 45 % (matching the application), back prints 40 %: the
+    # filing's labels disagree. A silent best-verdict pass would hide that —
+    # the merged field must come back as a soft warning for review.
+    front = _render_front()
+    back = _render_back(abv_line="40% Alc./Vol.")
+    result, _ = verify_label_images(_application(), [front, back])
+
+    abv = next(f for f in result.fields if f.field == "alcohol_content")
+    assert abv.status is FieldStatus.SOFT_WARNING
+    assert "disagree" in abv.reason
+
+
+def test_single_image_set_keeps_unindexed_results() -> None:
+    # With one image there is nothing to disambiguate: image_index stays None,
+    # matching the single-image contract.
+    result, reads = verify_label_images(_application(), [_render_front()])
+    assert len(reads) == 1
+    assert all(f.image_index is None for f in result.fields)
+    assert result.government_warning.image_index is None
