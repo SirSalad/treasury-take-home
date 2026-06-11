@@ -316,9 +316,11 @@ export function ReviewPage() {
             </div>
           )}
           {/* Layout-affecting zoom (no CSS transform): the image's real size
-              grows, so this container gains true scroll range and a focused
-              region can be centered with scrollIntoView. */}
-          <div className="flex max-h-[calc(100vh-230px)] items-start justify-center overflow-auto bg-[#41464d] p-3">
+              grows, so this container gains true scroll range. The child uses
+              m-auto (not justify/items-center) — flex-centering makes
+              start-side overflow unreachable; auto margins center when the
+              image fits and collapse cleanly when it overflows. */}
+          <div className="flex max-h-[calc(100vh-230px)] overflow-auto bg-[#41464d] p-3">
             <LabelImage
               key={activeImage}
               src={api.submissionImageUrl(detail.id, activeImage)}
@@ -329,6 +331,7 @@ export function ReviewPage() {
               zoom={zoom}
               onAutoZoom={setZoom}
               onSelect={selectKey}
+              className="m-auto"
               imgClassName="h-auto w-auto max-h-[calc(100vh-260px)]"
             />
           </div>
