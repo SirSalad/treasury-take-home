@@ -11,7 +11,10 @@ stat cards, and audit trail all demo with realistic data:
 
 Seeding is **idempotent per case**: a case whose image is already present as a
 submission is skipped, so it is safe to run on every container boot and to
-re-run after adding new cases (it tops up rather than duplicating).
+re-run after adding new cases (it tops up rather than duplicating). It also
+**self-heals** — if a seeded row's image file is missing (e.g. a redeploy
+recreated the container and its uploads were not on a persistent volume), the
+file is restored from the packaged bytes so the review screen renders again.
 """
 
 from __future__ import annotations
@@ -20,6 +23,7 @@ import json
 from datetime import UTC, datetime
 from importlib import resources
 from importlib.resources.abc import Traversable
+from pathlib import Path
 from typing import Protocol
 
 from sqlalchemy import select
@@ -117,20 +121,30 @@ def seed_demo(db: Session, ocr: SupportsExtract, upload_dir: str = "uploads") ->
     skipped, so re-running tops the queue up rather than duplicating.
     """
     data = resources.files("app.seed") / "data"
-    seeded_images = set(
-        db.scalars(select(Submission.image_filename).where(Submission.image_filename.is_not(None)))
-    )
+    # Existing seeded rows, keyed by image filename, so we can both skip
+    # already-seeded cases and heal ones whose image file has gone missing
+    # (e.g. a redeploy recreated the container before uploads were on a volume).
+    existing: dict[str, Submission] = {
+        s.image_filename: s
+        for s in db.scalars(select(Submission).where(Submission.image_filename.is_not(None)))
+        if s.image_filename is not None
+    }
 
     created = 0
     for manifest_name, subdir in _MANIFESTS:
         manifest = json.loads((data / manifest_name).read_text())
         image_dir = data if subdir == "." else data / subdir
         for case in manifest["cases"]:
-            if case["image"] in seeded_images:
-                continue
-            _seed_case(db, ocr, upload_dir, image_dir, case)
-            seeded_images.add(case["image"])
-            created += 1
+            prior = existing.get(case["image"])
+            if prior is None:
+                _seed_case(db, ocr, upload_dir, image_dir, case)
+                created += 1
+            elif not Path(prior.image_ref).is_file():
+                # Row survived but its image file did not — restore it from the
+                # packaged bytes so the review screen renders again.
+                prior.image_ref = _store_upload(
+                    upload_dir, case["image"], (image_dir / case["image"]).read_bytes()
+                )
 
     db.commit()
     return created

@@ -49,6 +49,12 @@ services:
       # (pass/warning/fail + recorded decisions) on boot — demo data for the
       # review queue. Always a no-op once any submission exists.
       SEED_DEMO: ${SEED_DEMO:-0}
+    volumes:
+      # Uploaded label images live here (Submission.image_ref points into it).
+      # A named volume keeps them across container recreates/redeploys —
+      # without it, every redeploy wipes the files and the stored rows render
+      # broken images. WORKDIR is /app and the default upload_dir is "uploads".
+      - uploads:/app/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -73,3 +79,4 @@ services:
 
 volumes:
   pgdata:
+  uploads:

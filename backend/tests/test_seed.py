@@ -54,3 +54,21 @@ def test_seed_tops_up_after_partial(db_session: Session, tmp_path) -> None:
 
     assert seed_demo(db_session, _FakeOcr(_LINES), upload_dir=str(tmp_path)) == 1
     assert len(db_session.scalars(select(Submission)).all()) == _TOTAL
+
+
+def test_seed_heals_missing_image_files(db_session: Session, tmp_path) -> None:
+    # Rows survive but their image files are wiped (a redeploy with no uploads
+    # volume): reseeding creates nothing new but restores every file on disk.
+    from pathlib import Path
+
+    seed_demo(db_session, _FakeOcr(_LINES), upload_dir=str(tmp_path))
+    submissions = db_session.scalars(select(Submission)).all()
+    for s in submissions:
+        Path(s.image_ref).unlink()
+    assert not any(Path(s.image_ref).is_file() for s in submissions)
+
+    created = seed_demo(db_session, _FakeOcr(_LINES), upload_dir=str(tmp_path))
+    assert created == 0  # no new rows
+    db_session.expire_all()
+    restored = db_session.scalars(select(Submission)).all()
+    assert all(Path(s.image_ref).is_file() for s in restored)
