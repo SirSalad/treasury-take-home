@@ -19,6 +19,7 @@ from app.extract import (
     extract_from_text,
 )
 from app.ocr import get_ocr_service
+from app.ocr.schemas import BoundingBox, OcrResult, TextLine
 
 FIXTURE = Path(__file__).parent / "fixtures" / "sample_label.png"
 
@@ -44,10 +45,28 @@ def _best_value(text: str, field: FieldName) -> str | None:
         # Jack Daniel's 70cl bottle: "70cl 40% Vol.").
         ("70cl 40% Vol.", "40"),
         ("40% vol", "40"),
+        # Craft-beer "ABV" anchor, both orders (real label: Beach Ball "5.1% ABV").
+        ("5.1% ABV", "5.1"),
+        ("5.1%ABV", "5.1"),
+        ("ABV: 5.1%", "5.1"),
+        # Spelled-out form with OCR-stripped spaces (real label: Unruly Spirits).
+        ("40%ALCOHOLBYVOLUME", "40"),
+        ("40% ALCOHOL BY VOLUME", "40"),
+        # OCR digit confusion: capital I / lowercase l read where a 1 was
+        # printed (real label: Anthony's "I3%ALC/VOL" in a stylised typeface).
+        ("I3%ALC/VOL", "13"),
+        ("l2% Alc. by Vol.", "12"),
     ],
 )
 def test_abv_surface_forms(text: str, expected: str) -> None:
     assert _best_value(text, FieldName.ABV) == expected
+
+
+def test_digit_confusion_fix_does_not_touch_words() -> None:
+    # The I→1 normalisation applies only where the letter abuts a digit; words
+    # like "Illinois" (or a roman-numeral "Vol. II") are never rewritten.
+    assert _best_value("Bottled in Illinois 45% Alc./Vol.", FieldName.ABV) == "45"
+    assert _best_value("Vol. II of the series", FieldName.ABV) is None
 
 
 def test_abv_ignores_unanchored_percentage() -> None:
@@ -74,6 +93,73 @@ def test_abv_does_not_capture_proof_number() -> None:
 )
 def test_proof_surface_forms(text: str, expected: str) -> None:
     assert _best_value(text, FieldName.PROOF) == expected
+
+
+# --- Cross-line assembly (unit-caption adjacency, proof→ABV) -------------------
+
+
+def _ocr_line(text: str, *, x: float, y: float, w: float = 80.0, h: float = 20.0) -> TextLine:
+    polygon = [(x, y), (x + w, y), (x + w, y + h), (x, y + h)]
+    box = BoundingBox.from_polygon(polygon)
+    return TextLine(text=text, confidence=0.95, polygon=polygon, box=box)
+
+
+def test_abv_assembled_from_number_next_to_caption() -> None:
+    # Stylised spirits layout (real label: Land Run): a big "50" with a small
+    # "ALC/VOL" caption beside it, detected as separate lines.
+    ocr = OcrResult(
+        lines=[
+            _ocr_line("STRAIGHT BOURBON WHISKEY", x=10, y=0),
+            _ocr_line("50", x=10, y=40, w=60, h=50),
+            _ocr_line("ALC/VOL", x=75, y=70),
+        ]
+    )
+    best = extract_fields(ocr).best(FieldName.ABV)
+    assert best is not None
+    assert best.value == "50"
+
+
+def test_adjacency_ignores_far_away_numbers() -> None:
+    # A bare number elsewhere on the label must not be glued to the caption.
+    ocr = OcrResult(
+        lines=[
+            _ocr_line("12", x=10, y=0),  # plausible as an ABV, but far above
+            _ocr_line("ALC/VOL", x=75, y=700),
+        ]
+    )
+    assert extract_fields(ocr).best(FieldName.ABV) is None
+
+
+def test_adjacency_defers_to_inline_statement() -> None:
+    # When an inline ABV exists, adjacency must not add a competing candidate.
+    ocr = OcrResult(
+        lines=[
+            _ocr_line("45% Alc./Vol.", x=10, y=0),
+            _ocr_line("50", x=10, y=40),
+            _ocr_line("ALC/VOL", x=75, y=45),
+        ]
+    )
+    candidates = extract_fields(ocr).for_field(FieldName.ABV)
+    assert [c.value for c in candidates] == ["45"]
+
+
+def test_abv_derived_from_proof_when_absent() -> None:
+    # US proof is exactly twice ABV (27 CFR 5.65): "80 PROOF" pins ABV at 40,
+    # at a discounted confidence since it is derived rather than read.
+    ocr = OcrResult(lines=[_ocr_line("80 PROOF", x=10, y=0)])
+    extraction = extract_fields(ocr)
+    best = extraction.best(FieldName.ABV)
+    assert best is not None
+    assert best.value == "40"
+    proof = extraction.best(FieldName.PROOF)
+    assert proof is not None
+    assert best.confidence < proof.confidence
+
+
+def test_abv_not_derived_when_directly_stated() -> None:
+    ocr = OcrResult(lines=[_ocr_line("45% Alc./Vol. (90 Proof)", x=10, y=0)])
+    candidates = extract_fields(ocr).for_field(FieldName.ABV)
+    assert [c.value for c in candidates] == ["45"]
 
 
 # --- Net contents ------------------------------------------------------------

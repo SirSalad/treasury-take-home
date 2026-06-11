@@ -242,12 +242,16 @@ scraped from the TTB Public COLA Registry** — 10 each wine/spirits/malt — wi
 the actual label artwork filed with each application and the filed form fields
 as ground truth. This is exactly the input the product is built for, as it
 exists in the wild: handwritten keg collars, rotated can wraps, a genuine 3%
-lager. Expectations are monotone (equal-or-better passes, regressions fail), so
-the set honestly encodes today's measured gaps — most notably that the
-Government Warning on can wraps/keg collars usually runs 90° to the artwork and
-is missed by OCR (found on only 10/30 real labels, vs. brand verified on
-29/30 and ABV read on 23/30). See `backend/tests/eval_cola/README.md` for
-methodology and traceability (every case carries its public TTB ID).
+lager. Per-field accuracy floors form a ratchet (equal-or-better passes,
+regressions fail). The set initially measured the Government Warning at 10/30 —
+on can wraps and keg collars it usually runs 90° to the artwork. That finding
+drove the adaptive rescue passes (`app/verify/pipeline.py`: conditional ±90°
+re-OCR and a crop-and-upscale re-read of the warning region) plus
+fragmented-read word coverage and extractor hardening, lifting measured
+accuracy to **brand 29/30, ABV 30/30, net contents 27/28, Government Warning
+29/30**. The remaining gap is one arc-curved keg cap and one script logotype,
+both documented. See `backend/tests/eval_cola/README.md` for methodology and
+traceability (every case carries its public TTB ID).
 
 ```bash
 cd backend && pytest -m eval tests/eval_cola -s

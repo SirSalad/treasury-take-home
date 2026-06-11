@@ -460,12 +460,12 @@
    },
    "label_truth": {
     "printed_brand": "COYOTE DAWN",
-    "alcohol_content_pct": 45.0,
-    "alcohol_content_text": "45% Alc by Vol",
+    "alcohol_content_pct": 40.0,
+    "alcohol_content_text": "40% Alc by Vol",
     "net_contents": "750 ml",
     "vintage": null,
     "government_warning": "present",
-    "notes": "90 proof; handwritten story over burning-paper photo; warning body lowercase"
+    "notes": "80 proof; handwritten story over burning-paper photo; warning body lowercase; annotation fix 2026-06-11: zoomed crop shows the label prints 40% Alc by Vol / 80 PROOF, the earlier 45%/90-proof annotation was a misread"
    },
    "golden": {
     "brand_name": "match",

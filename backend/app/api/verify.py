@@ -33,7 +33,7 @@ from app.models.submission import Submission
 from app.ocr import OcrService, get_ocr_service
 from app.ocr.preprocess import decode_image
 from app.ocr.quality import assess_image_quality
-from app.verify import verify_label
+from app.verify import verify_label_image
 
 router = APIRouter(prefix="/api", tags=["verification"])
 
@@ -113,7 +113,10 @@ def verify(
 
     started = datetime.now(UTC)
     start = time.perf_counter()
-    ocr_result = ocr.extract(data)
+    # The adaptive pipeline: one OCR pass for clean labels, with conditional
+    # rotation/zoom rescue passes when mandatory content (notably the
+    # Government Warning) is not recovered. ocr_result is the first-pass read.
+    result, ocr_result = verify_label_image(application, data, ocr=ocr)
 
     if not ocr_result.lines:
         # Decodable but no text recovered: treat as unreadable rather than
@@ -134,7 +137,6 @@ def verify(
             detail="No text could be recognised in the image.",
         )
 
-    result = verify_label(application, ocr_result)
     elapsed_ms = int((time.perf_counter() - start) * 1000)
 
     submission = _persist_submission(

@@ -53,12 +53,19 @@ _TINY_PNG = _valid_png()
 
 
 class _FakeOcr:
-    """Stand-in OCR service returning preset lines, ignoring the image bytes."""
+    """Stand-in OCR service returning preset lines, ignoring the image bytes.
+
+    Mirrors the :class:`app.ocr.service.OcrService` surface the adaptive
+    pipeline uses (``max_side``, ``extract(..., max_side=...)``); every call
+    returns the same lines, so rescue passes are idempotent here.
+    """
+
+    max_side = 1600
 
     def __init__(self, texts: list[str]) -> None:
         self._texts = texts
 
-    def extract(self, _image: object) -> OcrResult:
+    def extract(self, _image: object, *, max_side: int | None = None) -> OcrResult:
         box = BoundingBox(x_min=0, y_min=0, x_max=100, y_max=10)
         lines = [
             TextLine(
