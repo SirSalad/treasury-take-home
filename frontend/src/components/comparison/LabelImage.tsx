@@ -95,6 +95,70 @@ export function LabelImage({
   const wrapperRef = React.useRef<HTMLDivElement>(null);
   const regionRefs = React.useRef(new Map<string, HTMLButtonElement>());
 
+  // Drag-to-pan over the zoomed image. The pointer is captured on the wrapper
+  // so the pan keeps tracking outside it; movement past a small threshold
+  // counts as a drag and suppresses the click that would otherwise select a
+  // region box under the cursor.
+  const panRef = React.useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    scrollLeft: number;
+    scrollTop: number;
+    dragged: boolean;
+  } | null>(null);
+  const [panning, setPanning] = React.useState(false);
+
+  function handlePointerDown(event: React.PointerEvent<HTMLDivElement>) {
+    // Left button / primary touch only; let right-click menus through.
+    if (event.button !== 0) return;
+    const container = closestScrollable(wrapperRef.current);
+    if (!container) return;
+    panRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      scrollLeft: container.scrollLeft,
+      scrollTop: container.scrollTop,
+      dragged: false,
+    };
+  }
+
+  function handlePointerMove(event: React.PointerEvent<HTMLDivElement>) {
+    const pan = panRef.current;
+    if (!pan || event.pointerId !== pan.pointerId) return;
+    const dx = event.clientX - pan.startX;
+    const dy = event.clientY - pan.startY;
+    if (!pan.dragged && Math.hypot(dx, dy) < 5) return; // still a click
+    if (!pan.dragged) {
+      // Capture only once it is a real drag — capturing on pointerdown would
+      // retarget the derived click away from the region buttons.
+      event.currentTarget.setPointerCapture(pan.pointerId);
+    }
+    pan.dragged = true;
+    setPanning(true);
+    const container = closestScrollable(wrapperRef.current);
+    container?.scrollTo({ left: pan.scrollLeft - dx, top: pan.scrollTop - dy });
+  }
+
+  function handlePointerEnd(event: React.PointerEvent<HTMLDivElement>) {
+    const pan = panRef.current;
+    if (!pan || event.pointerId !== pan.pointerId) return;
+    setPanning(false);
+    // Keep panRef.dragged alive through the click that follows pointerup; the
+    // click-capture handler below reads and clears it.
+    if (!pan.dragged) panRef.current = null;
+  }
+
+  function handleClickCapture(event: React.MouseEvent<HTMLDivElement>) {
+    if (panRef.current?.dragged) {
+      // This click is the tail end of a pan, not a selection.
+      event.preventDefault();
+      event.stopPropagation();
+      panRef.current = null;
+    }
+  }
+
   function handleLoad(event: React.SyntheticEvent<HTMLImageElement>) {
     const img = event.currentTarget;
     if (img.naturalWidth && img.naturalHeight) {
@@ -161,12 +225,23 @@ export function LabelImage({
     // container while the image grows would shear every box off the artwork.
     <div
       ref={wrapperRef}
-      className={cn("relative inline-block", !zoomed && "max-w-full", className)}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerEnd}
+      onPointerCancel={handlePointerEnd}
+      onClickCapture={handleClickCapture}
+      className={cn(
+        "relative inline-block touch-none select-none",
+        !zoomed && "max-w-full",
+        panning ? "cursor-grabbing" : "cursor-grab",
+        className,
+      )}
     >
       <img
         src={src}
         alt={alt}
         onLoad={handleLoad}
+        draggable={false}
         // Inline sizing overrides the fit classes while zoomed, growing the
         // layout box so the overflow container gains real scroll range.
         style={
