@@ -1,19 +1,19 @@
-# Full local stack: Postgres + FastAPI backend + nginx-served frontend.
+# Full stack: Postgres + FastAPI backend + nginx-served frontend.
 #
-#   docker compose -f docker/docker-compose.yml up --build
+# This base file publishes NO host ports, so it deploys as-is under a
+# reverse-proxy PaaS (Dokploy/Traefik, Coolify, ...): the proxy reaches
+# containers over the docker network by container port — route the domain to
+# service `frontend`, port 80. Everything else is internal (backend:8000,
+# db:5432); publishing them would only invite host port collisions, and
+# exposing dev-credential Postgres on a shared host would be unsafe.
 #
-# Then open http://localhost:8080 (frontend). The frontend proxies /api/* to
-# the backend, which exposes /health directly on :8000.
+# For local development, add the dev overlay to publish the usual ports
+# (frontend on :8080, backend on :8000):
 #
-# Host port publishes are for local development and are overridable
-# (FRONTEND_PORT / BACKEND_PORT). Under a reverse-proxy PaaS (Dokploy/Traefik,
-# Coolify, ...) the proxy reaches containers over the docker network by
-# container port — route the domain to service `frontend`, port 80 — and the
-# published ports are unused; set FRONTEND_PORT/BACKEND_PORT if the defaults
-# collide with other apps on the host. Postgres is intentionally not published:
-# the backend reaches it as db:5432 on the internal network, and exposing it
-# (with these dev credentials) on a shared host would be unsafe. For local
-# psql, use: docker compose -f docker/docker-compose.yml exec db psql -U postgres labelverify
+#   docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml up --build
+#
+# Then open http://localhost:8080. For local psql:
+#   docker compose -f docker/docker-compose.yml exec db psql -U postgres labelverify
 
 name: ttb-label-verify
 
@@ -45,8 +45,6 @@ services:
       # explicitly in case the API is called directly during development.
       # Override with the public URL when deploying behind a domain.
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
-    ports:
-      - "${BACKEND_PORT:-8000}:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -65,8 +63,6 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.frontend
     restart: unless-stopped
-    ports:
-      - "${FRONTEND_PORT:-8080}:80"
     depends_on:
       backend:
         condition: service_healthy

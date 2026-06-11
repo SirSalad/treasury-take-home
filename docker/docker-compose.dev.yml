@@ -1,0 +1,16 @@
+# Local-development overlay: publishes host ports on top of the portless base
+# stack (the base deploys as-is behind a reverse proxy; see docker-compose.yml).
+#
+#   docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml up --build
+#
+# Frontend: http://localhost:8080 (override with FRONTEND_PORT)
+# Backend:  http://localhost:8000 (override with BACKEND_PORT)
+
+services:
+  backend:
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+
+  frontend:
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"

@@ -94,7 +94,7 @@ pnpm install      # or: npm install
 ### Everything (Docker Compose) — recommended
 
 ```bash
-docker compose -f docker/docker-compose.yml up --build
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml up --build
 ```
 
 This brings up three services and waits for each to become healthy:
@@ -105,6 +105,12 @@ This brings up three services and waits for each to become healthy:
 | `backend`  | FastAPI + RapidOCR         | http://localhost:8000  | `/health` probe; OCR models baked in |
 | `db`       | `postgres:16-alpine`       | internal only (`db:5432`) | Volume `pgdata`; db `labelverify`; not published to the host |
 
+The base file (`docker-compose.yml`) publishes **no host ports** so it deploys
+unchanged behind a reverse-proxy PaaS (Dokploy, Coolify, …): route the domain
+to service `frontend`, container port `80`, and set `CORS_ORIGINS` to the
+public URL. The `docker-compose.dev.yml` overlay adds the localhost publishes
+above (override with `FRONTEND_PORT`/`BACKEND_PORT`).
+
 Open **http://localhost:8080** to use the app. The frontend talks to the API
 same-origin through nginx, so there are no CORS or outbound calls. On boot the
 backend applies Alembic migrations and warms the OCR model (hence the ~40s
@@ -114,7 +120,7 @@ healthy before it starts.
 Useful variants:
 
 ```bash
-docker compose -f docker/docker-compose.yml up --build -d   # detached
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml up --build -d   # detached
 docker compose -f docker/docker-compose.yml logs -f backend # follow API logs
 docker compose -f docker/docker-compose.yml down            # stop
 docker compose -f docker/docker-compose.yml down -v         # stop + drop the DB volume
@@ -153,7 +159,9 @@ between local and prod.
 reviewer ──HTTPS──▶ Cloudflare edge ──tunnel──▶ cloudflared ──▶ :8080 frontend ──/api/*──▶ :8000 backend ──▶ :5432 db
 ```
 
-- **Stack** — `docker compose -f docker/docker-compose.yml up -d`. Each service
+- **Stack** — `docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml up -d`
+  (the dev overlay publishes `:8080`, which the tunnel points at; a
+  reverse-proxy PaaS like Dokploy needs only the base file). Each service
   carries `restart: unless-stopped`, so the stack survives a host reboot.
 - **Public URL** — a [`cloudflared`](https://github.com/cloudflare/cloudflared)
   quick tunnel exposes the frontend (`:8080`) over HTTPS. It runs as a systemd
