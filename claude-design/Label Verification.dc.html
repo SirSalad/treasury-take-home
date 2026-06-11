@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Pinyon+Script&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: 'Public Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  @keyframes scanmove { 0% { top: 2%; } 100% { top: 96%; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+  @keyframes pop { 0% { transform: scale(.6); opacity: 0; } 60% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
+  @keyframes fadeup { 0% { transform: translateY(8px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+  .qrow { transition: background .12s, box-shadow .12s; }
+  .qrow:hover { background: #eff5fb !important; box-shadow: inset 3px 0 0 #005ea2; }
+  .lift { transition: transform .14s ease, box-shadow .14s ease; }
+  .lift:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(20,33,61,.13) !important; }
+  .navlink:hover { color: #ffbe2e !important; }
+  /* WCAG 2.1 AA visible focus indicator (USWDS-style) */
+  button:focus-visible, a:focus-visible, [tabindex]:focus-visible, textarea:focus-visible, input:focus-visible {
+    outline: 4px solid #2491ff; outline-offset: 2px; border-radius: 4px;
+  }
+  textarea:focus, input:focus { outline: 3px solid #2491ff; outline-offset: 1px; }
+  .navlink:focus-visible { outline-color: #ffbe2e; }
+</style>
+</helmet>
+
+<div style="min-height: 100vh; background: #f3f6f8; color: #1b1b1b; font-family: 'Public Sans', sans-serif;">
+
+  <!-- ===== OFFICIAL GOV BANNER ===== -->
+  <div style="background: #f0f0f0; border-bottom: 1px solid #dfe3e8;">
+    <div style="max-width: 1480px; margin: 0 auto; padding: 7px 28px; display: flex; align-items: center; gap: 9px; font-size: 11.5px; color: #1b1b1b;">
+      <span style="position: relative; width: 16px; height: 11px; border-radius: 1px; overflow: hidden; box-shadow: 0 0 0 1px rgba(0,0,0,.12); flex: none; background: repeating-linear-gradient(180deg, #b22234 0, #b22234 1.571px, #fff 1.571px, #fff 3.143px);">
+        <span style="position: absolute; top: 0; left: 0; width: 7px; height: 6px; background: #3c3b6e;"></span>
+      </span>
+      <span style="color: #3d4551;">An official website of the United States government</span>
+      <span class="navlink" style="color: #005ea2; font-weight: 600; cursor: pointer; white-space: nowrap;">Here&rsquo;s how you know &#9662;</span>
+    </div>
+  </div>
+
+  <!-- ===== HEADER ===== -->
+  <header style="position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 12px rgba(20,33,61,.14);">
+    <div style="background: linear-gradient(180deg, #1a3760 0%, #162e51 100%); border-bottom: 4px solid #ffbe2e;">
+      <div style="max-width: 1480px; margin: 0 auto; padding: 13px 28px; display: flex; align-items: center; gap: 18px;">
+        <div style="width: 48px; height: 48px; border-radius: 50%; background: radial-gradient(circle at 50% 36%, #224d85, #0b1d38); display: flex; align-items: center; justify-content: center; flex: none; box-shadow: inset 0 0 0 2px #ffbe2e, inset 0 0 0 4px #162e51, 0 0 0 1px rgba(255,190,46,.35), 0 2px 6px rgba(0,0,0,.35);">
+          <span style="color: #ffbe2e; font-size: 19px; line-height: 1; text-shadow: 0 1px 2px rgba(0,0,0,.4);">&#9733;</span>
+        </div>
+        <div style="line-height: 1.05;">
+          <div style="font-size: 21px; font-weight: 800; letter-spacing: 2px; color: #fff;">TTB</div>
+        </div>
+        <div style="line-height: 1.22; border-left: 1px solid #2c4d78; padding-left: 16px; white-space: nowrap;">
+          <div style="font-size: 12.5px; font-weight: 700; color: #fff;">Alcohol and Tobacco Tax and Trade Bureau</div>
+          <div style="font-size: 11px; color: #9fb6d4;">U.S. Department of the Treasury</div>
+        </div>
+        <div style="flex: 1;"></div>
+        <nav style="display: flex; align-items: center; gap: 26px;">
+          <span class="navlink" style="font-size: 13.5px; color: #dbe4f0; cursor: pointer; transition: color .15s;">Reviewer Tools &#9662;</span>
+          <span class="navlink" style="font-size: 13.5px; color: #dbe4f0; cursor: pointer; transition: color .15s;">Reports</span>
+          <span class="navlink" style="font-size: 13.5px; color: #dbe4f0; cursor: pointer; transition: color .15s;">Help</span>
+        </nav>
+      </div>
+    </div>
+    <div style="background: #005ea2;">
+      <div style="max-width: 1480px; margin: 0 auto; padding: 9px 28px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <span style="font-size: 14.5px; font-weight: 700; color: #fff; letter-spacing: .2px;">COLA Label Verification</span>
+          <span style="font-size: 12px; color: #bcd2ea; background: #16406f; padding: 2px 9px; border-radius: 3px; font-weight: 600; white-space: nowrap;">Reviewer Workspace</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="width: 7px; height: 7px; border-radius: 50%; background: #ffbe2e; display: inline-block;"></span>
+          <span style="font-size: 12px; font-weight: 600; color: #dbe4f0; letter-spacing: .2px;">Prototype &middot; sample data only</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== QUEUE ===== -->
+  <sc-if value="{{ isQueue }}" hint-placeholder-val="{{ true }}">
+  <main style="max-width: 1480px; margin: 0 auto; padding: 24px 28px 60px;">
+    <div style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 14px;">
+      <div>
+        <h1 style="margin: 0 0 5px; font-size: 30px; font-weight: 800; color: #162e51; letter-spacing: -.6px;">My Review Queue</h1>
+        <p style="margin: 0; font-size: 14px; color: #5b616b;">Pick up where you left off, or start a new verification.</p>
+      </div>
+      <div style="display: flex; gap: 12px;">
+        <button onClick="{{ goBatch }}" style="display: flex; align-items: center; gap: 9px; font-family: inherit; font-size: 14.5px; font-weight: 700; color: #005ea2; background: #fff; border: 2px solid #005ea2; border-radius: 6px; padding: 11px 18px; cursor: pointer;">
+          <span style="font-size: 16px;">&#9776;</span> Batch Upload
+        </button>
+        <button onClick="{{ goUpload }}" style="display: flex; align-items: center; gap: 9px; font-family: inherit; font-size: 14.5px; font-weight: 700; color: #fff; background: #005ea2; border: 2px solid #005ea2; border-radius: 6px; padding: 11px 20px; cursor: pointer; box-shadow: 0 1px 0 rgba(0,0,0,.12);">
+          <span style="font-size: 17px; line-height: 1;">+</span> New Verification
+        </button>
+      </div>
+    </div>
+
+    <!-- stat strip -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px;">
+      <div style="background: #fff; border: 1px solid #e4e8ec; box-shadow: 0 1px 2px rgba(20,33,61,.04), 0 3px 8px rgba(20,33,61,.06); border-left: 4px solid #005ea2; border-radius: 10px; padding: 18px 20px;">
+        <div style="font-size: 30px; font-weight: 800; color: #162e51; line-height: 1;">12</div>
+        <div style="font-size: 13px; color: #5b616b; margin-top: 5px; font-weight: 600;">Pending in your queue</div>
+      </div>
+      <div style="background: #fff; border: 1px solid #e4e8ec; box-shadow: 0 1px 2px rgba(20,33,61,.04), 0 3px 8px rgba(20,33,61,.06); border-left: 4px solid #7a5a00; border-radius: 10px; padding: 18px 20px;">
+        <div style="font-size: 30px; font-weight: 800; color: #7a5a00; line-height: 1;">3</div>
+        <div style="font-size: 13px; color: #5b616b; margin-top: 5px; font-weight: 600;">Flagged for your judgment</div>
+      </div>
+      <div style="background: #fff; border: 1px solid #e4e8ec; box-shadow: 0 1px 2px rgba(20,33,61,.04), 0 3px 8px rgba(20,33,61,.06); border-left: 4px solid #226e2a; border-radius: 10px; padding: 18px 20px;">
+        <div style="font-size: 30px; font-weight: 800; color: #226e2a; line-height: 1;">148</div>
+        <div style="font-size: 13px; color: #5b616b; margin-top: 5px; font-weight: 600;">Cleared this week</div>
+      </div>
+      <div style="background: #fff; border: 1px solid #e4e8ec; box-shadow: 0 1px 2px rgba(20,33,61,.04), 0 3px 8px rgba(20,33,61,.06); border-left: 4px solid #5b616b; border-radius: 10px; padding: 18px 20px;">
+        <div style="font-size: 30px; font-weight: 800; color: #162e51; line-height: 1;">3.1s</div>
+        <div style="font-size: 13px; color: #5b616b; margin-top: 5px; font-weight: 600;">Avg. scan time</div>
+      </div>
+    </div>
+
+    <!-- queue table -->
+    <div style="background: #fff; border: 1px solid #e4e8ec; border-radius: 10px; box-shadow: 0 1px 2px rgba(20,33,61,.04), 0 3px 8px rgba(20,33,61,.06); overflow: hidden;">
+      <div style="display: grid; grid-template-columns: 168px 130px 1.4fr 1.3fr 1fr 118px 44px; gap: 0; padding: 12px 18px; background: #f4f5f6; border-bottom: 2px solid #d6d7d9; font-size: 11.5px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: #5b616b;">
+        <div>Status</div><div>Application</div><div>Brand</div><div>Applicant</div><div>Class / Type</div><div>Due</div><div></div>
+      </div>
+      <sc-for list="{{ queueRows }}" as="row" hint-placeholder-count="8">
+        <div class="qrow" onClick="{{ row.open }}" onKeyDown="{{ row.openKey }}" tabIndex="0" role="button" aria-label="{{ row.aria }}" style="display: grid; grid-template-columns: 168px 130px 1.4fr 1.3fr 1fr 118px 44px; gap: 0; align-items: center; padding: 14px 18px; border-bottom: 1px solid #edeff1; cursor: pointer; transition: background .12s;">
+          <div>
+            <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: {{ row.statusColor }}; background: {{ row.statusBg }}; padding: 4px 10px; border-radius: 20px;">
+              <span style="width: 7px; height: 7px; border-radius: 50%; background: {{ row.statusColor }};"></span>{{ row.status }}
+            </span>
+          </div>
+          <div style="font-size: 13.5px; font-weight: 600; color: #005ea2; font-variant-numeric: tabular-nums;">{{ row.id }}</div>
+          <div style="font-size: 14px; font-weight: 700; color: #1b1b1b;">{{ row.brand }}</div>
+          <div style="font-size: 13.5px; color: #3d4551;">{{ row.applicant }}</div>
+          <div style="font-size: 13px; color: #5b616b;">{{ row.type }}</div>
+          <div style="font-size: 13px; font-weight: 600; color: {{ row.dueColor }}; font-variant-numeric: tabular-nums;">{{ row.due }}</div>
+          <div style="text-align: right; color: #6e767e; font-size: 17px;">&#8250;</div>
+        </div>
+      </sc-for>
+    </div>
+  </main>
+  </sc-if>
+
+  <!-- ===== UPLOAD ===== -->
+  <sc-if value="{{ isUpload }}" hint-placeholder-val="{{ true }}">
+  <main style="max-width: 980px; margin: 0 auto; padding: 24px 28px 60px;">
+    <div onClick="{{ goQueue }}" style="display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 600; color: #005ea2; cursor: pointer; margin-bottom: 16px;">&#8592; Back to Queue</div>
+    <h1 style="margin: 0 0 6px; font-size: 30px; font-weight: 800; color: #162e51; letter-spacing: -.6px;">New Label Verification</h1>
+    <p style="margin: 0 0 24px; font-size: 14.5px; color: #5b616b;">Drop a label image below. Results come back in about 3 seconds.</p>
+
+    <div style="border: 2px dashed #9bb4d0; background: #f3f7fc; border-radius: 12px; padding: 44px 24px; text-align: center; margin-bottom: 30px;">
+      <div style="width: 64px; height: 64px; margin: 0 auto 14px; border-radius: 50%; background: #e3edf8; display: flex; align-items: center; justify-content: center;">
+        <span style="font-size: 30px; color: #005ea2;">&#8682;</span>
+      </div>
+      <div style="font-size: 18px; font-weight: 700; color: #1b1b1b; margin-bottom: 4px;">Drag &amp; drop a label image here</div>
+      <div style="font-size: 13.5px; color: #5b616b; margin-bottom: 18px;">JPG or PNG, up to 10&nbsp;MB &middot; or choose a sample below</div>
+      <button style="font-family: inherit; font-size: 14.5px; font-weight: 700; color: #fff; background: #005ea2; border: none; border-radius: 6px; padding: 11px 22px; cursor: pointer;">Browse files</button>
+    </div>
+
+    <div style="font-size: 12px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: #5b616b; margin-bottom: 12px;">Or try a sample label</div>
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+      <sc-for list="{{ sampleCards }}" as="c" hint-placeholder-count="3">
+        <div class="lift" onClick="{{ c.pick }}" onKeyDown="{{ c.pickKey }}" tabIndex="0" role="button" aria-label="Verify sample label: {{ c.title }}" style="background: #fff; border: 1px solid #e4e8ec; border-radius: 12px; padding: 14px; cursor: pointer; box-shadow: 0 1px 2px rgba(20,33,61,.04), 0 3px 8px rgba(20,33,61,.06);" style-hover="border-color: #005ea2;">
+          <div style="{{ c.thumbStyle }}">
+            <span style="font-family: 'Libre Baskerville', serif; font-size: 15px; font-weight: 700; color: #4a3a28; text-align: center; line-height: 1.2; letter-spacing: .5px;">{{ c.thumbLabel }}</span>
+          </div>
+          <div style="font-size: 14px; font-weight: 700; color: #1b1b1b;">{{ c.title }}</div>
+          <div style="font-size: 12.5px; color: #5b616b; margin-top: 3px;">{{ c.note }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </main>
+  </sc-if>
+
+  <!-- ===== SCANNING ===== -->
+  <sc-if value="{{ isScanning }}" hint-placeholder-val="{{ true }}">
+  <main style="max-width: 620px; margin: 0 auto; padding: 60px 28px;">
+    <div style="background: #fff; border: 1px solid #d6d7d9; border-radius: 14px; padding: 34px; text-align: center; box-shadow: 0 10px 30px rgba(17,46,81,.08);">
+      <div style="position: relative; width: 230px; aspect-ratio: .78; margin: 0 auto 24px; border-radius: 6px; overflow: hidden; border: 1px solid #d9d4c4;">
+        <div style="position: absolute; inset: 0; background: linear-gradient(160deg, #f3ead2, #e9dcbd);"></div>
+        <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: 'Libre Baskerville', serif; color: #7c6a4d; font-size: 13px; letter-spacing: 1px; opacity: .55;">LABEL</div>
+        <div style="position: absolute; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, #226e2a, transparent); box-shadow: 0 0 14px 3px rgba(46,133,64,.55); animation: scanmove 1.1s linear infinite;"></div>
+      </div>
+      <div style="font-size: 19px; font-weight: 800; color: #162e51; margin-bottom: 6px;">Reading the label&hellip;</div>
+      <div style="font-size: 14px; color: #5b616b; margin-bottom: 18px;">{{ scanText }}</div>
+      <div style="height: 8px; background: #e6e8ea; border-radius: 20px; overflow: hidden; margin-bottom: 10px;">
+        <div style="height: 100%; width: {{ scanPctCss }}; background: #226e2a; border-radius: 20px; transition: width .12s linear;"></div>
+      </div>
+      <div style="font-size: 12.5px; color: #6e767e; font-variant-numeric: tabular-nums;">{{ scanSeconds }}s elapsed &middot; {{ scannedCount }} of {{ totalFields }} fields located</div>
+    </div>
+  </main>
+  </sc-if>
+
+  <!-- ===== ERROR / LOW QUALITY ===== -->
+  <sc-if value="{{ isError }}" hint-placeholder-val="{{ true }}">
+  <main style="max-width: 760px; margin: 0 auto; padding: 40px 28px 60px;">
+    <div onClick="{{ goUpload }}" style="display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 600; color: #005ea2; cursor: pointer; margin-bottom: 16px;">&#8592; Try another image</div>
+    <div style="background: #fff; border: 1px solid #d6d7d9; border-top: 5px solid #cd2026; border-radius: 12px; padding: 0; overflow: hidden;">
+      <div style="display: grid; grid-template-columns: 220px 1fr; gap: 0;">
+        <div style="position: relative; background: #2a2a2a; display: flex; align-items: center; justify-content: center; min-height: 240px;">
+          <div style="position: absolute; inset: 18px; border-radius: 4px; background: linear-gradient(135deg, #6b614c, #b5a682); transform: rotate(-7deg); filter: blur(1.5px); opacity: .9;"></div>
+          <div style="position: absolute; inset: 0; background: radial-gradient(circle at 65% 35%, rgba(255,255,255,.65), transparent 45%);"></div>
+          <span style="position: relative; color: #fff; font-size: 12px; font-weight: 700; background: rgba(205,32,38,.92); padding: 4px 10px; border-radius: 4px; letter-spacing: .5px;">GLARE DETECTED</span>
+        </div>
+        <div style="padding: 28px 30px;">
+          <h2 style="margin: 0 0 8px; font-size: 21px; font-weight: 800; color: #b50909;">We couldn&rsquo;t read this label clearly</h2>
+          <p style="margin: 0 0 18px; font-size: 14.5px; color: #3d4551; line-height: 1.55;">The image has heavy glare and is rotated about 7&deg;, so several required fields couldn&rsquo;t be located with confidence. Rather than guess, we&rsquo;ve stopped so nothing slips through.</p>
+          <div style="background: #fef6f6; border: 1px solid #f3c9cb; border-radius: 8px; padding: 14px 16px; margin-bottom: 20px;">
+            <div style="font-size: 12px; font-weight: 700; color: #b50909; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px;">What couldn&rsquo;t be read</div>
+            <div style="display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; color: #3d4551;">
+              <div>&#10007;&nbsp; Government Warning &mdash; obscured by glare</div>
+              <div>&#10007;&nbsp; Alcohol Content &mdash; out of focus</div>
+              <div>&#9888;&nbsp; Net Contents &mdash; low confidence</div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 12px;">
+            <button onClick="{{ goUpload }}" style="font-family: inherit; font-size: 14px; font-weight: 700; color: #fff; background: #005ea2; border: none; border-radius: 6px; padding: 10px 20px; cursor: pointer;">Upload a better photo</button>
+            <button style="font-family: inherit; font-size: 14px; font-weight: 700; color: #cd2026; background: #fff; border: 2px solid #e6b3b5; border-radius: 6px; padding: 9px 18px; cursor: pointer;">Request new image from applicant</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  </sc-if>
+
+  <!-- ===== RESULT ===== -->
+  <sc-if value="{{ isResult }}" hint-placeholder-val="{{ true }}">
+  <main style="max-width: 1480px; margin: 0 auto; padding: 20px 28px 60px;">
+    <!-- top bar -->
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+        <div onClick="{{ goQueue }}" style="display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 600; color: #005ea2; cursor: pointer; white-space: nowrap;">&#8592; Back to Queue</div>
+        <h1 style="margin: 0; font-size: 23px; font-weight: 800; color: #162e51; letter-spacing: -.4px; white-space: nowrap;">{{ app.brand }}</h1>
+        <span style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: {{ verdict.color }}; background: {{ verdict.bg }}; padding: 6px 13px; border-radius: 20px; white-space: nowrap;">
+          <span style="font-size: 15px;">{{ verdict.icon }}</span>{{ verdict.label }}
+        </span>
+        <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: #226e2a; background: #eaf4ec; padding: 5px 11px; border-radius: 20px; white-space: nowrap;">&#9201; Verified in {{ app.scanTime }}s</span>
+      </div>
+      <button style="font-family: inherit; font-size: 13.5px; font-weight: 700; color: #005ea2; background: #fff; border: 2px solid #005ea2; border-radius: 6px; padding: 9px 16px; cursor: pointer;">View Application Details</button>
+    </div>
+
+    <!-- app info strip -->
+    <div style="background: #fff; border: 1px solid #e4e8ec; border-radius: 10px; box-shadow: 0 1px 2px rgba(20,33,61,.04), 0 3px 8px rgba(20,33,61,.06); padding: 14px 20px; margin-bottom: 16px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;">
+      <sc-for list="{{ appMeta }}" as="m" hint-placeholder-count="6">
+        <div>
+          <div style="font-size: 10.5px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: #6e767e; margin-bottom: 3px;">{{ m.k }}</div>
+          <div style="font-size: 13.5px; font-weight: 600; color: #1b1b1b; font-variant-numeric: tabular-nums;">{{ m.v }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- 3 columns -->
+    <div style="display: grid; grid-template-columns: 400px 1fr 312px; gap: 16px; align-items: start;">
+
+      <!-- LEFT: label + boxes -->
+      <div style="background: #fff; border: 1px solid #e4e8ec; border-radius: 10px; box-shadow: 0 1px 2px rgba(20,33,61,.04), 0 3px 8px rgba(20,33,61,.06); overflow: hidden;">
+        <div style="padding: 12px 16px; border-bottom: 1px solid #e6e8ea; display: flex; align-items: center; justify-content: space-between;">
+          <span style="font-size: 13.5px; font-weight: 700; color: #162e51;">Submitted Label</span>
+          <div style="display: flex; gap: 6px;">
+            <button onClick="{{ zoomOut }}" aria-label="Zoom out" style="width: 28px; height: 28px; border: 1px solid #d6d7d9; background: #f7f8f9; border-radius: 5px; cursor: pointer; font-size: 16px; color: #5b616b; line-height: 1;">&minus;</button>
+            <button onClick="{{ zoomIn }}" aria-label="Zoom in" style="width: 28px; height: 28px; border: 1px solid #d6d7d9; background: #f7f8f9; border-radius: 5px; cursor: pointer; font-size: 15px; color: #5b616b; line-height: 1;">+</button>
+          </div>
+        </div>
+        <div style="padding: 18px; background: #41464d; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+          <!-- LABEL CANVAS -->
+          <div style="position: relative; width: 100%; max-width: 320px; aspect-ratio: .76; transform: {{ zoomCss }}; transition: transform .18s;">
+            <div style="position: absolute; inset: 0; border-radius: 5px; background: {{ labelBgColor }}; box-shadow: 0 8px 22px rgba(0,0,0,.45);"></div>
+            <div style="position: absolute; inset: 0; border-radius: 5px; background: radial-gradient(120% 80% at 50% 0%, rgba(255,255,255,.5), rgba(0,0,0,.05)); pointer-events: none;"></div>
+            <div style="position: absolute; inset: 9px; border: 2px solid {{ labelBorderColor }}; border-radius: 3px; pointer-events: none;"></div>
+            <div style="position: absolute; inset: 13px; border: 1px solid {{ labelBorderColor }}; border-radius: 2px; pointer-events: none; opacity: .5;"></div>
+            <!-- label text items -->
+            <sc-for list="{{ labelItems }}" as="t" hint-placeholder-count="6">
+              <div style="{{ t.style }}">{{ t.content }}</div>
+            </sc-for>
+            <!-- bounding boxes -->
+            <sc-for list="{{ boxItems }}" as="b" hint-placeholder-count="6">
+              <div onMouseEnter="{{ b.enter }}" onMouseLeave="{{ b.leave }}" onClick="{{ b.click }}" style="{{ b.style }}">
+                <span style="{{ b.tagStyle }}">{{ b.num }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="padding: 11px 16px; border-top: 1px solid #e6e8ea; font-size: 12px; color: #5b616b; display: flex; align-items: center; gap: 7px;">
+          <span style="width: 9px; height: 9px; border-radius: 2px; background: #226e2a; display: inline-block;"></span> Hover a checklist row to see where it was found on the label.
+        </div>
+      </div>
+
+      <!-- MIDDLE: checklist + warning -->
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <!-- checklist -->
+        <div style="background: #fff; border: 1px solid #e4e8ec; border-radius: 10px; box-shadow: 0 1px 2px rgba(20,33,61,.04), 0 3px 8px rgba(20,33,61,.06); overflow: hidden;">
+          <div style="padding: 13px 18px; border-bottom: 1px solid #e6e8ea; display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 14.5px; font-weight: 800; color: #162e51;">Verification Checklist</span>
+            <span style="font-size: 12.5px; color: #5b616b;">{{ checkSummary }}</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 1.35fr 1.35fr 96px 30px; gap: 0; padding: 9px 18px; background: #f4f5f6; border-bottom: 1px solid #e6e8ea; font-size: 10.5px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: #6e767e;">
+            <div>Requirement</div><div>On Label</div><div>Result</div><div></div>
+          </div>
+          <sc-for list="{{ checklist }}" as="c" hint-placeholder-count="6">
+            <div onMouseEnter="{{ c.enter }}" onMouseLeave="{{ c.leave }}" onClick="{{ c.click }}" style="{{ c.rowStyle }}">
+              <div>
+                <div style="font-size: 13.5px; font-weight: 700; color: #1b1b1b;">{{ c.label }}</div>
+                <div style="font-size: 11.5px; color: #6e767e; margin-top: 1px;">App: {{ c.applicant }}</div>
+              </div>
+              <div style="font-size: 13px; color: #3d4551; font-weight: 500;">{{ c.detected }}</div>
+              <div>
+                <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; color: {{ c.color }};">{{ c.icon }} {{ c.statusLabel }}</span>
+              </div>
+              <div style="width: 22px; height: 22px; border-radius: 50%; background: {{ c.numBg }}; color: {{ c.color }}; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 1.5px solid {{ c.color }};">{{ c.num }}</div>
+            </div>
+          </sc-for>
+          <sc-if value="{{ hasFlag }}" hint-placeholder-val="{{ true }}">
+            <div style="padding: 12px 18px; background: #fff8ea; border-top: 1px solid #f0e2bf; display: flex; gap: 10px; align-items: flex-start;">
+              <span style="color: #7a5a00; font-size: 16px; line-height: 1.2;">&#9873;</span>
+              <div style="font-size: 12.5px; color: #6b5408; line-height: 1.5;">{{ flagNote }}</div>
+            </div>
+          </sc-if>
+        </div>
+
+        <!-- GOVERNMENT WARNING HERO -->
+        <div style="background: #fff; border: 1px solid #e4e8ec; border-top: 4px solid {{ warning.accent }}; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 2px rgba(20,33,61,.04), 0 3px 8px rgba(20,33,61,.06);">
+          <div style="padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 15px; font-weight: 800; color: #162e51;">Government Warning Statement</span>
+              <span style="font-size: 11px; font-weight: 700; color: #b50909; background: #fdeced; padding: 3px 8px; border-radius: 4px; letter-spacing: .3px;">MANDATORY &middot; 27 CFR &sect;16.21</span>
+            </div>
+            <span style="display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 800; color: {{ warning.accent }};">{{ warning.icon }} {{ warning.verdict }}</span>
+          </div>
+          <!-- compliance badges -->
+          <div style="display: flex; gap: 8px; padding: 0 18px 14px; flex-wrap: wrap;">
+            <sc-for list="{{ warning.badges }}" as="bd" hint-placeholder-count="4">
+              <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: {{ bd.color }}; background: {{ bd.bg }}; border: 1px solid {{ bd.border }}; padding: 5px 11px; border-radius: 6px;">{{ bd.icon }} {{ bd.text }}</span>
+            </sc-for>
+          </div>
+          <!-- diff: required vs detected -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #e6e8ea; border-top: 1px solid #e6e8ea;">
+            <div style="background: #f3f8f4; padding: 14px 16px;">
+              <div style="font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: #226e2a; margin-bottom: 8px;">Required by TTB</div>
+              <div style="font-size: 12px; line-height: 1.6; color: #2b3b2d;"><strong style="font-weight: 800;">GOVERNMENT WARNING:</strong> {{ warning.required }}</div>
+            </div>
+            <div style="background: {{ warning.detBg }}; padding: 14px 16px;">
+              <div style="font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: {{ warning.accent }}; margin-bottom: 8px;">Detected on Label</div>
+              <div style="font-size: 12px; line-height: 1.6; color: #2b2b2b;">
+                <span style="{{ warning.headStyle }}">{{ warning.detHead }}</span>
+                <sc-for list="{{ warning.detBody }}" as="seg" hint-placeholder-count="3">
+                  <span style="{{ seg.style }}">{{ seg.text }}</span>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: review actions -->
+      <div style="background: #fff; border: 1px solid #e4e8ec; border-radius: 10px; box-shadow: 0 1px 2px rgba(20,33,61,.04), 0 3px 8px rgba(20,33,61,.06); overflow: hidden; position: sticky; top: 96px;">
+        <div style="padding: 13px 18px; border-bottom: 1px solid #e6e8ea; font-size: 14.5px; font-weight: 800; color: #162e51;">Review Decision</div>
+        <div style="padding: 16px 18px;">
+          <div style="font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: #6e767e; margin-bottom: 10px;">Recommended</div>
+          <sc-for list="{{ actions }}" as="a" hint-placeholder-count="3">
+            <div onClick="{{ a.pick }}" onKeyDown="{{ a.pickKey }}" tabIndex="0" role="radio" aria-checked="{{ a.checked }}" aria-label="{{ a.aria }}" style="{{ a.style }}">
+              <span style="{{ a.dotStyle }}"></span>
+              <div>
+                <div style="font-size: 13.5px; font-weight: 700; color: #1b1b1b;">{{ a.title }}</div>
+                <div style="font-size: 11.5px; color: #5b616b; margin-top: 1px;">{{ a.sub }}</div>
+              </div>
+            </div>
+          </sc-for>
+          <div style="font-size: 12px; font-weight: 700; color: #3d4551; margin: 16px 0 7px;">Internal note <span style="font-weight: 400; color: #6e767e;">(not sent to applicant)</span></div>
+          <textarea placeholder="Add a note for the record..." aria-label="Internal note, not sent to applicant" style="width: 100%; min-height: 72px; resize: vertical; font-family: inherit; font-size: 13px; color: #1b1b1b; border: 1px solid #c4c8cc; border-radius: 6px; padding: 9px 11px;"></textarea>
+          <button style="width: 100%; margin-top: 14px; font-family: inherit; font-size: 15px; font-weight: 800; color: #fff; background: #005ea2; border: none; border-radius: 6px; padding: 13px; cursor: pointer; box-shadow: 0 1px 0 rgba(0,0,0,.12);">Submit Decision</button>
+          <button onClick="{{ goQueue }}" style="width: 100%; margin-top: 9px; font-family: inherit; font-size: 14px; font-weight: 700; color: #005ea2; background: #fff; border: none; border-radius: 6px; padding: 8px; cursor: pointer;">Save &amp; return to queue</button>
+        </div>
+        <div style="padding: 14px 18px; border-top: 1px solid #e6e8ea; background: #f9fafb;">
+          <div style="font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: #6e767e; margin-bottom: 8px;">Due Date</div>
+          <div style="font-size: 14px; font-weight: 700; color: {{ app.dueColor }};">{{ app.due }}</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+  </sc-if>
+
+  <!-- ===== BATCH ===== -->
+  <sc-if value="{{ isBatch }}" hint-placeholder-val="{{ true }}">
+  <main style="max-width: 1180px; margin: 0 auto; padding: 24px 28px 60px;">
+    <div onClick="{{ goQueue }}" style="display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 600; color: #005ea2; cursor: pointer; margin-bottom: 16px;">&#8592; Back to Queue</div>
+    <h1 style="margin: 0 0 6px; font-size: 30px; font-weight: 800; color: #162e51; letter-spacing: -.6px;">Batch Verification</h1>
+    <p style="margin: 0 0 24px; font-size: 14.5px; color: #5b616b;">Built for peak season &mdash; drop a whole importer&rsquo;s submission at once. We verify each label and surface only the ones that need your eyes.</p>
+
+    <sc-if value="{{ batchIdle }}" hint-placeholder-val="{{ true }}">
+      <div style="border: 2px dashed #9bb4d0; background: #f3f7fc; border-radius: 12px; padding: 50px 24px; text-align: center;">
+        <div style="width: 64px; height: 64px; margin: 0 auto 14px; border-radius: 50%; background: #e3edf8; display: flex; align-items: center; justify-content: center;"><span style="font-size: 30px; color: #005ea2;">&#9776;</span></div>
+        <div style="font-size: 18px; font-weight: 700; color: #1b1b1b; margin-bottom: 4px;">Drop up to 300 label images</div>
+        <div style="font-size: 13.5px; color: #5b616b; margin-bottom: 20px;">Folder or multi-select &middot; JPG / PNG &middot; results stream in as they finish</div>
+        <button onClick="{{ startBatch }}" style="font-family: inherit; font-size: 14.5px; font-weight: 700; color: #fff; background: #005ea2; border: none; border-radius: 6px; padding: 12px 24px; cursor: pointer;">Simulate a 247-label import</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ batchRunning }}" hint-placeholder-val="{{ true }}">
+      <div style="background: #fff; border: 1px solid #d6d7d9; border-radius: 12px; padding: 30px;">
+        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 18px;">
+          <div style="width: 26px; height: 26px; border: 3px solid #e0e3e6; border-top-color: #005ea2; border-radius: 50%; animation: spin .8s linear infinite;"></div>
+          <div style="font-size: 17px; font-weight: 800; color: #162e51;">Verifying 247 labels&hellip;</div>
+        </div>
+        <div style="height: 12px; background: #e6e8ea; border-radius: 20px; overflow: hidden; margin-bottom: 8px;">
+          <div style="height: 100%; width: {{ batchPctCss }}; background: linear-gradient(90deg, #005ea2, #226e2a); border-radius: 20px; transition: width .15s linear;"></div>
+        </div>
+        <div style="font-size: 13px; color: #5b616b; font-variant-numeric: tabular-nums;">{{ batchDone }} of 247 done &middot; about {{ batchEta }} remaining</div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ batchDoneState }}" hint-placeholder-val="{{ true }}">
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px;">
+        <div style="background: #fff; border: 1px solid #e4e8ec; box-shadow: 0 1px 2px rgba(20,33,61,.04), 0 3px 8px rgba(20,33,61,.06); border-left: 4px solid #226e2a; border-radius: 8px; padding: 16px 20px;">
+          <div style="font-size: 32px; font-weight: 800; color: #226e2a; line-height: 1;">218</div>
+          <div style="font-size: 13px; color: #5b616b; margin-top: 5px; font-weight: 600;">Auto-cleared &mdash; all checks passed</div>
+        </div>
+        <div style="background: #fff; border: 1px solid #e4e8ec; box-shadow: 0 1px 2px rgba(20,33,61,.04), 0 3px 8px rgba(20,33,61,.06); border-left: 4px solid #7a5a00; border-radius: 8px; padding: 16px 20px;">
+          <div style="font-size: 32px; font-weight: 800; color: #7a5a00; line-height: 1;">21</div>
+          <div style="font-size: 13px; color: #5b616b; margin-top: 5px; font-weight: 600;">Need your judgment</div>
+        </div>
+        <div style="background: #fff; border: 1px solid #e4e8ec; box-shadow: 0 1px 2px rgba(20,33,61,.04), 0 3px 8px rgba(20,33,61,.06); border-left: 4px solid #cd2026; border-radius: 8px; padding: 16px 20px;">
+          <div style="font-size: 32px; font-weight: 800; color: #cd2026; line-height: 1;">8</div>
+          <div style="font-size: 13px; color: #5b616b; margin-top: 5px; font-weight: 600;">Failed &mdash; clear violations</div>
+        </div>
+      </div>
+      <div style="background: #eaf4ec; border: 1px solid #bfe0c6; border-radius: 8px; padding: 12px 18px; margin-bottom: 18px; font-size: 13.5px; color: #1e5a2d; display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 16px;">&#10003;</span> 247 labels verified in 11 minutes. <strong>You only need to look at 29 of them.</strong>
+      </div>
+      <div style="background: #fff; border: 1px solid #e4e8ec; border-radius: 10px; box-shadow: 0 1px 2px rgba(20,33,61,.04), 0 3px 8px rgba(20,33,61,.06); overflow: hidden;">
+        <div style="display: grid; grid-template-columns: 70px 1.4fr 1.2fr 1fr 1.4fr 110px; gap: 0; padding: 11px 18px; background: #f4f5f6; border-bottom: 2px solid #d6d7d9; font-size: 10.5px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: #6e767e;">
+          <div>Row</div><div>Brand</div><div>Applicant</div><div>Result</div><div>Issue</div><div></div>
+        </div>
+        <sc-for list="{{ batchTable }}" as="r" hint-placeholder-count="6">
+          <div class="qrow" onClick="{{ r.open }}" onKeyDown="{{ r.openKey }}" tabIndex="0" role="button" aria-label="Review {{ r.brand }}, {{ r.result }}: {{ r.issue }}" style="display: grid; grid-template-columns: 70px 1.4fr 1.2fr 1fr 1.4fr 110px; gap: 0; align-items: center; padding: 13px 18px; border-bottom: 1px solid #edeff1; cursor: pointer;">
+            <div style="font-size: 13px; color: #6e767e; font-variant-numeric: tabular-nums;">{{ r.row }}</div>
+            <div style="font-size: 14px; font-weight: 700; color: #1b1b1b;">{{ r.brand }}</div>
+            <div style="font-size: 13px; color: #3d4551;">{{ r.applicant }}</div>
+            <div><span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: {{ r.color }}; background: {{ r.bg }}; padding: 4px 10px; border-radius: 20px;">{{ r.icon }} {{ r.result }}</span></div>
+            <div style="font-size: 12.5px; color: #5b616b;">{{ r.issue }}</div>
+            <div style="text-align: right;"><span style="font-size: 12.5px; font-weight: 700; color: #005ea2;">Review &#8250;</span></div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+  </main>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: 1480, &quot;height&quot;: 940}}">
+class Component extends DCLogic {
+  state = {
+    view: 'queue',      // queue | upload | scanning | result | error | batch
+    sampleId: 'oldtom',
+    scanMs: 0,
+    hoverField: null,
+    selectedField: null,
+    zoom: 1,
+    action: null,
+    batch: 'idle',      // idle | running | done
+    batchMs: 0,
+  };
+
+  WARN = "(1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.";
+
+  // ---------- sample label data ----------
+  samples() {
+    const serif = "'Libre Baskerville', serif";
+    const parchment = "linear-gradient(165deg, #f7efd8 0%, #efe2c0 55%, #e7d8b0 100%)";
+    return {
+      oldtom: {
+        quality: 'good',
+        scanTime: '3.1',
+        labelBg: parchment, labelBgColor: '#f1e6ca', labelBorder: '#7c6233',
+        app: { brand: 'OLD TOM DISTILLERY', applicant: 'Old Tom Distillery, LLC', id: 'APP2041188', submitted: '06/02/2026', serial: '26041880022', type: 'Original', code: '110 \u2013 Distilled Spirits', due: '06/09/2026', dueColor: '#b50909' },
+        decor: [
+          { content: '\u2014 EST. 1881 \u2014', x: 28, y: 9, w: 44, h: 4, font: { fontFamily: serif, fontSize: '9px', letterSpacing: '2px', color: '#6b5836' } },
+          { content: 'Small Batch', x: 30, y: 34, w: 40, h: 7, font: { fontFamily: "'Pinyon Script', cursive", fontSize: '24px', color: '#7a3b1d' } },
+        ],
+        fields: [
+          { id: 'brand', label: 'Brand Name', applicant: 'Old Tom Distillery', detected: 'OLD TOM DISTILLERY', status: 'pass', x: 8, y: 15, w: 84, h: 17, content: 'OLD TOM\nDISTILLERY', font: { fontFamily: serif, fontSize: '23px', fontWeight: 700, color: '#3a2a16', lineHeight: 1 } },
+          { id: 'class', label: 'Class / Type', applicant: 'KY Straight Bourbon', detected: 'Kentucky Straight Bourbon Whiskey', status: 'pass', x: 8, y: 44, w: 84, h: 9, content: 'KENTUCKY STRAIGHT\nBOURBON WHISKEY', font: { fontFamily: serif, fontSize: '11px', fontWeight: 700, letterSpacing: '1px', color: '#4a3a20', lineHeight: 1.25 } },
+          { id: 'abv', label: 'Alcohol Content', applicant: '45% Alc./Vol.', detected: '45% ALC./VOL. (90 PROOF)', status: 'pass', x: 9, y: 59, w: 52, h: 5, content: '45% ALC./VOL. (90 PROOF)', font: { fontFamily: serif, fontSize: '10px', color: '#4a3a20' } },
+          { id: 'net', label: 'Net Contents', applicant: '750 mL', detected: '750 mL', status: 'pass', x: 64, y: 59, w: 27, h: 5, content: '750 mL', font: { fontFamily: serif, fontSize: '10px', color: '#4a3a20' } },
+          { id: 'bottler', label: 'Bottler / Address', applicant: 'Bardstown, KY', detected: 'Old Tom Distillery Co., Bardstown, KY', status: 'pass', x: 12, y: 66, w: 76, h: 6, content: 'Distilled & Bottled by Old Tom\nDistillery Co., Bardstown, Kentucky', font: { fontFamily: serif, fontSize: '7px', color: '#5a4a30', lineHeight: 1.3 } },
+          { id: 'warning', label: 'Government Warning', applicant: 'Standard text', detected: 'Exact match', status: 'pass', x: 9, y: 75, w: 82, h: 21, content: 'GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.', font: { fontFamily: "'Public Sans', sans-serif", fontSize: '5px', fontWeight: 600, color: '#2e2418', lineHeight: 1.3, textAlign: 'left' } },
+        ],
+        warning: {
+          status: 'pass',
+          detHead: 'GOVERNMENT WARNING:',
+          headOk: true,
+          detBody: [{ text: ' ' + this.WARN, ok: true }],
+          badges: [['caps', true], ['bold', true], ['wording', true], ['size', true]],
+        },
+        flag: null,
+      },
+
+      stonesthrow: {
+        quality: 'good',
+        scanTime: '3.4',
+        labelBg: "linear-gradient(160deg, #f2f4f1 0%, #e4e9e3 100%)", labelBgColor: '#eaeee8', labelBorder: '#3a5c46',
+        app: { brand: "STONE'S THROW", applicant: "Stone's Throw Brewing Co.", id: 'APP2041206', submitted: '06/03/2026', serial: '26042060145', type: 'Original', code: '901 \u2013 Malt Beverage', due: '06/10/2026', dueColor: '#7a5a00' },
+        decor: [
+          { content: 'BREWING CO.', x: 25, y: 33, w: 50, h: 4, font: { fontFamily: serif, fontSize: '9px', letterSpacing: '3px', color: '#3a5c46' } },
+        ],
+        fields: [
+          { id: 'brand', label: 'Brand Name', applicant: "Stone's Throw", detected: "STONE'S THROW", status: 'review', x: 6, y: 16, w: 88, h: 14, content: "STONE'S\nTHROW", font: { fontFamily: serif, fontSize: '24px', fontWeight: 700, color: '#23402c', lineHeight: .95 } },
+          { id: 'class', label: 'Class / Type', applicant: 'India Pale Ale', detected: 'India Pale Ale', status: 'pass', x: 8, y: 42, w: 84, h: 6, content: 'INDIA PALE ALE', font: { fontFamily: serif, fontSize: '12px', fontWeight: 700, letterSpacing: '2px', color: '#3a5c46' } },
+          { id: 'abv', label: 'Alcohol Content', applicant: '6.8% Alc./Vol.', detected: '6.8% ALC./VOL.', status: 'pass', x: 9, y: 53, w: 52, h: 5, content: '6.8% ALC./VOL.', font: { fontFamily: serif, fontSize: '10px', color: '#3a4a40' } },
+          { id: 'net', label: 'Net Contents', applicant: '12 FL OZ', detected: '12 FL OZ', status: 'pass', x: 62, y: 53, w: 29, h: 5, content: '12 FL OZ', font: { fontFamily: serif, fontSize: '10px', color: '#3a4a40' } },
+          { id: 'bottler', label: 'Bottler / Address', applicant: 'Portland, OR', detected: 'Stone\u2019s Throw Brewing, Portland, OR', status: 'pass', x: 12, y: 61, w: 76, h: 6, content: 'Brewed & Bottled by Stone\u2019s Throw\nBrewing Co., Portland, Oregon', font: { fontFamily: serif, fontSize: '7px', color: '#46554b', lineHeight: 1.3 } },
+          { id: 'warning', label: 'Government Warning', applicant: 'Standard text', detected: 'Heading not all-caps', status: 'fail', x: 9, y: 72, w: 82, h: 22, content: 'Government Warning: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate heavy machinery, and may cause health problems.', font: { fontFamily: "'Public Sans', sans-serif", fontSize: '5px', fontWeight: 400, color: '#2e3a32', lineHeight: 1.3, textAlign: 'left' } },
+        ],
+        warning: {
+          status: 'fail',
+          detHead: 'Government Warning:',
+          headOk: false,
+          detBody: [
+            { text: " (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate ", ok: true },
+            { text: "heavy ", ok: false },
+            { text: "machinery, and may cause health problems.", ok: true },
+          ],
+          badges: [['caps', false], ['bold', false], ['wording', false], ['size', true]],
+        },
+        flag: "Brand name reads \u201CSTONE\u2019S THROW\u201D on the label but \u201CStone\u2019s Throw\u201D on the application \u2014 a capitalization difference only. This is almost certainly the same brand, but it\u2019s a judgment call, so we\u2019re leaving it to you rather than auto-approving.",
+      },
+
+      glare: { quality: 'low', scanTime: '1.6', app: { brand: 'Unreadable' } },
+    };
+  }
+
+  cur() { return this.samples()[this.state.sampleId] || this.samples().oldtom; }
+
+  // ---------- scan engine ----------
+  runScan(id) {
+    if (this._iv) clearInterval(this._iv);
+    const s = this.samples()[id];
+    const low = s.quality === 'low';
+    const total = low ? 1500 : 3200;
+    this.setState({ sampleId: id, view: 'scanning', scanMs: 0 });
+    const t0 = Date.now();
+    this._iv = setInterval(() => {
+      const ms = Date.now() - t0;
+      if (ms >= total) {
+        clearInterval(this._iv); this._iv = null;
+        this.setState({ scanMs: total, view: low ? 'error' : 'result', action: null });
+      } else {
+        this.setState({ scanMs: ms });
+      }
+    }, 60);
+  }
+
+  runBatch() {
+    if (this._biv) clearInterval(this._biv);
+    this.setState({ batch: 'running', batchMs: 0 });
+    const t0 = Date.now(); const total = 4200;
+    this._biv = setInterval(() => {
+      const ms = Date.now() - t0;
+      if (ms >= total) { clearInterval(this._biv); this._biv = null; this.setState({ batchMs: total, batch: 'done' }); }
+      else this.setState({ batchMs: ms });
+    }, 60);
+  }
+
+  componentWillUnmount() { if (this._iv) clearInterval(this._iv); if (this._biv) clearInterval(this._biv); }
+
+  // ---------- view models ----------
+  statusMeta(st) {
+    if (st === 'pass') return { color: '#226e2a', bg: '#eaf4ec', icon: '\u2713', label: 'Pass', numBg: '#eaf4ec' };
+    if (st === 'review') return { color: '#7a5a00', bg: '#fdf6e3', icon: '\u2691', label: 'Review', numBg: '#fdf6e3' };
+    if (st === 'fail') return { color: '#cd2026', bg: '#fdeced', icon: '\u2717', label: 'Fail', numBg: '#fdeced' };
+    return { color: '#5b616b', bg: '#f0f0f0', icon: '\u2013', label: 'N/A', numBg: '#f0f0f0' };
+  }
+
+  queueRows() {
+    const open = (id) => () => this.setState({ view: 'result', sampleId: id, hoverField: null, selectedField: null, action: null });
+    const P = { status: 'Pending Review', statusColor: '#005ea2', statusBg: '#e7f0fa' };
+    const R = { status: 'Needs Review', statusColor: '#7a5a00', statusBg: '#fdf6e3' };
+    const A = { status: 'Approved', statusColor: '#226e2a', statusBg: '#eaf4ec' };
+    const rows = [
+      { ...R, id: 'APP2041206', brand: "Stone's Throw IPA", applicant: "Stone's Throw Brewing Co.", type: 'Malt Beverage', due: '06/10/2026', dueColor: '#7a5a00', sid: 'stonesthrow' },
+      { ...P, id: 'APP2041188', brand: 'Old Tom Distillery', applicant: 'Old Tom Distillery, LLC', type: 'Kentucky Straight Bourbon', due: '06/09/2026', dueColor: '#b50909', sid: 'oldtom' },
+      { ...P, id: 'APP2041190', brand: 'Cedar & Sage Gin', applicant: 'Northwood Spirits Inc.', type: 'Distilled Gin', due: '06/11/2026', dueColor: '#3d4551', sid: 'oldtom' },
+      { ...R, id: 'APP2041175', brand: 'Harbor Light Lager', applicant: 'Pacific Coast Brewing', type: 'Malt Beverage', due: '06/12/2026', dueColor: '#3d4551', sid: 'stonesthrow' },
+      { ...P, id: 'APP2041201', brand: 'Vallejo Reserva', applicant: 'Importadora Vallejo SA', type: 'Tequila A\u00f1ejo', due: '06/12/2026', dueColor: '#3d4551', sid: 'oldtom' },
+      { ...A, id: 'APP2041140', brand: 'Birch Run Vodka', applicant: 'Great Lakes Distilling', type: 'Vodka', due: '\u2014', dueColor: '#97a0ab', sid: 'oldtom' },
+      { ...P, id: 'APP2041199', brand: 'Maison Dubois', applicant: 'Vins Dubois (France)', type: 'Red Wine', due: '06/13/2026', dueColor: '#3d4551', sid: 'oldtom' },
+      { ...R, id: 'APP2041166', brand: 'Ember Peak Bourbon', applicant: 'Highline Craft Co.', type: 'Straight Bourbon', due: '06/13/2026', dueColor: '#3d4551', sid: 'stonesthrow' },
+    ];
+    return rows.map(r => ({ ...r, open: open(r.sid), openKey: this.keyActivate(open(r.sid)), aria: r.status + ', ' + r.brand + ', application ' + r.id + ', due ' + r.due }));
+  }
+
+  sampleCards() {
+    const base = { height: '120px', borderRadius: '6px', border: '1px solid #e3e0d6', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px', overflow: 'hidden' };
+    return [
+      { id: 'oldtom', title: 'Old Tom Bourbon', note: 'Clean label \u2014 all checks pass', thumbStyle: { ...base, background: 'linear-gradient(165deg, #f7efd8, #e7d8b0)' }, thumbLabel: 'OLD TOM\nDISTILLERY', pick: () => this.runScan('oldtom'), pickKey: this.keyActivate(() => this.runScan('oldtom')) },
+      { id: 'stonesthrow', title: "Stone's Throw IPA", note: 'Brand case + warning issue', thumbStyle: { ...base, background: 'linear-gradient(160deg, #f2f4f1, #e4e9e3)' }, thumbLabel: "STONE'S\nTHROW", pick: () => this.runScan('stonesthrow'), pickKey: this.keyActivate(() => this.runScan('stonesthrow')) },
+      { id: 'glare', title: 'Glare / bad angle', note: 'Low-quality photo \u2014 error', thumbStyle: { ...base, background: 'linear-gradient(135deg, #6b614c, #b5a682)', border: '1px solid #4a4536' }, thumbLabel: 'GLARE', pick: () => this.runScan('glare'), pickKey: this.keyActivate(() => this.runScan('glare')) },
+    ];
+  }
+
+  renderVals() {
+    const st = this.state;
+    const s = this.cur();
+    const view = st.view;
+    const highlight = st.selectedField || st.hoverField;
+
+    // ----- scan -----
+    const total = s.quality === 'low' ? 1500 : 3200;
+    const prog = Math.min(1, st.scanMs / total);
+    const fieldCount = (s.fields || []).length;
+    const scannedCount = Math.min(fieldCount, Math.floor(prog * fieldCount) + 1) - (prog < 1 ? 0 : 0);
+    const scanLabels = ['Brand name', 'Class / type', 'Alcohol content', 'Net contents', 'Bottler info', 'Government warning'];
+    const scanText = prog >= 1 ? 'Finishing up\u2026' : 'Locating ' + (scanLabels[Math.min(scanLabels.length - 1, Math.floor(prog * scanLabels.length))]) + '\u2026';
+
+    // ----- label items (decor + fields) -----
+    const labelItems = [];
+    (s.decor || []).forEach((d, i) => {
+      labelItems.push({ key: 'd' + i, content: d.content, style: this.css({ position: 'absolute', left: d.x + '%', top: d.y + '%', width: d.w + '%', height: d.h + '%', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', whiteSpace: 'pre-line', ...d.font }) });
+    });
+    (s.fields || []).forEach((f) => {
+      labelItems.push({ key: 'f' + f.id, content: f.content, style: this.css({ position: 'absolute', left: f.x + '%', top: f.y + '%', width: f.w + '%', height: f.h + '%', display: 'flex', alignItems: 'center', justifyContent: (f.font.textAlign === 'left' ? 'flex-start' : 'center'), textAlign: f.font.textAlign || 'center', whiteSpace: 'pre-line', overflow: 'hidden', ...f.font }) });
+    });
+
+    // ----- bounding boxes -----
+    const enter = (id) => () => this.setState({ hoverField: id });
+    const leave = () => () => this.setState({ hoverField: null });
+    const click = (id) => () => this.setState({ selectedField: st.selectedField === id ? null : id });
+    const boxItems = (s.fields || []).map((f, i) => {
+      const m = this.statusMeta(f.status);
+      const on = highlight === f.id;
+      const ring = f.status === 'pass' ? '#226e2a' : (f.status === 'fail' ? '#cd2026' : '#7a5a00');
+      return {
+        key: 'b' + f.id, num: i + 1,
+        enter: enter(f.id), leave: leave(), click: click(f.id),
+        style: this.css({ position: 'absolute', left: f.x + '%', top: f.y + '%', width: f.w + '%', height: f.h + '%', border: (on ? '2.5px' : '1.5px') + ' solid ' + ring, background: on ? this.hexA(ring, .14) : 'transparent', borderRadius: '3px', cursor: 'pointer', transition: 'all .12s', boxShadow: on ? '0 0 0 3px ' + this.hexA(ring, .2) : 'none', zIndex: on ? 5 : 2 }),
+        tagStyle: this.css({ position: 'absolute', top: '-9px', left: '-9px', width: '17px', height: '17px', borderRadius: '50%', background: ring, color: '#fff', fontSize: '10px', fontWeight: 700, display: on ? 'flex' : 'none', alignItems: 'center', justifyContent: 'center', fontFamily: "'Public Sans', sans-serif" }),
+      };
+    });
+
+    // ----- checklist -----
+    const checklist = (s.fields || []).map((f, i) => {
+      const m = this.statusMeta(f.status);
+      const on = highlight === f.id;
+      return {
+        key: f.id, num: i + 1, label: f.label, applicant: f.applicant, detected: f.detected,
+        color: m.color, icon: m.icon, statusLabel: m.label, numBg: m.numBg,
+        enter: enter(f.id), leave: leave(), click: click(f.id),
+        rowStyle: this.css({ display: 'grid', gridTemplateColumns: '1.35fr 1.35fr 96px 30px', gap: '0', alignItems: 'center', padding: '11px 18px', borderBottom: '1px solid #edeff1', cursor: 'pointer', background: on ? '#eef4fb' : (f.status === 'fail' ? '#fffafa' : (f.status === 'review' ? '#fffdf6' : '#fff')), transition: 'background .12s' }),
+      };
+    });
+    const passN = (s.fields || []).filter(f => f.status === 'pass').length;
+    const checkSummary = passN + ' of ' + fieldCount + ' clear';
+
+    // ----- verdict pill -----
+    const anyFail = (s.fields || []).some(f => f.status === 'fail');
+    const anyRev = (s.fields || []).some(f => f.status === 'review');
+    let verdict;
+    if (anyFail) verdict = { color: '#cd2026', bg: '#fdeced', icon: '\u2717', label: 'Violation found' };
+    else if (anyRev) verdict = { color: '#7a5a00', bg: '#fdf6e3', icon: '\u2691', label: 'Needs your judgment' };
+    else verdict = { color: '#226e2a', bg: '#eaf4ec', icon: '\u2713', label: 'All checks passed' };
+
+    // ----- warning hero -----
+    const w = s.warning || {};
+    const badgeText = { caps: 'All-caps heading', bold: 'Bold heading', wording: 'Exact wording', size: 'Min. font size' };
+    const badges = (w.badges || []).map(([k, ok]) => ({
+      key: k, text: badgeText[k], icon: ok ? '\u2713' : '\u2717',
+      color: ok ? '#226e2a' : '#cd2026', bg: ok ? '#eaf4ec' : '#fdeced', border: ok ? '#bfe0c6' : '#f3c9cb',
+    }));
+    const headStyle = this.css(w.headOk
+      ? { fontWeight: 800 }
+      : { fontWeight: 800, background: '#fde0e1', color: '#b50909', padding: '0 3px', borderRadius: '3px', textDecoration: 'underline', textDecorationColor: '#cd2026', textDecorationStyle: 'wavy' });
+    const detBody = (w.detBody || []).map((seg, i) => ({
+      key: 'sg' + i, text: seg.text,
+      style: this.css(seg.ok ? {} : { background: '#fde0e1', color: '#b50909', padding: '0 2px', borderRadius: '3px', fontWeight: 700 }),
+    }));
+    const warning = {
+      accent: w.status === 'pass' ? '#226e2a' : '#cd2026',
+      icon: w.status === 'pass' ? '\u2713' : '\u2717',
+      verdict: w.status === 'pass' ? 'Exact match' : 'Rejected',
+      detBg: w.status === 'pass' ? '#f3f8f4' : '#fdf4f4',
+      required: this.WARN, badges,
+      detHead: w.detHead || '', headStyle, detBody,
+    };
+
+    // ----- app meta -----
+    const a = s.app || {};
+    const appMeta = [
+      { k: 'Application ID', v: a.id }, { k: 'Submitted', v: a.submitted }, { k: 'Applicant', v: a.applicant },
+      { k: 'Serial No.', v: a.serial }, { k: 'Type', v: a.type }, { k: 'TTB Product Code', v: a.code },
+    ];
+
+    // ----- actions -----
+    const actSpec = anyFail
+      ? [['reject', 'Return for correction', 'Government Warning fails TTB formatting', true], ['changes', 'Request changes', 'Send specific fixes to applicant', false], ['approve', 'Approve anyway', 'Override \u2014 requires supervisor note', false]]
+      : anyRev
+        ? [['approve', 'Approve label', 'Case difference is cosmetic \u2014 same brand', true], ['changes', 'Request changes', 'Ask applicant to match the form', false], ['info', 'Request more info', 'Confirm brand name spelling', false]]
+        : [['approve', 'Approve label', 'All requirements met', true], ['changes', 'Request changes', 'Send back for corrections', false], ['info', 'Request more info', 'Ask applicant a question', false]];
+    const setAct = (id) => () => this.setState({ action: id });
+    const setActKey = (id) => this.keyActivate(() => this.setState({ action: id }));
+    if (actSpec.length && !actSpec.some(x => x[0] === st.action)) { /* keep */ }
+    const action = actSpec.some(x => x[0] === st.action) ? st.action : actSpec.find(x => x[3])[0];
+    const actions = actSpec.map(([id, title, sub, rec]) => {
+      const on = action === id;
+      const accent = id === 'reject' ? '#cd2026' : (id === 'approve' ? '#226e2a' : '#005ea2');
+      return {
+        key: id, title, sub: rec ? sub + ' \u00b7 recommended' : sub, pick: setAct(id), pickKey: setActKey(id), checked: on, aria: title + (rec ? ', recommended' : ''),
+        style: this.css({ display: 'flex', gap: '11px', alignItems: 'flex-start', padding: '11px 12px', border: '1.5px solid ' + (on ? accent : '#e0e3e6'), background: on ? this.hexA(accent, .07) : '#fff', borderRadius: '8px', cursor: 'pointer', marginBottom: '8px', transition: 'all .12s' }),
+        dotStyle: this.css({ flex: 'none', width: '16px', height: '16px', borderRadius: '50%', marginTop: '2px', border: '2px solid ' + (on ? accent : '#b8bdc4'), background: on ? 'radial-gradient(circle, ' + accent + ' 0 42%, transparent 46%)' : '#fff' }),
+      };
+    });
+
+    // ----- batch -----
+    const bprog = Math.min(1, st.batchMs / 4200);
+    const batchDone = Math.floor(bprog * 247);
+    const batchTable = [
+      ['012', "Stone's Throw IPA", "Stone's Throw Brewing", 'review', 'Brand case mismatch', 'stonesthrow'],
+      ['034', 'Rio Verde Tequila', 'Importadora Vallejo SA', 'fail', 'Warning heading not all-caps', 'stonesthrow'],
+      ['058', 'Harbor Light Lager', 'Pacific Coast Brewing', 'review', 'ABV missing on label', 'oldtom'],
+      ['071', 'Maison Dubois Rouge', 'Vins Dubois (France)', 'fail', 'No government warning found', 'stonesthrow'],
+      ['093', 'Ember Peak Bourbon', 'Highline Craft Co.', 'review', 'Fanciful name unclear', 'oldtom'],
+      ['115', 'Birch Run Reserve', 'Great Lakes Distilling', 'fail', 'Net contents mismatch', 'stonesthrow'],
+    ].map(([row, brand, applicant, status, issue, sid]) => {
+      const m = this.statusMeta(status);
+      const openR = () => this.setState({ view: 'result', sampleId: sid, batch: 'idle', hoverField: null, selectedField: null, action: null });
+      return { key: row, row, brand, applicant, issue, result: status === 'fail' ? 'Failed' : 'Review', color: m.color, bg: m.bg, icon: m.icon, open: openR, openKey: this.keyActivate(openR) };
+    });
+
+    return {
+      isQueue: view === 'queue', isUpload: view === 'upload', isScanning: view === 'scanning',
+      isResult: view === 'result', isError: view === 'error', isBatch: view === 'batch',
+      goQueue: () => this.setState({ view: 'queue' }),
+      goUpload: () => this.setState({ view: 'upload' }),
+      goBatch: () => this.setState({ view: 'batch', batch: 'idle' }),
+      queueRows: this.queueRows(), sampleCards: this.sampleCards(),
+      // scan
+      scanText, scanPctCss: (prog * 100).toFixed(0) + '%', scanSeconds: (Math.min(st.scanMs, total) / 1000).toFixed(1),
+      scannedCount: Math.max(0, scannedCount), totalFields: fieldCount,
+      // result
+      app: { ...a, scanTime: s.scanTime },
+      zoomCss: 'scale(' + st.zoom + ')',
+      labelBgColor: s.labelBgColor || '#efe3c4',
+      labelBorderColor: s.labelBorder || '#7c6233',
+      appMeta, verdict, labelItems, boxItems, checklist, checkSummary, warning,
+      hasFlag: !!s.flag, flagNote: s.flag || '',
+      zoom: st.zoom,
+      zoomIn: () => this.setState({ zoom: Math.min(1.8, st.zoom + 0.2) }),
+      zoomOut: () => this.setState({ zoom: Math.max(0.8, st.zoom - 0.2) }),
+      actions,
+      // batch
+      batchIdle: st.batch === 'idle', batchRunning: st.batch === 'running', batchDoneState: st.batch === 'done',
+      startBatch: () => this.runBatch(),
+      batchPctCss: (bprog * 100).toFixed(0) + '%', batchDone, batchEta: Math.max(0, Math.ceil((1 - bprog) * 11)) + ' min',
+      batchTable,
+    };
+  }
+
+  // helpers
+  keyActivate(fn) { return (e) => { if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); fn(); } }; }
+  css(obj) { return obj; }
+  hexA(hex, a) {
+    const h = hex.replace('#', '');
+    const r = parseInt(h.substring(0, 2), 16), g = parseInt(h.substring(2, 4), 16), b = parseInt(h.substring(4, 6), 16);
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+  }
+}
+</script>
+</body>
+</html>
