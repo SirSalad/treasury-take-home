@@ -19,6 +19,13 @@ const RESPONSE: VerificationResponse = {
   application_id: 1,
   status: "completed",
   image_filename: "label.png",
+  images: [
+    {
+      index: 0,
+      filename: "label.png",
+      quality: { level: "ok", mean_confidence: 0.97, text_regions: 11, message: null },
+    },
+  ],
   timing: { total_ms: 2400, ocr_ms: 1500 },
   result: SAMPLE_RESULT,
   image_quality: { level: "ok", mean_confidence: 0.97, text_regions: 11, message: null },

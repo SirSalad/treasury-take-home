@@ -112,7 +112,7 @@ export function BatchPage() {
       const image = images.get(rows[i].image.trim());
       try {
         if (!image) throw new ApiError(0, `No uploaded file named "${rows[i].image}".`);
-        const response = await api.verify(image, rowToApplication(rows[i]));
+        const response = await api.verify([image], rowToApplication(rows[i]));
         results[i] = {
           state: "done",
           submissionId: response.submission_id,
