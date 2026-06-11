@@ -45,7 +45,7 @@ export function DecisionPanel({
   return (
     <section
       aria-label="Review decision"
-      className="overflow-hidden rounded-[10px] border border-fed-line bg-white shadow-card lg:sticky lg:top-24"
+      className="overflow-hidden rounded-[10px] border border-fed-line bg-white shadow-card"
     >
       <h3 className="border-b border-[#e6e8ea] px-[18px] py-2.5 text-[14.5px] font-extrabold text-fed-navy">
         Review Decision

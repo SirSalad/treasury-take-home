@@ -223,7 +223,7 @@ export function ReviewPage() {
       <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,460px)_minmax(0,1fr)_320px]">
         {/* LEFT: submitted label with highlight boxes — sized to the viewport
             height so it fills the screen without pushing the page taller. */}
-        <div className="flex flex-col overflow-hidden rounded-[10px] border border-fed-line bg-white shadow-card xl:sticky xl:top-24">
+        <div className="flex flex-col overflow-hidden rounded-[10px] border border-fed-line bg-white shadow-card">
           <div className="flex items-center justify-between border-b border-[#e6e8ea] px-4 py-2.5">
             <h3 className="text-[13.5px] font-bold text-fed-navy">Submitted Label</h3>
             <div className="flex gap-1.5">
@@ -278,7 +278,9 @@ export function ReviewPage() {
           <WarningHero result={result.government_warning} />
         </div>
 
-        {/* RIGHT: decision */}
+        {/* RIGHT: decision + activity, in normal flow so they scroll together
+            (no sticky — the panel pinning while the timeline slid under it was
+            the "Activity collapses on scroll" glitch). */}
         <div>
           {decisionError && (
             <div
