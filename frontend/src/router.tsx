@@ -1,6 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 
 import { Layout } from "@/components/layout/Layout";
+import { AuditPage } from "@/pages/AuditPage";
 import { BatchPage } from "@/pages/BatchPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { QueuePage } from "@/pages/QueuePage";
@@ -16,6 +17,7 @@ export const router = createBrowserRouter([
       { path: "verify", element: <VerifyPage /> },
       { path: "review/:id", element: <ReviewPage /> },
       { path: "batch", element: <BatchPage /> },
+      { path: "audit", element: <AuditPage /> },
       { path: "*", element: <NotFoundPage /> },
     ],
   },

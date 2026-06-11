@@ -18,5 +18,6 @@ describe("App", () => {
     expect(nav.textContent).toContain("Review Queue");
     expect(nav.textContent).toContain("New Verification");
     expect(nav.textContent).toContain("Batch Upload");
+    expect(nav.textContent).toContain("Audit Log");
   });
 });

@@ -7,6 +7,7 @@ import { axe } from "vitest-axe";
 import { App } from "./App";
 import type { QueueStats, SubmissionDetail, SubmissionRow } from "./lib/api";
 import { SAMPLE_RESULT } from "./lib/verification.fixture";
+import { AuditPage } from "./pages/AuditPage";
 import { BatchPage } from "./pages/BatchPage";
 import { QueuePage } from "./pages/QueuePage";
 import { ReviewPage } from "./pages/ReviewPage";
@@ -49,6 +50,25 @@ vi.mock("@/lib/api", async () => {
       queueStats: () => Promise.resolve(STATS),
       submission: () => Promise.resolve(DETAIL),
       submissionImageUrl: () => "/sample-label.png",
+      audit: () =>
+        Promise.resolve([
+          {
+            id: 2,
+            created_at: "2026-06-11T12:05:00Z",
+            action: "decision.recorded",
+            actor: "reviewer",
+            submission_id: 7,
+            detail: { decision: "approve", note: "Looks good" },
+          },
+          {
+            id: 1,
+            created_at: "2026-06-11T12:00:00Z",
+            action: "verification.completed",
+            actor: "reviewer",
+            submission_id: 7,
+            detail: { brand_name: "Stone's Throw IPA", overall: "warning", processing_ms: 3100 },
+          },
+        ]),
     },
   };
 });
@@ -87,6 +107,15 @@ describe("WCAG 2.1 AA accessibility", () => {
         </Routes>
       </MemoryRouter>,
       () => screen.findByText(/Verification Checklist/i),
+    );
+  });
+
+  it("audit log", async () => {
+    await expectNoAaViolations(
+      <MemoryRouter>
+        <AuditPage />
+      </MemoryRouter>,
+      () => screen.findByText(/Decision recorded/i),
     );
   });
 

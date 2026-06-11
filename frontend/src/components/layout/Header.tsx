@@ -6,6 +6,7 @@ const NAV = [
   { to: "/", label: "Review Queue", end: true },
   { to: "/verify", label: "New Verification" },
   { to: "/batch", label: "Batch Upload" },
+  { to: "/audit", label: "Audit Log" },
 ];
 
 /**

@@ -151,6 +151,16 @@ export interface SubmissionDetail extends SubmissionRow {
   application: Record<string, string | number | null> | null;
 }
 
+/** One row of the append-only audit trail (mirrors `AuditEventRow`). */
+export interface AuditEvent {
+  id: number;
+  created_at: string | null;
+  action: string;
+  actor: string;
+  submission_id: number | null;
+  detail: Record<string, unknown> | null;
+}
+
 // ---- Endpoints ----------------------------------------------------------
 
 export const api = {
@@ -207,5 +217,11 @@ export const api = {
       body: { decision, note: note || null },
       signal,
     });
+  },
+
+  /** Append-only audit trail, newest first; optionally scoped to one submission. */
+  audit(submissionId?: number, signal?: AbortSignal): Promise<AuditEvent[]> {
+    const query = submissionId != null ? `?submission_id=${submissionId}` : "";
+    return request<AuditEvent[]>(`/audit${query}`, { signal });
   },
 };

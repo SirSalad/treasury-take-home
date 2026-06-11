@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
+import { ActivityTimeline } from "@/components/review/ActivityTimeline";
 import { DecisionPanel } from "@/components/review/DecisionPanel";
 import { ReviewChecklist } from "@/components/review/ReviewChecklist";
 import { WarningHero } from "@/components/review/WarningHero";
@@ -300,6 +301,9 @@ export function ReviewPage() {
             onSubmit={submitDecision}
             onReturn={() => navigate("/")}
           />
+          <div className="mt-4">
+            <ActivityTimeline submissionId={detail.id} />
+          </div>
         </div>
       </div>
     </div>
