@@ -31,7 +31,7 @@ type PagePhase = "edit" | "running" | "done";
 
 const OUTCOME_PILL: Record<string, { label: string; icon: string; color: string; bg: string }> = {
   pass: { label: "Cleared", icon: "✓", color: "#226e2a", bg: "#eaf4ec" },
-  warning: { label: "Needs judgment", icon: "⚠", color: "#7a5a00", bg: "#faf3d1" },
+  warning: { label: "Needs review", icon: "⚠", color: "#7a5a00", bg: "#faf3d1" },
   fail: { label: "Failed", icon: "✗", color: "#b50909", bg: "#fdeced" },
   error: { label: "Unreadable", icon: "✗", color: "#b50909", bg: "#fdeced" },
 };
@@ -149,9 +149,9 @@ export function BatchPage() {
         Batch Verification
       </h2>
       <p className="mb-6 text-[14.5px] text-fed-gray">
-        Built for peak season — drop a whole importer’s submission at once. Upload a CSV manifest
-        and the label images it names, fix anything up in the table, and we surface only the labels
-        that need your eyes.
+        Verify many labels in one run. Upload a CSV manifest and the label images it names; each row
+        is checked like a single verification, and the results table links to the review screen for
+        any label that needs attention.
       </p>
 
       {phase !== "running" && (
@@ -334,9 +334,9 @@ export function BatchPage() {
         <>
           <div className="mb-5 grid gap-3.5 md:grid-cols-3">
             {[
-              { value: cleared, label: "Auto-cleared — all checks passed", accent: "#226e2a" },
-              { value: judgment, label: "Need your judgment", accent: "#7a5a00" },
-              { value: failed, label: "Failed — violations or unreadable", accent: "#cd2026" },
+              { value: cleared, label: "Passed — all checks matched", accent: "#226e2a" },
+              { value: judgment, label: "Need review", accent: "#7a5a00" },
+              { value: failed, label: "Failed — mismatches or unreadable", accent: "#cd2026" },
             ].map((card) => (
               <div
                 key={card.label}

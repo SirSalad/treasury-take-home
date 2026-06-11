@@ -41,10 +41,10 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
           >
             <AlertTriangle className="mx-auto size-10 text-destructive" aria-hidden="true" />
             <div className="space-y-1">
-              <h1 className="text-xl font-bold text-foreground">Something went wrong</h1>
+              <h1 className="text-xl font-bold text-foreground">The page hit an error</h1>
               <p className="text-sm text-muted-foreground">
-                The app hit an unexpected error and could not continue. Reloading usually clears it.
-                If it keeps happening, contact your administrator.
+                The page could not continue. Reload to try again; if the error repeats, contact your
+                administrator.
               </p>
             </div>
             <Button onClick={() => window.location.reload()}>Reload the page</Button>

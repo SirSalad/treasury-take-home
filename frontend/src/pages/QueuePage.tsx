@@ -220,12 +220,12 @@ export function QueuePage() {
       <div className="mb-5 grid grid-cols-2 gap-3.5 lg:grid-cols-4">
         <StatCard
           value={stats ? String(stats.pending) : "–"}
-          label="Pending in your queue"
+          label="Pending review"
           accent="#005ea2"
         />
         <StatCard
           value={stats ? String(stats.flagged) : "–"}
-          label="Flagged for your judgment"
+          label="Flagged for review"
           accent="#7a5a00"
           valueColor="#7a5a00"
         />

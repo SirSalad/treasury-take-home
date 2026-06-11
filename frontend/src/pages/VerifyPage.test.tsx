@@ -88,7 +88,7 @@ describe("VerifyPage flow", () => {
     fillAndSubmit();
 
     // Scanning state is announced while the request is in flight.
-    expect(await screen.findByText(/Reading the label/i)).toBeDefined();
+    expect(await screen.findByText(/Verifying the label/i)).toBeDefined();
 
     resolve(RESPONSE);
 

@@ -22,8 +22,8 @@ const VERDICT_PILL: Record<
   { icon: string; label: string; color: string; bg: string }
 > = {
   pass: { icon: "✓", label: "All checks passed", color: "#226e2a", bg: "#eaf4ec" },
-  warning: { icon: "⚠", label: "Needs your judgment", color: "#7a5a00", bg: "#faf3d1" },
-  fail: { icon: "✗", label: "Violations found", color: "#b50909", bg: "#fdeced" },
+  warning: { icon: "⚠", label: "Needs review", color: "#7a5a00", bg: "#faf3d1" },
+  fail: { icon: "✗", label: "Checks failed", color: "#b50909", bg: "#fdeced" },
 };
 
 /**
@@ -175,17 +175,17 @@ export function ReviewPage() {
         >
           <div className="px-[30px] py-7">
             <h2 className="mb-2 text-[21px] font-extrabold text-fed-red-deep">
-              We couldn’t read this label
+              No text could be read from this filing
             </h2>
             <p className="mb-4 text-[14.5px] leading-[1.55] text-fed-slate">
               {detail.error ??
-                "No text could be recognised in the image, so nothing was verified. Rather than guess, we stopped so nothing slips through."}
+                "No text could be recognized in the uploaded image(s), so no fields were checked."}
             </p>
             <Link
               to="/verify"
               className="inline-block rounded-md bg-fed-blue px-5 py-2.5 text-sm font-bold text-white hover:bg-[#0b4778]"
             >
-              Upload a better image
+              Upload a clearer image
             </Link>
           </div>
         </div>
@@ -231,7 +231,7 @@ export function ReviewPage() {
           </span>
           {detail.processing_ms != null && (
             <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-fed-green-wash px-[11px] py-[5px] text-[12.5px] font-semibold text-fed-green">
-              ⏱ Verified in {(detail.processing_ms / 1000).toFixed(1)}s
+              ⏱ Processed in {(detail.processing_ms / 1000).toFixed(1)}s
             </span>
           )}
         </div>

@@ -97,10 +97,10 @@ export function VerifyPage() {
               }}
             />
           </div>
-          <p className="mb-1.5 text-[19px] font-extrabold text-fed-navy">Reading the label…</p>
+          <p className="mb-1.5 text-[19px] font-extrabold text-fed-navy">Verifying the label…</p>
           <p className="text-sm text-fed-gray">
-            Extracting the text and checking it against the application. This usually takes a few
-            seconds.
+            Extracting the label text and comparing it to the application. Filings with several
+            images can take up to a minute.
           </p>
         </div>
         {/* The scan-line keyframes live with the page that uses them. */}
@@ -121,8 +121,7 @@ export function VerifyPage() {
         New Label Verification
       </h2>
       <p className="mb-6 text-[14.5px] text-fed-gray">
-        Enter the application details (TTB Form 5100.31), drop the label artwork below, and results
-        come back in a few seconds.
+        Enter the application data from TTB Form 5100.31 and upload the label images.
       </p>
 
       {phase.name === "error" && (
@@ -135,7 +134,7 @@ export function VerifyPage() {
             <h3 className="font-bold text-fed-red-deep">Could not verify the label</h3>
             <p className="text-sm text-fed-ink">{phase.message}</p>
             <p className="text-sm text-fed-gray">
-              Your entries are kept below — adjust them or the image and try again.
+              The form entries below are unchanged. Correct the fields or images and resubmit.
             </p>
           </div>
         </div>
@@ -144,9 +143,9 @@ export function VerifyPage() {
       <section className="mb-7">
         <h3 className="mb-2 text-lg font-bold text-fed-ink">Label artwork</h3>
         <p className="mb-2 text-sm text-fed-gray">
-          Upload the filing’s label images — front, back, neck — as photos or scans. The mandatory
-          content is split across them (the Government Warning usually sits on the back label), so
-          including the full set is what lets every field verify.
+          Upload every label image in the filing (front, back, neck). Required items are split
+          across labels — the Government Warning is usually on the back — so the full set is needed
+          to check all fields.
         </p>
         <LabelUpload value={images} onChange={setImages} error={imageError} />
       </section>

@@ -96,7 +96,7 @@ describe("WCAG 2.1 AA accessibility", () => {
       <MemoryRouter>
         <QueuePage />
       </MemoryRouter>,
-      () => screen.findByText(/Pending in your queue/i),
+      () => screen.findAllByText(/Pending review/i),
     );
   });
 
