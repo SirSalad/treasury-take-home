@@ -2,9 +2,11 @@
 
 AI-powered alcohol-label verification prototype for the TTB Compliance Division.
 An agent enters the application data (the COLA/TTB Form 5100.31 "1513-0020"
-fields), uploads the label artwork, and the app extracts the label's text and
-compares it against the application — flagging matches, warnings, and mismatches,
-with special handling for the mandatory Government Health Warning.
+fields), uploads the filing's label artwork — the full set: front, back, neck,
+since the mandatory content is split across them — and the app extracts the
+labels' text and compares it against the application, merging the best verdict
+per field across the set and flagging matches, warnings, and mismatches, with
+special handling for the mandatory Government Health Warning.
 
 The product constraints come straight from the discovery interviews: **< 5s**
 results, an interface **"my 73-year-old mother could figure out"**, and **no
@@ -17,10 +19,12 @@ blocks outbound ML endpoints).
 
 Open the URL: the **Review Queue** (stat cards over recent submissions) is the
 home screen. Click **New Verification**, fill in the application fields, and
-upload a label image (samples live in
-[`backend/tests/corpus/images/`](backend/tests/corpus/images/)) to get a
-field-by-field verdict. **Batch upload** runs the same pipeline over a CSV
-manifest + image set.
+upload the label images — front and back together, the way a COLA is filed
+(samples live in
+[`backend/tests/corpus/images/`](backend/tests/corpus/images/) and
+[`backend/tests/eval_cola/images/`](backend/tests/eval_cola/images/)) — to get a
+field-by-field verdict with per-image highlight boxes. **Batch upload** runs
+the same pipeline over a CSV manifest + image set.
 
 The full Docker Compose stack (Postgres + FastAPI + nginx-served frontend) runs
 on a VPS; the public HTTPS URL is a Cloudflare tunnel terminating at the

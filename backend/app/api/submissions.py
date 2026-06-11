@@ -6,7 +6,8 @@ endpoints surface that audit trail as the reviewer's working queue:
 * ``GET  /api/submissions``                — recent submissions, newest first
 * ``GET  /api/submissions/stats``          — queue counts for the stat cards
 * ``GET  /api/submissions/{id}``           — one submission with its full result
-* ``GET  /api/submissions/{id}/image``     — the stored label image
+* ``GET  /api/submissions/{id}/image``     — the first stored label image
+* ``GET  /api/submissions/{id}/images/{index}`` — one image of the label set
 * ``POST /api/submissions/{id}/decision``  — record the reviewer's judgment
 """
 
@@ -65,6 +66,14 @@ class QueueStats(BaseModel):
     avg_scan_ms: int | None
 
 
+class SubmissionImageRow(BaseModel):
+    """One image of the submission's label set (``index`` = display order)."""
+
+    index: int
+    filename: str | None
+    kind: str | None
+
+
 class SubmissionDetail(SubmissionRow):
     """Full submission: the persisted verification result and application."""
 
@@ -72,6 +81,9 @@ class SubmissionDetail(SubmissionRow):
     error: str | None
     decision_note: str | None
     application: dict[str, Any] | None
+    # The filing's label set; the result's ``image_index`` values refer to
+    # these. Legacy single-image rows surface their one image here too.
+    images: list[SubmissionImageRow] = Field(default_factory=list)
 
 
 class DecisionInput(BaseModel):
@@ -84,6 +96,21 @@ class DecisionInput(BaseModel):
 def _applicant(submission: Submission) -> str | None:
     app_row = submission.application
     return app_row.name_and_address if app_row else None
+
+
+def _image_set(submission: Submission) -> list[tuple[str, str | None, str | None, str | None]]:
+    """The submission's ordered images as ``(ref, filename, content_type, kind)``.
+
+    Multi-image submissions read from ``submission.images``; legacy rows (seed,
+    batch, pre-migration data) fall back to the single denormalised image on
+    the submission itself, so every submission exposes a uniform image list.
+    """
+    if submission.images:
+        return [
+            (img.image_ref, img.image_filename, img.content_type, img.kind)
+            for img in submission.images
+        ]
+    return [(submission.image_ref, submission.image_filename, submission.content_type, None)]
 
 
 def _row(submission: Submission) -> SubmissionRow:
@@ -187,6 +214,10 @@ def get_submission(submission_id: int, db: Annotated[Session, Depends(get_db)]) 
         error=submission.error,
         decision_note=submission.decision_note,
         application=application,
+        images=[
+            SubmissionImageRow(index=i, filename=filename, kind=kind)
+            for i, (_, filename, _, kind) in enumerate(_image_set(submission))
+        ],
     )
 
 
@@ -194,9 +225,24 @@ def get_submission(submission_id: int, db: Annotated[Session, Depends(get_db)]) 
 def get_submission_image(
     submission_id: int, db: Annotated[Session, Depends(get_db)]
 ) -> FileResponse:
-    """The stored label image for re-rendering in the review screen."""
+    """The first stored label image (legacy single-image clients)."""
+    return get_submission_image_at(submission_id, 0, db)
+
+
+@router.get("/{submission_id}/images/{index}")
+def get_submission_image_at(
+    submission_id: int, index: int, db: Annotated[Session, Depends(get_db)]
+) -> FileResponse:
+    """One image of the submission's label set, by display order."""
     submission = _get_or_404(db, submission_id)
-    path = Path(submission.image_ref)
+    images = _image_set(submission)
+    if not 0 <= index < len(images):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Submission {submission_id} has no image {index}.",
+        )
+    ref, filename, content_type, _ = images[index]
+    path = Path(ref)
     if not path.is_file():
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -204,8 +250,8 @@ def get_submission_image(
         )
     return FileResponse(
         path,
-        media_type=submission.content_type or "application/octet-stream",
-        filename=submission.image_filename or path.name,
+        media_type=content_type or "application/octet-stream",
+        filename=filename or path.name,
     )
 
 

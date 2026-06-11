@@ -70,7 +70,7 @@ describe("VerifyPage flow", () => {
     renderPage();
     fillAndSubmit({ withImage: false });
     expect(verify).not.toHaveBeenCalled();
-    expect(screen.getByText(/Add the label image/i)).toBeDefined();
+    expect(screen.getByText(/Add at least one label image/i)).toBeDefined();
   });
 
   it("shows the scanning state then lands on the review screen on success", async () => {

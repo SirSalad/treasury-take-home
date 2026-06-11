@@ -99,9 +99,9 @@ const FORM_FIELD_MAP: ReadonlyArray<[keyof ApplicationForm, string]> = [
   ["appellation", "appellation"],
 ];
 
-function buildVerifyForm(image: File, application: ApplicationForm): FormData {
+function buildVerifyForm(images: File[], application: ApplicationForm): FormData {
   const data = new FormData();
-  data.append("image", image);
+  for (const image of images) data.append("images", image);
   for (const [formKey, apiKey] of FORM_FIELD_MAP) {
     const value = application[formKey].trim();
     if (value) data.append(apiKey, value);
@@ -143,12 +143,21 @@ export interface QueueStats {
   avg_scan_ms: number | null;
 }
 
+/** One image of a submission's label set (mirrors `SubmissionImageRow`). */
+export interface SubmissionImageRow {
+  index: number;
+  filename: string | null;
+  kind: string | null;
+}
+
 /** Full submission detail: queue row + persisted result + application. */
 export interface SubmissionDetail extends SubmissionRow {
   result: VerificationResult | null;
   error: string | null;
   decision_note: string | null;
   application: Record<string, string | number | null> | null;
+  /** The filing's label set; the result's `image_index` values refer to these. */
+  images: SubmissionImageRow[];
 }
 
 /** One row of the append-only audit trail (mirrors `AuditEventRow`). */
@@ -170,17 +179,18 @@ export const api = {
   },
 
   /**
-   * Verify one label image against its expected COLA application data. Sends a
-   * multipart request to `POST /api/verify` and returns the verdict contract.
+   * Verify a filing's label image set (front, back, …) against its expected
+   * COLA application data. Sends a multipart request to `POST /api/verify`
+   * (repeated `images` parts, in order) and returns the verdict contract.
    */
   verify(
-    image: File,
+    images: File[],
     application: ApplicationForm,
     signal?: AbortSignal,
   ): Promise<VerificationResponse> {
     return request<VerificationResponse>("/verify", {
       method: "POST",
-      body: buildVerifyForm(image, application),
+      body: buildVerifyForm(images, application),
       signal,
     });
   },
@@ -200,9 +210,9 @@ export const api = {
     return request<SubmissionDetail>(`/submissions/${id}`, { signal });
   },
 
-  /** URL of the stored label image for a submission (for <img src>). */
-  submissionImageUrl(id: number): string {
-    return `${BASE_URL}/submissions/${id}/image`;
+  /** URL of a stored label image for a submission (for <img src>). */
+  submissionImageUrl(id: number, index = 0): string {
+    return `${BASE_URL}/submissions/${id}/images/${index}`;
   },
 
   /** Record the reviewer's decision on a submission. */

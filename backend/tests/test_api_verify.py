@@ -212,3 +212,54 @@ def test_missing_brand_name_is_422(session_factory, tmp_path) -> None:
     del form["brand_name"]
     resp = client.post("/api/verify", data=form, files={"image": ("l.png", _TINY_PNG, "image/png")})
     assert resp.status_code == 422
+
+
+# --- Multi-image submissions (a filing's full label set) -----------------------
+
+
+def test_verify_accepts_multiple_images(session_factory, tmp_path) -> None:
+    client = _client(session_factory, _PASS_LINES, tmp_path)
+    resp = client.post(
+        "/api/verify",
+        data=_form(),
+        files=[
+            ("images", ("front.png", _TINY_PNG, "image/png")),
+            ("images", ("back.png", _TINY_PNG, "image/png")),
+        ],
+    )
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["result"]["overall"] == "pass"
+    assert body["image_filename"] == "front.png"
+    assert [img["index"] for img in body["images"]] == [0, 1]
+    assert [img["filename"] for img in body["images"]] == ["front.png", "back.png"]
+
+    # The persisted submission carries the ordered image set; the legacy
+    # single-image columns mirror the first image.
+    with session_factory() as db:
+        stored = db.get(Submission, body["submission_id"])
+        assert stored is not None
+        assert [img.position for img in stored.images] == [0, 1]
+        assert stored.image_ref == stored.images[0].image_ref
+        assert stored.image_filename == "front.png"
+
+    # The detail endpoint lists the set, and each image serves by index.
+    detail = client.get(f"/api/submissions/{body['submission_id']}").json()
+    assert [img["filename"] for img in detail["images"]] == ["front.png", "back.png"]
+    assert client.get(f"/api/submissions/{body['submission_id']}/images/1").status_code == 200
+    assert client.get(f"/api/submissions/{body['submission_id']}/images/5").status_code == 404
+    # The legacy single-image endpoint serves the first image.
+    assert client.get(f"/api/submissions/{body['submission_id']}/image").status_code == 200
+
+
+def test_verify_with_no_image_at_all_is_400(session_factory, tmp_path) -> None:
+    client = _client(session_factory, _PASS_LINES, tmp_path)
+    resp = client.post("/api/verify", data=_form())
+    assert resp.status_code == 400
+
+
+def test_verify_rejects_too_many_images(session_factory, tmp_path) -> None:
+    client = _client(session_factory, _PASS_LINES, tmp_path)
+    files = [("images", (f"l{i}.png", _TINY_PNG, "image/png")) for i in range(7)]
+    resp = client.post("/api/verify", data=_form(), files=files)
+    assert resp.status_code == 400

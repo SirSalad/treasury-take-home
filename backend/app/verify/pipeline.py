@@ -31,7 +31,7 @@ second of compute.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Sequence
 
 import cv2
 import numpy as np
@@ -125,6 +125,103 @@ def verify_label_image(
             result = build_result(result.fields, rescued)
 
     return result, primary
+
+
+def verify_label_images(
+    expected: ExpectedFields,
+    images: Sequence[ImageInput],
+    *,
+    ocr: OcrService | None = None,
+) -> tuple[VerificationResult, list[OcrResult]]:
+    """Verify a filing's *full label set* against the expected COLA.
+
+    A COLA filing comprises several label images — front, back, neck — and the
+    mandatory content is split across them (the Government Warning usually sits
+    on the back label, ABV on the front). Each image runs through
+    :func:`verify_label_image`; the per-field results merge on best verdict,
+    the way a reviewer reads the whole filing: content recovered on *any* label
+    is on the filing, and the warning is MISSING only when no label carries it.
+
+    One guard the best-verdict merge alone would lose: when two images yield
+    *different concrete readings* of the same field (front prints 40 % ABV,
+    back prints 45 %), a clean match would silently forgive a contradictory
+    filing — that field is downgraded to a soft warning instead, so a human
+    looks at it.
+
+    Every field/warning result carries ``image_index`` — which image its
+    verdict (and box) came from. Returns the merged result plus each image's
+    first-pass OCR read, in input order.
+    """
+    if not images:
+        raise ValueError("verify_label_images requires at least one image")
+    ocr = ocr or get_ocr_service()
+
+    per_image: list[VerificationResult] = []
+    reads: list[OcrResult] = []
+    for index, image in enumerate(images):
+        result, primary = verify_label_image(expected, image, ocr=ocr)
+        reads.append(primary)
+        per_image.append(_tag_image_index(result, index) if len(images) > 1 else result)
+
+    merged = per_image[0]
+    for nxt in per_image[1:]:
+        merged = _merge_results(merged, nxt)
+    if len(per_image) > 1:
+        merged = _flag_image_disagreements(merged, per_image)
+    return merged, reads
+
+
+def _tag_image_index(result: VerificationResult, index: int) -> VerificationResult:
+    """``result`` with every field and the warning stamped as read from image
+    ``index``, so the merged verdict keeps box provenance per image."""
+    fields = [field.model_copy(update={"image_index": index}) for field in result.fields]
+    warning = result.government_warning.model_copy(update={"image_index": index})
+    return result.model_copy(update={"fields": fields, "government_warning": warning})
+
+
+def _flag_image_disagreements(
+    merged: VerificationResult, per_image: list[VerificationResult]
+) -> VerificationResult:
+    """Downgrade a merged MATCH to SOFT_WARNING when another image disagrees.
+
+    Applies when a field matched on one image while another image yielded a
+    *located, different* reading (MISMATCH with ``found`` set — the valued
+    fields, e.g. ABV, keep their conflicting reading; fuzzy presence fields
+    blank ``found`` on a confirmed miss, so absence alone never counts as a
+    disagreement). The filing then prints two different values for one field,
+    which deserves a human glance, not a silent pass on the matching one.
+    """
+    conflicts: dict[str, FieldResult] = {}
+    for result in per_image:
+        for field in result.fields:
+            if field.status is FieldStatus.MISMATCH and field.found is not None:
+                conflicts.setdefault(field.field, field)
+
+    fields: list[FieldResult] = []
+    changed = False
+    for field in merged.fields:
+        conflict = conflicts.get(field.field)
+        if field.status is FieldStatus.MATCH and conflict is not None:
+            where = (
+                f"image {conflict.image_index + 1}"
+                if conflict.image_index is not None
+                else "another image"
+            )
+            field = field.model_copy(
+                update={
+                    "status": FieldStatus.SOFT_WARNING,
+                    "reason": (
+                        f"{field.reason}; but {where} shows a different reading "
+                        f"({conflict.found!r}) — the filing's labels disagree, "
+                        "flagged for review"
+                    ),
+                }
+            )
+            changed = True
+        fields.append(field)
+    if not changed:
+        return merged
+    return build_result(fields, merged.government_warning)
 
 
 def _wants_rotation_rescue(result: VerificationResult) -> bool:

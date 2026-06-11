@@ -90,13 +90,19 @@ class GovernmentWarningResult(BaseModel):
     # Where the header was located, for highlighting in the comparison UI.
     span: SourceSpan | None = None
     box: BoundingBox | None = None
+    # Which of the submission's images carried this verdict (zero-based index
+    # into the filing's label set). ``None`` on single-image verifications.
+    image_index: int | None = None
 
 
 # --- Result aggregation contract ---------------------------------------------
 #
 # Bumped when the wire shape of VerificationResult changes incompatibly, so
 # stored Submission.result rows and the UI can detect a schema they predate.
-RESULT_SCHEMA_VERSION = 1
+# v2: ``image_index`` provenance on FieldResult / GovernmentWarningResult — a
+# submission now carries a filing's whole label set (front/back/neck), and a
+# box is meaningless without knowing which image it sits on.
+RESULT_SCHEMA_VERSION = 2
 
 
 class FieldStatus(enum.StrEnum):
@@ -153,6 +159,9 @@ class FieldResult(BaseModel):
     score: float = Field(default=0.0, ge=0.0, le=1.0)
     span: SourceSpan | None = None
     box: BoundingBox | None = None
+    # Which of the submission's images carried this verdict (zero-based index
+    # into the filing's label set). ``None`` on single-image verifications.
+    image_index: int | None = None
     # Human-readable explanation of why this status was assigned.
     reason: str = ""
 

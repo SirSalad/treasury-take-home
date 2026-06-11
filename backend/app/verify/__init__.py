@@ -14,6 +14,8 @@ Public API:
   expected COLA and return a :class:`VerificationResult`.
 * :func:`verify_label_image` — the image-in entry point: OCR + verify with
   adaptive rotation/zoom rescue passes (what the API and evals run).
+* :func:`verify_label_images` — verify a filing's *full label set* (front/back/
+  neck), merging per-field best verdicts with image provenance.
 * :func:`build_result` — roll per-field results + the warning into the stable
   :class:`VerificationResult` contract.
 * :func:`aggregate_verdict` — the overall PASS / WARNING / FAIL rule on its own.
@@ -32,7 +34,7 @@ from app.verify.aggregate import (
     summarise,
 )
 from app.verify.engine import ExpectedFields, verify_label
-from app.verify.pipeline import verify_label_image
+from app.verify.pipeline import verify_label_image, verify_label_images
 from app.verify.schemas import (
     GOVERNMENT_WARNING_TEXT,
     RESULT_SCHEMA_VERSION,
@@ -64,5 +66,6 @@ __all__ = [
     "verify_government_warning",
     "verify_label",
     "verify_label_image",
+    "verify_label_images",
     "verify_warning_from_ocr",
 ]

@@ -31,8 +31,12 @@ pytest -m eval tests/eval_cola
    fields**, so those were annotated manually (`label_truth`) by reading the
    full-resolution artwork, with zoomed crops for small or rotated text.
 
-Scraped 2026-06-10. Each case is traceable: the TTB ID in the filename/manifest
-resolves at
+Scraped 2026-06-10. **Image-set completeness re-verified 2026-06-11**: every
+case's image count was checked against the live registry's attachment list
+(`publicFormDisplay` per TTB ID) — all 30 match, so the 14 single-image cases
+really are single-image filings (can wraps / keg collars where one artwork is
+the whole label set), not partial scrapes. Each case is traceable: the TTB ID
+in the filename/manifest resolves at
 `https://ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchAdvanced&ttbid=<ttbid>`.
 COLA filings are public records published by the U.S. Treasury (TTB); the set
 is used here as test data with full attribution via TTB IDs.
