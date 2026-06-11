@@ -15,8 +15,8 @@ limitations behind monotone baselines. The test prints a full scorecard listing
 every failing label, and asserts per-field **accuracy floors** — a ratchet, so
 the pipeline cannot regress and the team raises the bar as OCR improves. The
 gap between the floors and 30/30 is the continuous-improvement backlog (today:
-the Government Warning on tightly-kerned/rotated labels, ABV on tiny or
-handwritten print, and one script-font brand).
+one arc-curved keg cap that defeats straight-line OCR — its warning and net
+contents — and one script-font brand logotype).
 
 Marked ``eval`` and deselected by default; run with ``pytest -m eval``.
 """
@@ -30,7 +30,7 @@ import pytest
 
 from app.api.schemas import ApplicationInput
 from app.ocr.service import get_ocr_service
-from app.verify.engine import verify_label
+from app.verify.pipeline import verify_label_image
 
 pytestmark = pytest.mark.eval
 
@@ -45,9 +45,9 @@ _WARN_RANK = {"compliant": 0, "altered": 1, "missing": 2}
 # Denominators: brand 30, alcohol 30, net_contents 28, government_warning 30.
 _ACCURACY_FLOORS = {
     "brand_name": 29,
-    "alcohol_content": 23,
-    "net_contents": 26,
-    "government_warning": 13,
+    "alcohol_content": 30,
+    "net_contents": 27,
+    "government_warning": 29,
 }
 
 
@@ -93,7 +93,7 @@ def test_cola_golden_accuracy() -> None:
         net: list[str] = []
         warn: list[str] = []
         for image in case["images"]:
-            verdict = verify_label(application, ocr.extract(str(_HERE / image["file"])))
+            verdict, _ = verify_label_image(application, str(_HERE / image["file"]), ocr=ocr)
             by_field = {f.field: f.status.value for f in verdict.fields}
             brand.append(by_field.get("brand_name", "absent"))
             abv.append(by_field.get("alcohol_content", "absent"))

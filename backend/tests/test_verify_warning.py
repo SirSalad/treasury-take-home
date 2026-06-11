@@ -109,6 +109,69 @@ def test_clause_with_ocr_noise_still_present() -> None:
     assert result.verdict is WarningVerdict.COMPLIANT
 
 
+# --- Fragmented reads (rotated columns, curved collars) ------------------------
+
+
+def test_scrambled_reading_order_with_all_words_is_compliant() -> None:
+    # On rotated keg collars OCR returns the statement's fragments out of
+    # printed order, with other label text interleaved (real label: Coyote
+    # Dawn). Every word is present, so the wording is verified word-by-word.
+    fragments = [
+        "GOVERNMENT",
+        "according to the surgeon general, women",
+        "should not drink",
+        "WARNING:",
+        "during pregnancy because of the risk of",
+        "birth defects. (2) consumption of",
+        "RE-ORDERS: KEGCOLLAR.COM",  # interleaved foreign text
+        "alcoholic beverages impairs your ability",
+        "to drive a car or operate machinery, and",
+        "may cause health problems. (1)",
+        "alcoholic beverages",
+    ]
+    result = verify_government_warning("\n".join(fragments))
+    assert result.verdict is WarningVerdict.COMPLIANT
+    assert result.header_all_caps is True
+    assert any("fragmented" in note for note in result.limitations)
+
+
+def test_scrambled_read_with_dropped_clause_is_altered() -> None:
+    # Word coverage must not forgive tampering: scrambled order AND a missing
+    # clause (no "...impairs your ability to drive..." words) stays altered.
+    fragments = [
+        "GOVERNMENT",
+        "according to the surgeon general, women",
+        "should not drink alcoholic beverages",
+        "WARNING:",
+        "during pregnancy because of the risk of",
+        "birth defects.",
+    ]
+    result = verify_government_warning("\n".join(fragments))
+    assert result.verdict is WarningVerdict.ALTERED
+
+
+def test_scrambled_read_with_word_swap_is_altered() -> None:
+    # A reworded clause in a fragmented read still removes required words.
+    fragments = [
+        "GOVERNMENT WARNING:",
+        "according to the surgeon general, women",
+        "should not drink alcoholic beverages",
+        "during pregnancy because of the risk of",
+        "birth defects. (2) consumption of alcoholic",
+        "beverages is totally safe and healthy.",
+    ]
+    result = verify_government_warning("\n".join(fragments))
+    assert result.verdict is WarningVerdict.ALTERED
+
+
+def test_split_header_alone_is_not_a_warning() -> None:
+    # The relaxed (split-token) header cannot fake compliance: both words
+    # present without the statement is still non-compliant.
+    text = "GOVERNMENT\nOF FRANCE\nWARNING: KEG MAY RUPTURE UNDER PRESSURE"
+    result = verify_government_warning(text)
+    assert result.verdict is not WarningVerdict.COMPLIANT
+
+
 # --- Missing -----------------------------------------------------------------
 
 

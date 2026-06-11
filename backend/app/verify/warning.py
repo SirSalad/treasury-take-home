@@ -45,6 +45,14 @@ from app.verify.schemas import (
 # present, all-caps warning read as MISSING on tightly-kerned labels.
 _HEADER_RE = re.compile(r"government\s*warning", re.IGNORECASE)
 
+# Fallback header detection for fragmented reads: on rotated columns and curved
+# keg collars the detector returns the two header words as separate lines, with
+# unrelated text interleaved between them in reading order, so the adjacent
+# form above never matches. Both words present anywhere (in any order) counts
+# as a header *candidate*; compliance still requires the statement's wording to
+# be recovered, so stray uses of either word cannot fake a warning.
+_HEADER_TOKEN_RE = re.compile(r"government|warning", re.IGNORECASE)
+
 # The canonical statement's closing phrase, used to bound the candidate region so
 # trailing label text after the warning does not dilute the similarity score.
 # ``\s*`` between the words because OCR routinely drops the space
@@ -140,6 +148,51 @@ def _missing_required_phrases(region: str) -> list[str]:
     ]
 
 
+# Every distinct word of the canonical statement that carries signal (>= 3
+# letters keeps the safety-critical "not", "car", "may" while dropping "a"/
+# "of"/"to", which match anywhere). The word-coverage fallback requires ALL of
+# them: a dropped or reworded clause — the real evasion — removes several, so
+# it cannot pass, while a statement OCR merely read out of order keeps every
+# word and can.
+_STATEMENT_WORDS = tuple(sorted({w for w in re.findall(r"[a-z]+", _CANONICAL_LC) if len(w) >= 3}))
+
+# Words long enough to fuzzy-match (a character slip in "machinery" is OCR
+# noise); shorter words must appear verbatim — at 3-5 letters a fuzzy window
+# carries too little signal to be trusted.
+_WORD_FUZZY_MIN_LEN = 6
+_WORD_PRESENT_THRESHOLD = 0.8
+
+
+def _word_present(word: str, haystack: str) -> bool:
+    """Whether ``word`` appears in alnum ``haystack``, fuzzily for longer words."""
+    if word in haystack:
+        return True
+    n = len(word)
+    if n < _WORD_FUZZY_MIN_LEN or len(haystack) < n:
+        return False
+    return any(
+        SequenceMatcher(None, word, haystack[i : i + n]).ratio() >= _WORD_PRESENT_THRESHOLD
+        for i in range(len(haystack) - n + 1)
+    )
+
+
+def _statement_words_recovered(text: str) -> bool:
+    """Whether *every* word of the canonical statement appears in ``text``.
+
+    The order-insensitive last resort for fragmented reads: justified columns,
+    rotated wraps, and curved keg collars make OCR return the statement's words
+    out of printed order (with other label text interleaved), defeating the
+    sequence checks above even though every word was plainly read. Order
+    insensitivity is safe here because compliance still demands the complete
+    word inventory — tampering removes or replaces words, which this catches;
+    only a reordering of the exact same words would slip by, which is not a
+    plausible label (and the printed order is unrecoverable from such reads
+    anyway).
+    """
+    haystack = _alnum(text)
+    return all(_word_present(word, haystack) for word in _STATEMENT_WORDS)
+
+
 def _wording_similarity(region: str) -> float:
     """Similarity of ``region`` to the canonical statement, in ``[0, 1]``.
 
@@ -173,28 +226,59 @@ def verify_government_warning(
     normalised = _normalise_whitespace(text)
 
     header = _HEADER_RE.search(normalised)
-    if header is None:
-        return GovernmentWarningResult(
-            verdict=WarningVerdict.MISSING,
-            found_text=None,
-            header_all_caps=None,
-            similarity=0.0,
-            issues=["No Government Warning found on the label."],
-            limitations=limitations,
-        )
+    if header is not None:
+        header_texts = [normalised[header.start() : header.end()]]
+        header_start, header_end = header.span()
+        region = _bound_warning_region(normalised[header.start() :])
+    else:
+        # Fragmented read: the header words landed on separate detected lines
+        # (rotated columns, curved keg collars). Both must still be present.
+        tokens = list(_HEADER_TOKEN_RE.finditer(normalised))
+        words = {m.group().lower() for m in tokens}
+        if {"government", "warning"} - words:
+            return GovernmentWarningResult(
+                verdict=WarningVerdict.MISSING,
+                found_text=None,
+                header_all_caps=None,
+                similarity=0.0,
+                issues=["No Government Warning found on the label."],
+                limitations=limitations,
+            )
+        # The two words may also occur in other label text; the header is judged
+        # all-caps when an all-caps occurrence of each word exists.
+        header_texts = [
+            next((m.group() for m in tokens if m.group() == word.upper()), word)
+            for word in ("government", "warning")
+        ]
+        header_start, header_end = tokens[0].span()
+        # Reading order is scrambled, so no contiguous region can be bounded;
+        # score against everything read and rely on the word-coverage check.
+        region = normalised
 
-    header_text = normalised[header.start() : header.end()]
     # The required header is all caps; a title-case header (Jenny's catch) fails.
-    header_all_caps = header_text.isupper()
+    header_all_caps = all(t.isupper() for t in header_texts)
 
-    region = _bound_warning_region(normalised[header.start() :])
     similarity = _wording_similarity(region)
     missing_phrases = _missing_required_phrases(region)
+    fragmented = False
+    if missing_phrases and _statement_words_recovered(normalised):
+        # The sequence checks failed, yet every word of the statement was read:
+        # a fragmented read (justified column, rotated wrap, curved collar)
+        # whose printed order OCR could not preserve — not an alteration, which
+        # would have removed or replaced words. Verified word-by-word instead.
+        fragmented = True
+        missing_phrases = []
+        similarity = 1.0
+        limitations.append(
+            "Statement read fragmented (rotated or curved layout); wording was "
+            "verified word-by-word rather than in printed sequence."
+        )
 
     issues: list[str] = []
     if not header_all_caps:
+        found_header = " ".join(header_texts[:2])
         issues.append(
-            f"Header is not in all caps; 'GOVERNMENT WARNING' is required, found {header_text!r}."
+            f"Header is not in all caps; 'GOVERNMENT WARNING' is required, found {found_header!r}."
         )
     if missing_phrases:
         # A required clause is gone — the real evasion. (When OCR merely failed to
@@ -205,7 +289,7 @@ def verify_government_warning(
             + "; ".join(f"{p!r}" for p in missing_phrases)
             + "."
         )
-    elif similarity < similarity_threshold:
+    elif not fragmented and similarity < similarity_threshold:
         # Every clause is present but the statement is broadly garbled.
         issues.append(
             "Warning wording does not match the required statement "
@@ -220,7 +304,7 @@ def verify_government_warning(
         similarity=similarity,
         issues=issues,
         limitations=limitations,
-        span=SourceSpan(line_index=None, start=header.start(), end=header.end()),
+        span=SourceSpan(line_index=None, start=header_start, end=header_end),
     )
 
 

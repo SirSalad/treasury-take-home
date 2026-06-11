@@ -55,19 +55,37 @@ floors** (a ratchet): the pipeline can't regress, and you raise the floors in
 `test_cola_eval.py` as OCR improves. The gap between the floors and 30/30 is the
 continuous-improvement backlog.
 
-Measured accuracy (2026-06-11): brand 29/30, ABV 23/30, net contents 26/28,
-**government warning 10/30** — the warning on tightly-kerned/rotated labels is
-the standout gap to drive up next.
+Measured accuracy (2026-06-11, after the adaptive rescue passes): brand 29/30,
+**ABV 30/30, net contents 27/28, government warning 29/30** — up from
+29/23/26/10 in the first measurement the same day. The gains came from three
+changes, each driven by a failure family this eval surfaced:
+
+- **Rotation rescue** (`app/verify/pipeline.py`): when the warning (or a field)
+  is unrecovered, the image is re-OCR'd at ±90° and per-field best verdicts
+  merged — can wraps and keg collars print across the artwork.
+- **Warning zoom rescue** (same module): the warning region, located by its
+  header, is cropped + upscaled and re-read — the statement is the smallest
+  print on the label and the detector drops lines at native resolution.
+- **Fragmented-read word coverage** (`app/verify/warning.py`): justified
+  columns and curved collars scramble OCR reading order; when the sequence
+  checks fail but *every* word of the statement was read, the wording is
+  verified word-by-word (tampering removes words, so it still fails).
+- **Extractor robustness** (`app/extract/extractors.py`): `I3%`→`13%` digit
+  confusion, `ABV`/`ALCOHOLBYVOLUME` anchors, a big "50" next to a small
+  "ALC/VOL" caption assembled across lines, and proof→ABV derivation
+  (80 PROOF pins 40%).
+
+One annotation fix the rescue passes exposed (2026-06-11): Coyote Dawn's
+`label_truth` said 45 % / 90 proof, but the zoomed crop plainly prints
+"40% Alc by Vol / 80 PROOF" — the manual annotation was a misread; corrected
+in `manifest.json` (note kept in its `notes`).
 
 ## Known gaps this set exposed (by design, kept honest)
 
-- **Government Warning (10/30) is the big one.** It's present and standard on
-  every label, but on real can wraps and keg collars it runs 90° to the artwork
-  (OCR doesn't detect rotated lines → `missing`), and where it is read, OCR
-  noise on the long statement drops the wording similarity below threshold
-  (→ `altered`). Tracked as a follow-up issue.
-- **Handwritten/photographed labels**: two keg collars (Beach Ball, Schnucki —
-  the latter a literal photo of a handwritten disc) defeat ABV extraction.
-- **Tiny edge print**: ABV in ~6 pt rotated type at the label margin
-  (Anthony's) or dense small print (Benchmark) does not extract.
-- One brand mismatch: Giro Splendido's script logotype on a blue keg collar.
+- **Leinenkugel's keg cap (warning `missing`, net contents `mismatch`)**: the
+  text follows the cap's printed **arc**, every word at a different angle.
+  Straight-line OCR cannot assemble it, and a polar unwrap doesn't converge
+  because the curve is a perspective-distorted cone, not a concentric circle.
+  Needs proper curved-text rectification — tracked as a follow-up.
+- One brand mismatch: Giro Splendido's script logotype on a blue keg collar
+  (no OCR-recoverable text in the logotype; it lands in review, not auto-pass).

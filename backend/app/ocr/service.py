@@ -95,16 +95,25 @@ class OcrService:
             }
         )
 
-    def extract(self, image: ImageInput) -> OcrResult:
+    @property
+    def max_side(self) -> int:
+        """The default longest-side resolution cap applied before OCR."""
+        return self._max_side
+
+    def extract(self, image: ImageInput, *, max_side: int | None = None) -> OcrResult:
         """Run OCR on ``image`` and return recognised lines with boxes.
 
         ``image`` may be a path, raw encoded bytes, or a decoded ndarray. It is
         run through :func:`app.ocr.preprocess.preprocess_image` first (decode +
         resolution cap) so the timed path matches production's
-        *preprocess → OCR → extract* pipeline.
+        *preprocess → OCR → extract* pipeline. ``max_side`` overrides the
+        service-wide resolution cap for this call — the adaptive pipeline's
+        zoom rescue feeds in regions deliberately upscaled past the cap so the
+        recogniser sees small print at a readable size (detection stays bounded
+        by the engine's own ``limit_side_len``, so cost remains capped).
         """
         start = time.perf_counter()
-        payload = preprocess_image(image, max_side=self._max_side)
+        payload = preprocess_image(image, max_side=self._max_side if max_side is None else max_side)
         out = self._engine(payload)
         elapsed_ms = (time.perf_counter() - start) * 1000.0
 

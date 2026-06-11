@@ -31,7 +31,7 @@ from app.extract.schemas import (
     FieldName,
     SourceSpan,
 )
-from app.ocr.schemas import OcrResult
+from app.ocr.schemas import BoundingBox, OcrResult
 
 
 @dataclass(frozen=True)
@@ -46,21 +46,40 @@ class RawMatch:
 
 
 # --- ABV: "45% Alc./Vol.", "ALC. 45% BY VOL.", "Alcohol 45% by volume",
-#         "40% Vol." (British/EU spirits omit "Alc.") ---------------------------
+#         "40% Vol." (British/EU spirits omit "Alc."), "5.1% ABV" ---------------
+
+# OCR digit confusion: a capital I, lowercase l, or pipe read where a 1 was
+# printed ("I3% ALC/VOL" on a stylised typeface). Normalised only where the
+# letter abuts a digit, and only inside the numeric extractors, so words are
+# never touched. Replacements are one-for-one, keeping every match span valid
+# against the original text.
+_DIGIT_CONFUSION_RE = re.compile(r"(?:(?<![A-Za-z0-9])|(?<=\d))[Il|](?=\d)")
+
+
+def _fix_digit_confusion(text: str) -> str:
+    return _DIGIT_CONFUSION_RE.sub("1", text)
+
 
 # Two shapes: a percentage that is immediately followed by an alcohol/volume
 # anchor, or an alcohol anchor immediately followed by a percentage. Requiring an
 # anchor keeps it from matching unrelated percentages and, crucially, the proof
 # number. The percent-first shape also accepts a bare "Vol" anchor so EU-style
-# "40% Vol." labels (no "Alc.") are recognised.
+# "40% Vol." labels (no "Alc.") are recognised, the craft-beer "ABV", and the
+# spelled-out "ALCOHOL BY VOLUME" even when OCR strips its spaces
+# ("40%ALCOHOLBYVOLUME").
 _ABV_RE = re.compile(
     r"""
     (?:
-        (?P<pct_first>\d{1,2}(?:\.\d+)?)\s*%\s*           # "45% "
-        (?:alc|alcohol|vol(?:ume)?)\b                       # ... Alc / Vol
+        (?P<pct_first>\d{1,2}(?:\.\d+)?)\s*%\s*            # "45% "
+        (?:
+            alc(?:ohol)?(?:[\s./]*by[\s./]*vol(?:ume)?)?    # Alc / Alcohol by Volume
+          | vol(?:ume)?                                     # bare Vol (EU)
+          | abv                                             # craft-beer ABV
+        )\b
       |
-        \balc(?:ohol)?\.?                                  # "Alc." / "Alcohol"
+        \b(?:alc(?:ohol)?\.?                               # "Alc." / "Alcohol"
         \s*(?:[./]?\s*vol(?:ume)?\.?|by\s+vol(?:ume)?)?    # optional "/Vol."
+        |abv)                                              # or "ABV: 5.1%"
         [:\s.]*                                            # filler
         (?P<pct_second>\d{1,2}(?:\.\d+)?)\s*%              # "45%"
     )
@@ -70,6 +89,7 @@ _ABV_RE = re.compile(
 
 
 def _find_abv(text: str) -> Iterator[RawMatch]:
+    text = _fix_digit_confusion(text)
     for m in _ABV_RE.finditer(text):
         pct = m.group("pct_first") or m.group("pct_second")
         # Higher confidence when an explicit "vol" anchor is present, not just
@@ -99,6 +119,7 @@ _PROOF_RE = re.compile(
 
 
 def _find_proof(text: str) -> Iterator[RawMatch]:
+    text = _fix_digit_confusion(text)
     for m in _PROOF_RE.finditer(text):
         num = m.group("num_first") or m.group("num_second")
         yield RawMatch(
@@ -156,6 +177,7 @@ _NET_RE = re.compile(
 
 
 def _find_net_contents(text: str) -> Iterator[RawMatch]:
+    text = _fix_digit_confusion(text)
     for m in _NET_RE.finditer(text):
         key = re.sub(r"[.\s]", "", m.group("unit")).lower()
         canonical, confidence = _NET_UNITS.get(key, (m.group("unit"), 0.6))
@@ -285,10 +307,123 @@ def extract_fields(result: OcrResult) -> ExtractionResult:
     Each OCR line is scanned independently so candidates carry their source line
     index and bounding box — the per-field statements this targets sit on their
     own lines, and per-line scanning keeps offsets meaningful for highlighting.
+
+    Two assembly steps then use cross-line context only an :class:`OcrResult`
+    has: unit-label adjacency (a big "50" detected separately from its small
+    "ALC/VOL" caption — a common spirits layout) and a proof-derived ABV
+    fallback (US proof is exactly twice ABV), so a label stating only "80
+    PROOF" still yields a comparable alcohol content.
     """
     candidates: list[FieldCandidate] = []
     for i, line in enumerate(result.lines):
         for candidate in extract_from_text(line.text, line_index=i):
             candidate.box = line.box
             candidates.append(candidate)
+    candidates.extend(_assemble_adjacent_units(result, candidates))
+    candidates.extend(_derive_abv_from_proof(candidates))
     return ExtractionResult(candidates=candidates)
+
+
+# --- Cross-line assembly ------------------------------------------------------
+
+# A line that is *only* a unit caption ("ALC/VOL", "ALC. BY VOL.", "PROOF",
+# "ABV"), its number detected as a separate line — stylised spirit labels print
+# the number much larger than the caption, which splits the detection.
+_UNIT_CAPTION_RES: dict[FieldName, re.Pattern[str]] = {
+    FieldName.ABV: re.compile(
+        r"^[\W_]*(?:alc(?:ohol)?[\W_]*(?:by[\W_]*)?vol(?:ume)?|abv)[\W_]*$", re.IGNORECASE
+    ),
+    FieldName.PROOF: re.compile(r"^[\W_]*proof[\W_]*$", re.IGNORECASE),
+}
+
+# A line that is only a number (allowing %/degree dressing), the caption's value.
+_BARE_NUMBER_RE = re.compile(r"^[\W_]*(?P<num>\d{1,3}(?:\.\d+)?)[\W_]*$")
+
+# Plausibility bounds — adjacency is a weaker signal than an inline statement,
+# so an implausible value is dropped rather than surfaced.
+_VALUE_BOUNDS = {FieldName.ABV: (1.0, 80.0), FieldName.PROOF: (2.0, 160.0)}
+
+# How far (in caption heights) the number may sit from the caption's centre.
+_ADJACENCY_MAX_GAP = 2.5
+
+
+def _assemble_adjacent_units(
+    result: OcrResult, existing: list[FieldCandidate]
+) -> list[FieldCandidate]:
+    """ABV/proof read from a bare number next to its unit caption.
+
+    For each caption-only line, the nearest bare-number line within
+    :data:`_ADJACENCY_MAX_GAP` caption heights becomes the value. Skipped for
+    fields that already have an inline candidate — adjacency exists to recover
+    layouts the inline regexes cannot see, not to outvote them.
+    """
+    found_fields = {c.field for c in existing}
+    assembled: list[FieldCandidate] = []
+    for field, caption_re in _UNIT_CAPTION_RES.items():
+        if field in found_fields:
+            continue
+        for i, caption in enumerate(result.lines):
+            if not caption_re.match(caption.text):
+                continue
+            nearest: tuple[float, int, str] | None = None
+            # The number is usually printed much larger than its caption, so the
+            # allowance scales with the caption's larger dimension.
+            max_gap = _ADJACENCY_MAX_GAP * max(caption.box.height, caption.box.width / 4, 1.0)
+            for j, line in enumerate(result.lines):
+                if j == i:
+                    continue
+                m = _BARE_NUMBER_RE.match(line.text)
+                if m is None:
+                    continue
+                lo, hi = _VALUE_BOUNDS[field]
+                if not lo <= float(m.group("num")) <= hi:
+                    continue
+                distance = _box_gap(caption.box, line.box)
+                if distance <= max_gap and (nearest is None or distance < nearest[0]):
+                    nearest = (distance, j, m.group("num"))
+            if nearest is not None:
+                _, j, num = nearest
+                line = result.lines[j]
+                assembled.append(
+                    FieldCandidate(
+                        field=field,
+                        value=_num(num),
+                        text=f"{line.text.strip()} {caption.text.strip()}",
+                        confidence=0.75,
+                        span=SourceSpan(line_index=j, start=0, end=len(line.text)),
+                        box=line.box,
+                    )
+                )
+    return assembled
+
+
+def _box_gap(a: BoundingBox, b: BoundingBox) -> float:
+    """Shortest edge-to-edge distance between two boxes (0 when they touch)."""
+    dx = max(a.x_min - b.x_max, b.x_min - a.x_max, 0.0)
+    dy = max(a.y_min - b.y_max, b.y_min - a.y_max, 0.0)
+    return (dx**2 + dy**2) ** 0.5
+
+
+def _derive_abv_from_proof(candidates: list[FieldCandidate]) -> list[FieldCandidate]:
+    """An ABV candidate derived from a proof statement, when ABV is absent.
+
+    US proof is exactly twice the alcohol-by-volume percentage (27 CFR 5.65),
+    so "80 PROOF" pins ABV at 40 even when the percentage statement itself was
+    not recovered. Derived — not read — hence the discounted confidence.
+    """
+    if any(c.field is FieldName.ABV for c in candidates):
+        return []
+    derived: list[FieldCandidate] = []
+    for c in candidates:
+        if c.field is FieldName.PROOF:
+            derived.append(
+                FieldCandidate(
+                    field=FieldName.ABV,
+                    value=_num(str(float(c.value) / 2)),
+                    text=c.text,
+                    confidence=round(c.confidence * 0.85, 4),
+                    span=c.span,
+                    box=c.box,
+                )
+            )
+    return derived
