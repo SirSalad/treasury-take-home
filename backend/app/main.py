@@ -13,7 +13,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
-from app.api import verify_router
+from app.api import audit_router, submissions_router, verify_router
 from app.config import get_settings
 from app.ocr import get_ocr_service
 
@@ -67,3 +67,5 @@ def health() -> dict[str, str]:
 
 
 app.include_router(verify_router)
+app.include_router(submissions_router)
+app.include_router(audit_router)

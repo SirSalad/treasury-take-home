@@ -54,6 +54,12 @@ class Submission(TimestampMixin, Base):
     result: Mapped[dict[str, Any] | None] = mapped_column(JSONType)
     error: Mapped[str | None] = mapped_column(Text)
 
+    # Reviewer decision (the human judgment recorded on top of the automated
+    # verdict): approve / request_changes / request_info. Null = still in queue.
+    decision: Mapped[str | None] = mapped_column(String(32), index=True)
+    decision_note: Mapped[str | None] = mapped_column(Text)
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
     application: Mapped["Application | None"] = relationship(back_populates="submissions")
     # Deleting a submission removes its batch link; submissions themselves are
     # durable verification records and outlive the batch that grouped them.

@@ -5,6 +5,7 @@ which is what Alembic autogenerate and ``create_all`` rely on.
 """
 
 from app.models.application import Application
+from app.models.audit import AuditEvent
 from app.models.batch import Batch, BatchItem
 from app.models.enums import (
     BatchStatus,
@@ -16,6 +17,7 @@ from app.models.submission import Submission
 
 __all__ = [
     "Application",
+    "AuditEvent",
     "Batch",
     "BatchItem",
     "BatchStatus",

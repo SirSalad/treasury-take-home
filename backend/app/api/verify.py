@@ -23,6 +23,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, s
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
+from app.api.audit import record_event
 from app.api.schemas import ApplicationInput, TimingInfo, VerificationResponse
 from app.config import Settings, get_settings
 from app.db import get_db
@@ -206,6 +207,19 @@ def _persist_submission(
         error=error,
     )
     db.add(submission)
+    db.flush()  # assign the submission id so the audit row can reference it
+    record_event(
+        db,
+        f"verification.{status.value.lower()}",
+        submission_id=submission.id,
+        detail={
+            "brand_name": application.brand_name,
+            "image_filename": image.filename,
+            "processing_ms": processing_ms,
+            "overall": (result or {}).get("overall"),
+            "error": error,
+        },
+    )
     db.commit()
     db.refresh(submission)
     return submission
