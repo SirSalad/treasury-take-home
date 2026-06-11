@@ -1,15 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { api, ApiError, type QueueStats, type SubmissionRow } from "@/lib/api";
 
 /**
  * My Review Queue — the workspace home (claude-design).
  *
- * Four stat cards over a sortable, filterable table of submissions. Row status
- * is the human-workflow state derived from the automated verdict plus any
- * recorded reviewer decision, not the raw pipeline status. Sorting and
- * filtering are client-side over the loaded set.
+ * Four stat cards over a sortable, filterable table of submissions (the shared
+ * {@link DataTable}). Row status is the human-workflow state derived from the
+ * automated verdict plus any recorded reviewer decision, not the raw pipeline
+ * status.
  */
 
 type StatusKey = "needs_review" | "pending" | "changes" | "info" | "unreadable" | "approved";
@@ -33,25 +34,8 @@ function statusKey(row: SubmissionRow): StatusKey {
   return "pending";
 }
 
-type SortCol = "status" | "id" | "brand" | "applicant" | "class" | "submitted";
-type SortDir = "asc" | "desc";
-
-function compare(a: SubmissionRow, b: SubmissionRow, col: SortCol): number {
-  switch (col) {
-    case "id":
-      return a.id - b.id;
-    case "status":
-      return STATUS_DEF[statusKey(a)].order - STATUS_DEF[statusKey(b)].order;
-    case "brand":
-      return (a.brand_name ?? "").localeCompare(b.brand_name ?? "");
-    case "applicant":
-      return (a.applicant ?? "").localeCompare(b.applicant ?? "");
-    case "class":
-      return (a.class_type ?? "").localeCompare(b.class_type ?? "");
-    case "submitted":
-      // created_at is ISO-8601, so lexical order is chronological order.
-      return (a.created_at ?? "").localeCompare(b.created_at ?? "");
-  }
+function subId(id: number): string {
+  return `SUB-${String(id).padStart(4, "0")}`;
 }
 
 function formatDate(iso: string | null): string {
@@ -63,7 +47,95 @@ function formatDate(iso: string | null): string {
   });
 }
 
-const GRID = "grid grid-cols-[168px_110px_1.4fr_1.3fr_1fr_118px_44px] items-center gap-0";
+const COLUMNS: DataTableColumn<SubmissionRow>[] = [
+  {
+    key: "status",
+    header: "Status",
+    width: "168px",
+    sortValue: (row) => STATUS_DEF[statusKey(row)].order,
+    cell: (row) => {
+      const status = STATUS_DEF[statusKey(row)];
+      return (
+        <span
+          className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold"
+          style={{ color: status.color, background: status.bg }}
+        >
+          <span
+            aria-hidden="true"
+            className="h-[7px] w-[7px] rounded-full"
+            style={{ background: status.color }}
+          />
+          {status.label}
+        </span>
+      );
+    },
+  },
+  {
+    key: "id",
+    header: "ID",
+    width: "110px",
+    sortValue: (row) => row.id,
+    defaultDir: "desc",
+    cell: (row) => (
+      <span className="text-[13.5px] font-semibold tabular-nums text-fed-blue">
+        {subId(row.id)}
+      </span>
+    ),
+  },
+  {
+    key: "brand",
+    header: "Brand",
+    width: "1.4fr",
+    sortValue: (row) => row.brand_name ?? "",
+    cell: (row) => (
+      <span className="block truncate pr-2 text-sm font-bold text-fed-ink">
+        {row.brand_name ?? "—"}
+      </span>
+    ),
+  },
+  {
+    key: "applicant",
+    header: "Applicant",
+    width: "1.3fr",
+    sortValue: (row) => row.applicant ?? "",
+    cell: (row) => (
+      <span className="block truncate pr-2 text-[13.5px] text-fed-slate">
+        {row.applicant ?? "—"}
+      </span>
+    ),
+  },
+  {
+    key: "class",
+    header: "Class / Type",
+    width: "1fr",
+    sortValue: (row) => row.class_type ?? "",
+    cell: (row) => (
+      <span className="block truncate pr-2 text-[13px] text-fed-gray">{row.class_type ?? "—"}</span>
+    ),
+  },
+  {
+    key: "submitted",
+    header: "Submitted",
+    width: "118px",
+    sortValue: (row) => row.created_at ?? "",
+    defaultDir: "desc",
+    cell: (row) => (
+      <span className="text-[13px] font-semibold tabular-nums text-fed-gray">
+        {formatDate(row.created_at)}
+      </span>
+    ),
+  },
+  {
+    key: "chevron",
+    header: "",
+    width: "44px",
+    cell: () => (
+      <span aria-hidden="true" className="block text-right text-[17px] text-fed-gray-light">
+        ›
+      </span>
+    ),
+  },
+];
 
 function StatCard({
   value,
@@ -98,11 +170,6 @@ export function QueuePage() {
   const [stats, setStats] = useState<QueueStats | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusKey | "all">("all");
-  const [sortCol, setSortCol] = useState<SortCol>("id");
-  const [sortDir, setSortDir] = useState<SortDir>("desc");
-
   useEffect(() => {
     const controller = new AbortController();
     Promise.all([api.submissions(controller.signal), api.queueStats(controller.signal)])
@@ -116,59 +183,6 @@ export function QueuePage() {
       });
     return () => controller.abort();
   }, []);
-
-  const visible = useMemo(() => {
-    if (!rows) return [];
-    const q = query.trim().toLowerCase();
-    const filtered = rows.filter((row) => {
-      if (statusFilter !== "all" && statusKey(row) !== statusFilter) return false;
-      if (q) {
-        const hay = [
-          row.brand_name,
-          row.applicant,
-          row.class_type,
-          `sub-${String(row.id).padStart(4, "0")}`,
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      return true;
-    });
-    const dir = sortDir === "asc" ? 1 : -1;
-    return [...filtered].sort((a, b) => compare(a, b, sortCol) * dir);
-  }, [rows, query, statusFilter, sortCol, sortDir]);
-
-  function toggleSort(col: SortCol) {
-    if (col === sortCol) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortCol(col);
-      // Sensible default direction per column: newest/most-urgent first.
-      setSortDir(col === "id" || col === "submitted" ? "desc" : "asc");
-    }
-  }
-
-  const open = (id: number) => navigate(`/review/${id}`);
-  const filtering = query.trim() !== "" || statusFilter !== "all";
-
-  function SortHeader({ col, label }: { col: SortCol; label: string }) {
-    const active = sortCol === col;
-    return (
-      <button
-        type="button"
-        onClick={() => toggleSort(col)}
-        aria-label={`Sort by ${label}${active ? (sortDir === "asc" ? ", ascending" : ", descending") : ""}`}
-        className="flex items-center gap-1 text-left uppercase tracking-[.5px] hover:text-fed-blue"
-      >
-        {label}
-        <span aria-hidden="true" className={active ? "text-fed-blue" : "text-[#c4c8cc]"}>
-          {active ? (sortDir === "asc" ? "▲" : "▼") : "▾"}
-        </span>
-      </button>
-    );
-  }
 
   return (
     <div className="pb-10">
@@ -237,75 +251,41 @@ export function QueuePage() {
         </div>
       )}
 
-      {/* Filter bar */}
-      <div className="mb-3 flex flex-wrap items-center gap-3">
-        <div className="grow sm:grow-0">
-          <label htmlFor="queue-search" className="sr-only">
-            Search the queue by brand, applicant, class, or ID
-          </label>
-          <input
-            id="queue-search"
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search brand, applicant, class, ID…"
-            className="w-full rounded-md border border-[#c4c8cc] px-3 py-2 text-sm text-fed-ink focus:border-fed-blue focus:outline-none sm:w-[320px]"
-          />
-        </div>
-        <div>
-          <label htmlFor="queue-status" className="sr-only">
-            Filter by status
-          </label>
-          <select
-            id="queue-status"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as StatusKey | "all")}
-            className="rounded-md border border-[#c4c8cc] bg-white px-3 py-2 text-sm font-semibold text-fed-ink focus:border-fed-blue focus:outline-none"
-          >
-            <option value="all">All statuses</option>
-            {(Object.keys(STATUS_DEF) as StatusKey[]).map((key) => (
-              <option key={key} value={key}>
-                {STATUS_DEF[key].label}
-              </option>
-            ))}
-          </select>
-        </div>
-        {filtering && (
-          <button
-            type="button"
-            onClick={() => {
-              setQuery("");
-              setStatusFilter("all");
-            }}
-            className="text-sm font-semibold text-fed-blue hover:underline"
-          >
-            Clear filters
-          </button>
-        )}
-        {rows && (
-          <span className="ml-auto text-[13px] text-fed-gray" aria-live="polite">
-            {filtering ? `${visible.length} of ${rows.length}` : `${rows.length}`}{" "}
-            {rows.length === 1 ? "submission" : "submissions"}
-          </span>
-        )}
-      </div>
-
-      <div className="overflow-hidden rounded-[10px] border border-fed-line bg-white shadow-card">
-        <div
-          className={`${GRID} border-b-2 border-[#d6d7d9] bg-fed-head-bg px-[18px] py-3 text-[11.5px] font-bold text-fed-gray`}
-        >
-          <SortHeader col="status" label="Status" />
-          <SortHeader col="id" label="ID" />
-          <SortHeader col="brand" label="Brand" />
-          <SortHeader col="applicant" label="Applicant" />
-          <SortHeader col="class" label="Class / Type" />
-          <SortHeader col="submitted" label="Submitted" />
-          <div />
-        </div>
-        {rows === null && !error && (
-          <p className="px-[18px] py-6 text-sm text-fed-gray">Loading the queue…</p>
-        )}
-        {rows?.length === 0 && (
+      <DataTable
+        columns={COLUMNS}
+        rows={rows}
+        getRowKey={(row) => row.id}
+        onRowClick={(row) => navigate(`/review/${row.id}`)}
+        rowAriaLabel={(row) =>
+          `Open submission ${row.id}, ${row.brand_name ?? "unknown brand"}, ${STATUS_DEF[statusKey(row)].label}`
+        }
+        search={{
+          ariaLabel: "Search the queue by brand, applicant, class, or ID",
+          placeholder: "Search brand, applicant, class, ID…",
+          text: (row) =>
+            [row.brand_name, row.applicant, row.class_type, subId(row.id)]
+              .filter(Boolean)
+              .join(" "),
+        }}
+        filters={[
+          {
+            key: "status",
+            label: "Filter by status",
+            options: [
+              { value: "all", label: "All statuses" },
+              ...(Object.keys(STATUS_DEF) as StatusKey[]).map((key) => ({
+                value: key,
+                label: STATUS_DEF[key].label,
+              })),
+            ],
+            predicate: (row, value) => statusKey(row) === value,
+          },
+        ]}
+        defaultSort={{ key: "id", dir: "desc" }}
+        countNoun={["submission", "submissions"]}
+        loadingMessage="Loading the queue…"
+        noMatchMessage="No submissions match your filters."
+        emptyState={
           <div className="px-[18px] py-10 text-center">
             <p className="mb-1 text-[15px] font-bold text-fed-ink">Nothing in the queue yet</p>
             <p className="text-[13.5px] text-fed-gray">
@@ -316,62 +296,8 @@ export function QueuePage() {
               and it will appear here for review.
             </p>
           </div>
-        )}
-        {rows && rows.length > 0 && visible.length === 0 && (
-          <p className="px-[18px] py-10 text-center text-[13.5px] text-fed-gray">
-            No submissions match your filters.
-          </p>
-        )}
-        {visible.map((row) => {
-          const status = STATUS_DEF[statusKey(row)];
-          return (
-            <div
-              key={row.id}
-              role="button"
-              tabIndex={0}
-              aria-label={`Open submission ${row.id}, ${row.brand_name ?? "unknown brand"}, ${status.label}`}
-              onClick={() => open(row.id)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  open(row.id);
-                }
-              }}
-              className={`${GRID} cursor-pointer border-b border-fed-line-soft px-[18px] py-3.5 transition-colors last:border-b-0 hover:bg-fed-blue-wash hover:shadow-[inset_3px_0_0_#005ea2] focus-visible:bg-fed-blue-wash focus-visible:shadow-[inset_3px_0_0_#005ea2] focus-visible:outline-none`}
-            >
-              <div>
-                <span
-                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold"
-                  style={{ color: status.color, background: status.bg }}
-                >
-                  <span
-                    aria-hidden="true"
-                    className="h-[7px] w-[7px] rounded-full"
-                    style={{ background: status.color }}
-                  />
-                  {status.label}
-                </span>
-              </div>
-              <div className="text-[13.5px] font-semibold tabular-nums text-fed-blue">
-                SUB-{String(row.id).padStart(4, "0")}
-              </div>
-              <div className="truncate pr-2 text-sm font-bold text-fed-ink">
-                {row.brand_name ?? "—"}
-              </div>
-              <div className="truncate pr-2 text-[13.5px] text-fed-slate">
-                {row.applicant ?? "—"}
-              </div>
-              <div className="truncate pr-2 text-[13px] text-fed-gray">{row.class_type ?? "—"}</div>
-              <div className="text-[13px] font-semibold tabular-nums text-fed-gray">
-                {formatDate(row.created_at)}
-              </div>
-              <div aria-hidden="true" className="text-right text-[17px] text-fed-gray-light">
-                ›
-              </div>
-            </div>
-          );
-        })}
-      </div>
+        }
+      />
     </div>
   );
 }

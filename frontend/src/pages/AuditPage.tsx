@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { api, ApiError, type AuditEvent } from "@/lib/api";
 import { describeAuditEvent, formatAuditTime } from "@/lib/audit";
 
@@ -8,10 +9,75 @@ import { describeAuditEvent, formatAuditTime } from "@/lib/audit";
  * Audit Log — the append-only record of every consequential action
  * (verification run, reviewer decision). The submissions table holds current
  * state; this is the history an auditor or FOIA request actually asks for.
- * Read-only by design: the API only ever appends.
+ * Read-only by design: the API only ever appends. Built from the shared
+ * {@link DataTable}, so it sorts, searches, and filters like the queue.
  */
 
-const GRID = "grid grid-cols-[150px_180px_1fr_92px] items-center gap-0";
+function subId(id: number): string {
+  return `SUB-${String(id).padStart(4, "0")}`;
+}
+
+const COLUMNS: DataTableColumn<AuditEvent>[] = [
+  {
+    key: "when",
+    header: "When",
+    width: "180px",
+    sortValue: (event) => event.created_at ?? "",
+    defaultDir: "desc",
+    cell: (event) => (
+      <span className="text-[12.5px] tabular-nums text-fed-gray">
+        {formatAuditTime(event.created_at)}
+      </span>
+    ),
+  },
+  {
+    key: "event",
+    header: "Event",
+    width: "190px",
+    sortValue: (event) => describeAuditEvent(event).label,
+    cell: (event) => {
+      const view = describeAuditEvent(event);
+      return (
+        <span
+          className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold"
+          style={{ color: view.color, background: view.bg }}
+        >
+          {view.label}
+        </span>
+      );
+    },
+  },
+  {
+    key: "details",
+    header: "Details",
+    width: "1fr",
+    cell: (event) => {
+      const view = describeAuditEvent(event);
+      return (
+        <span className="block truncate pr-3 text-[13px] text-fed-slate" title={view.summary}>
+          {view.summary || <span className="text-fed-gray-light">—</span>}
+        </span>
+      );
+    },
+  },
+  {
+    key: "submission",
+    header: "Submission",
+    width: "120px",
+    sortValue: (event) => event.submission_id ?? -1,
+    cell: (event) =>
+      event.submission_id != null ? (
+        <Link
+          to={`/review/${event.submission_id}`}
+          className="text-[13px] font-semibold tabular-nums text-fed-blue hover:underline"
+        >
+          {subId(event.submission_id)}
+        </Link>
+      ) : (
+        <span className="text-[13px] text-fed-gray-light">—</span>
+      ),
+  },
+];
 
 export function AuditPage() {
   const [events, setEvents] = useState<AuditEvent[] | null>(null);
@@ -50,60 +116,41 @@ export function AuditPage() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-[10px] border border-fed-line bg-white shadow-card">
-        <div
-          className={`${GRID} border-b-2 border-[#d6d7d9] bg-fed-head-bg px-[18px] py-3 text-[11.5px] font-bold uppercase tracking-[.5px] text-fed-gray`}
-        >
-          <div>When</div>
-          <div>Event</div>
-          <div>Details</div>
-          <div>Submission</div>
-        </div>
-        {events === null && !error && (
-          <p className="px-[18px] py-6 text-sm text-fed-gray">Loading the audit log…</p>
-        )}
-        {events?.length === 0 && (
+      <DataTable
+        columns={COLUMNS}
+        rows={events}
+        getRowKey={(event) => event.id}
+        search={{
+          ariaLabel: "Search the audit log by event, details, or submission",
+          placeholder: "Search events, details, ID…",
+          text: (event) => {
+            const view = describeAuditEvent(event);
+            const sub = event.submission_id != null ? subId(event.submission_id) : "";
+            return `${view.label} ${view.summary} ${sub}`;
+          },
+        }}
+        filters={[
+          {
+            key: "action",
+            label: "Filter by event type",
+            options: [
+              { value: "all", label: "All events" },
+              { value: "verification", label: "Verifications" },
+              { value: "decision", label: "Decisions" },
+            ],
+            predicate: (event, value) => event.action.startsWith(value),
+          },
+        ]}
+        defaultSort={{ key: "when", dir: "desc" }}
+        countNoun={["event", "events"]}
+        loadingMessage="Loading the audit log…"
+        noMatchMessage="No events match your filters."
+        emptyState={
           <p className="px-[18px] py-10 text-center text-[13.5px] text-fed-gray">
             No activity recorded yet.
           </p>
-        )}
-        {events?.map((event) => {
-          const view = describeAuditEvent(event);
-          return (
-            <div
-              key={event.id}
-              className={`${GRID} border-b border-fed-line-soft px-[18px] py-3 last:border-b-0`}
-            >
-              <div className="text-[12.5px] tabular-nums text-fed-gray">
-                {formatAuditTime(event.created_at)}
-              </div>
-              <div>
-                <span
-                  className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold"
-                  style={{ color: view.color, background: view.bg }}
-                >
-                  {view.label}
-                </span>
-              </div>
-              <div className="truncate pr-3 text-[13px] text-fed-slate" title={view.summary}>
-                {view.summary || <span className="text-fed-gray-light">—</span>}
-              </div>
-              <div className="text-[13px] tabular-nums">
-                {event.submission_id != null ? (
-                  <Link
-                    to={`/review/${event.submission_id}`}
-                    className="font-semibold text-fed-blue hover:underline"
-                  >
-                    SUB-{String(event.submission_id).padStart(4, "0")}
-                  </Link>
-                ) : (
-                  <span className="text-fed-gray-light">—</span>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+        }
+      />
     </div>
   );
 }
