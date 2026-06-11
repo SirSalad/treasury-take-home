@@ -19,7 +19,7 @@ from __future__ import annotations
 import json
 from datetime import UTC, datetime
 from importlib import resources
-from importlib.abc import Traversable
+from importlib.resources.abc import Traversable
 from typing import Protocol
 
 from sqlalchemy import select
