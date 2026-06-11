@@ -103,7 +103,7 @@ This brings up three services and waits for each to become healthy:
 | ---------- | -------------------------- | ---------------------- | ----- |
 | `frontend` | nginx serving the SPA      | http://localhost:8080  | Proxies `/api/*` to the backend |
 | `backend`  | FastAPI + RapidOCR         | http://localhost:8000  | `/health` probe; OCR models baked in |
-| `db`       | `postgres:16-alpine`       | `localhost:5432`       | Volume `pgdata`; db `labelverify` |
+| `db`       | `postgres:16-alpine`       | internal only (`db:5432`) | Volume `pgdata`; db `labelverify`; not published to the host |
 
 Open **http://localhost:8080** to use the app. The frontend talks to the API
 same-origin through nginx, so there are no CORS or outbound calls. On boot the

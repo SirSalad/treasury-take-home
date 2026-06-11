@@ -4,6 +4,16 @@
 #
 # Then open http://localhost:8080 (frontend). The frontend proxies /api/* to
 # the backend, which exposes /health directly on :8000.
+#
+# Host port publishes are for local development and are overridable
+# (FRONTEND_PORT / BACKEND_PORT). Under a reverse-proxy PaaS (Dokploy/Traefik,
+# Coolify, ...) the proxy reaches containers over the docker network by
+# container port — route the domain to service `frontend`, port 80 — and the
+# published ports are unused; set FRONTEND_PORT/BACKEND_PORT if the defaults
+# collide with other apps on the host. Postgres is intentionally not published:
+# the backend reaches it as db:5432 on the internal network, and exposing it
+# (with these dev credentials) on a shared host would be unsafe. For local
+# psql, use: docker compose -f docker/docker-compose.yml exec db psql -U postgres labelverify
 
 name: ttb-label-verify
 
@@ -17,8 +27,6 @@ services:
       POSTGRES_DB: labelverify
     volumes:
       - pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d labelverify"]
       interval: 5s
@@ -35,9 +43,10 @@ services:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/labelverify
       # The frontend is same-origin via the nginx proxy, but allow its origin
       # explicitly in case the API is called directly during development.
-      CORS_ORIGINS: http://localhost:8080
+      # Override with the public URL when deploying behind a domain.
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8000}:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -57,7 +66,7 @@ services:
       dockerfile: docker/Dockerfile.frontend
     restart: unless-stopped
     ports:
-      - "8080:80"
+      - "${FRONTEND_PORT:-8080}:80"
     depends_on:
       backend:
         condition: service_healthy
