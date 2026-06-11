@@ -91,6 +91,43 @@ def _found_line_confidence(ocr: OcrResult, found: str) -> float | None:
     return best_conf
 
 
+# Free-text fields whose value is *located by fuzzy presence*. A mismatch here
+# means "the expected value isn't on the label", so the best-scoring window is
+# noise — unlike alcohol_content / vintage, whose mismatch surfaces a real,
+# differently-valued reading worth showing and boxing.
+_FUZZY_LOCATED_FIELDS = frozenset(
+    {"brand_name", "class_type", "net_contents", "name_and_address", "country_of_origin"}
+)
+
+
+def _clear_unlocated_mismatches(fields: list[FieldResult]) -> list[FieldResult]:
+    """Blank the found text/box of confirmed fuzzy mismatches.
+
+    When a free-text value can't be located (e.g. a script-font brand the OCR
+    can't read), the matcher still returns its closest — and meaningless —
+    window. Reporting that as ``found`` and drawing a box on it is misleading;
+    show "not found" instead. Runs after the low-confidence review so that step
+    can still inspect the located window first.
+    """
+    cleared: list[FieldResult] = []
+    for field in fields:
+        if (
+            field.status is FieldStatus.MISMATCH
+            and field.field in _FUZZY_LOCATED_FIELDS
+            and field.found is not None
+        ):
+            field = field.model_copy(
+                update={
+                    "found": None,
+                    "box": None,
+                    "span": None,
+                    "reason": f"{field.reason}; value not located on the label",
+                }
+            )
+        cleared.append(field)
+    return cleared
+
+
 def _review_low_confidence_mismatches(
     fields: list[FieldResult], ocr: OcrResult
 ) -> list[FieldResult]:
@@ -187,6 +224,11 @@ def verify_label(expected: ExpectedFields, ocr_result: OcrResult) -> Verificatio
     # rejecting them outright — graceful degradation for hard-to-read label fonts.
     fields = _review_low_confidence_mismatches(fields, ocr_result)
 
+    # A confirmed free-text mismatch means the value was not located; the fuzzy
+    # matcher's best window is then just noise, so don't surface it (or box it)
+    # as what was "found" on the label.
+    fields = _clear_unlocated_mismatches(fields)
+
     warning = verify_warning_from_ocr(ocr_result)
     return build_result(fields, warning)
 
@@ -252,17 +294,47 @@ def _best_display_line(expected: str, ocr: OcrResult) -> tuple[int, TextLine, Pr
 def _verify_presence(field: str, expected: str, ocr: OcrResult) -> FieldResult:
     """Verify a free-text field by fuzzy-presence of its value in the OCR text."""
     presence = score_presence(expected, ocr.full_text)
+    found = presence.matched_text or None
     span, box = _locate(ocr, presence.matched_text)
+
+    # When the value is present, prefer the line that actually contains it. The
+    # token-window matcher can point elsewhere when OCR merges the value into one
+    # run ("1/2 BBL (15.5 GALLONS)" -> a single token), which would otherwise box
+    # an unrelated line and report it as what was found.
+    if presence.status is not MatchStatus.MISMATCH:
+        located = _locate_value(ocr, expected)
+        if located is not None:
+            index, line = located
+            found = line.text
+            span = SourceSpan(line_index=index, start=0, end=len(line.text))
+            box = line.box
+
     return FieldResult(
         field=field,
         status=_MATCH_TO_FIELD_STATUS[presence.status],
         expected=expected,
-        found=presence.matched_text or None,
+        found=found,
         score=presence.score,
         span=span,
         box=box,
         reason=presence.reason,
     )
+
+
+def _locate_value(ocr: OcrResult, value: str) -> tuple[int, TextLine] | None:
+    """The OCR line that contains ``value`` ignoring whitespace, if any.
+
+    OCR routinely drops the spaces inside a printed value, so a plain substring
+    search fails; comparing with whitespace removed finds the line that carries
+    it (e.g. expected "1/2 BBL (15.5 GALLONS)" inside the read "/1/2BBL(15.5GALLONS)").
+    """
+    target = _nows(value)
+    if not target:
+        return None
+    for index, line in enumerate(ocr.lines):
+        if target in _nows(line.text):
+            return index, line
+    return None
 
 
 def _verify_vintage(expected: str, ocr: OcrResult) -> FieldResult:

@@ -123,6 +123,40 @@ def test_high_confidence_mismatch_is_still_rejected() -> None:
     assert brand.status is FieldStatus.MISMATCH
 
 
+def test_unlocated_brand_mismatch_has_no_found_or_box() -> None:
+    """When a free-text value can't be located (e.g. a script-font brand the OCR
+    can't read), the mismatch reports "not found" rather than boxing the matcher's
+    closest — and meaningless — window."""
+    app = Application(brand_name="GIRO SPLENDIDO")
+    # None of these lines resemble the brand; the matcher's best window is noise.
+    ocr = OcrResult(
+        lines=[_line("5.2% ALC./VOL.", 0.0), _line("PACKAGED ON:", 24.0)], elapsed_ms=0.0
+    )
+    result = verify_label(app, ocr)
+    brand = next(f for f in result.fields if f.field == "brand_name")
+    assert brand.status is FieldStatus.MISMATCH
+    assert brand.found is None
+    assert brand.box is None
+
+
+def test_whitespace_merged_value_boxes_the_right_line() -> None:
+    """A present net-contents value the OCR merged into one token boxes the line
+    that actually carries it, not whichever window the token scorer preferred."""
+    app = Application(brand_name="GIRO SPLENDIDO", net_contents="1/2 BBL (15.5 GALLONS)")
+    ocr = OcrResult(
+        lines=[
+            _line("5.2%ALC./VOL.", 0.0),
+            _line("/1/2BBL(15.5GALLONS)", 24.0),
+        ],
+        elapsed_ms=0.0,
+    )
+    result = verify_label(app, ocr)
+    net = next(f for f in result.fields if f.field == "net_contents")
+    assert net.status is FieldStatus.MATCH
+    assert net.found is not None and "GALLONS" in net.found
+    assert net.box is not None and net.box.y_min == 24.0  # the net-contents line
+
+
 def test_vintage_exact_year_matches() -> None:
     """The declared vintage present verbatim on the label is a clean match."""
     from app.verify.engine import _verify_vintage

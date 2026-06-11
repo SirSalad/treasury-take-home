@@ -39,9 +39,11 @@ from app.verify.schemas import (
     WarningVerdict,
 )
 
-# Locates the header regardless of casing or the run of whitespace OCR may insert
-# between the two words (including a line break that normalisation collapses).
-_HEADER_RE = re.compile(r"government\s+warning", re.IGNORECASE)
+# Locates the header regardless of casing or whitespace between the two words.
+# ``\s*`` (not ``\s+``) because PP-OCRv4 frequently drops the space and runs the
+# words together (``GOVERNMENTWARNING``); requiring a space there made a plainly
+# present, all-caps warning read as MISSING on tightly-kerned labels.
+_HEADER_RE = re.compile(r"government\s*warning", re.IGNORECASE)
 
 # The canonical statement's closing phrase, used to bound the candidate region so
 # trailing label text after the warning does not dilute the similarity score.

@@ -12,6 +12,8 @@ Three layers:
 
 from __future__ import annotations
 
+import re
+
 import pytest
 
 from app.ocr.schemas import BoundingBox, OcrResult, TextLine
@@ -71,6 +73,17 @@ def test_minor_ocr_noise_still_compliant() -> None:
     result = verify_government_warning(noisy)
     assert result.verdict is WarningVerdict.COMPLIANT
     assert result.similarity < 1.0
+
+
+def test_space_stripped_warning_is_compliant() -> None:
+    # PP-OCRv4 routinely drops spaces on tightly-kerned labels, so the header
+    # arrives as "GOVERNMENTWARNING" and every word runs together. The all-caps,
+    # word-perfect statement must still read as compliant (regression: the header
+    # was previously only matched with a space, so this read as MISSING).
+    stripped = re.sub(r"\s+", "", GOVERNMENT_WARNING_TEXT)
+    result = verify_government_warning(stripped)
+    assert result.verdict is WarningVerdict.COMPLIANT
+    assert result.header_all_caps is True
 
 
 # --- Missing -----------------------------------------------------------------
