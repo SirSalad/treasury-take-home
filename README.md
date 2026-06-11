@@ -15,7 +15,8 @@ blocks outbound ML endpoints).
 
 **🔗 https://sculpture-confident-provided-acting.trycloudflare.com**
 
-Open the URL, click **Verify a label**, fill in the application fields, and
+Open the URL: the **Review Queue** (stat cards over recent submissions) is the
+home screen. Click **New Verification**, fill in the application fields, and
 upload a label image (samples live in
 [`backend/tests/corpus/images/`](backend/tests/corpus/images/)) to get a
 field-by-field verdict. **Batch upload** runs the same pipeline over a CSV
@@ -54,7 +55,7 @@ above is current as of deploy.
 │   └── tests/          # unit + golden corpus + perf SLA harness
 ├── frontend/     # Vite + React + TS app
 │   └── src/
-│       ├── pages/         # VerifyPage (core flow), BatchPage (placeholder), Home
+│       ├── pages/         # QueuePage (review queue), ReviewPage, VerifyPage, BatchPage
 │       ├── components/    # application form, 3-pane comparison view, layout
 │       └── lib/           # API client, validation, types
 ├── docker/       # Dockerfiles + docker-compose
@@ -374,11 +375,15 @@ size-capped (20 MB) to bound memory.
 
 - **Standalone prototype** — no COLA integration (out of scope per the IT
   interview); this is a proof-of-concept that could inform future procurement.
-- **Single-label verification is the core flow** and is wired end-to-end. **Batch
-  upload** is partially built: the backend ingestion library (CSV manifest +
-  image pairing, `app/batch/`) exists and is tested, but it is **not yet exposed
-  as an API endpoint**, and the frontend batch page is a placeholder. Given the
-  time box, the single-label flow was prioritised for depth over breadth.
+- **Single-label verification is the core flow** and is wired end-to-end:
+  verify → review screen (annotated label, checklist, Government Warning diff)
+  → recorded reviewer decision, with every submission landing in the **review
+  queue** and every action in an append-only **audit trail** (`/api/audit`).
+  **Batch upload** runs client-side over the same `POST /api/verify` pipeline
+  (sample CSV, in-browser manifest editing, per-row triage); the backend batch
+  ingestion library (`app/batch/`) exists and is tested but is not yet exposed
+  as a server-side endpoint — given the time box, one verified pipeline beats
+  two divergent ones.
 - **No real authn/PII handling** — per the IT interview, nothing sensitive is
   stored for the exercise. Uploaded images are written to a local directory and
   referenced from the DB; a production deployment would use an object store and
