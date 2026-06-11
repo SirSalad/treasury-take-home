@@ -28,10 +28,19 @@ const FILL: Record<VerificationStatus, string> = {
   mismatch: "bg-mismatch/10",
 };
 
-// Focus-zoom bounds: enough to read fine print (the Government Warning is the
-// smallest text on the label) without blowing a small crop into mush.
+// Focus-zoom cap: enough to read fine print (the Government Warning is the
+// smallest text on the label) without blowing a small crop into mush. No
+// lower bound — a region that already fills the view needs no zoom at all.
 const MAX_FOCUS_ZOOM = 4;
-const MIN_FOCUS_ZOOM = 1.5;
+
+/** The nearest ancestor that actually scrolls, for container-scoped panning. */
+function closestScrollable(el: HTMLElement | null): HTMLElement | null {
+  for (let node = el; node; node = node.parentElement) {
+    const style = window.getComputedStyle(node);
+    if (/(auto|scroll)/.test(style.overflowY + style.overflowX)) return node;
+  }
+  return null;
+}
 
 interface LabelImageProps {
   /** Object URL or path of the original label artwork. */
@@ -83,6 +92,7 @@ export function LabelImage({
   const [natural, setNatural] = React.useState<{ w: number; h: number } | null>(null);
   // The fitted (zoom = 1) rendered width, the basis for layout-affecting zoom.
   const [baseWidth, setBaseWidth] = React.useState<number | null>(null);
+  const wrapperRef = React.useRef<HTMLDivElement>(null);
   const regionRefs = React.useRef(new Map<string, HTMLButtonElement>());
 
   function handleLoad(event: React.SyntheticEvent<HTMLImageElement>) {
@@ -100,13 +110,21 @@ export function LabelImage({
 
   React.useEffect(() => {
     if (!focused || !natural || !baseWidth || !onAutoZoom) return;
-    const fraction = Math.max(
-      (focused.box.x_max - focused.box.x_min) / natural.w,
-      ((focused.box.y_max - focused.box.y_min) / natural.h) * 0.5,
-      0.02,
+    const container = closestScrollable(wrapperRef.current);
+    if (!container) return;
+    // Region size at zoom 1, in px (the fitted image keeps its aspect ratio).
+    const baseHeight = baseWidth * (natural.h / natural.w);
+    const regionW = Math.max(((focused.box.x_max - focused.box.x_min) / natural.w) * baseWidth, 8);
+    const regionH = Math.max(((focused.box.y_max - focused.box.y_min) / natural.h) * baseHeight, 8);
+    // Zoom so the region fills ~70% of the *viewport pane* in its tighter
+    // dimension — readable, with context around it — never zooming out.
+    const target = Math.min(
+      MAX_FOCUS_ZOOM,
+      Math.max(
+        1,
+        Math.min((0.7 * container.clientWidth) / regionW, (0.8 * container.clientHeight) / regionH),
+      ),
     );
-    // Aim for the region to span roughly half the fitted width.
-    const target = Math.min(MAX_FOCUS_ZOOM, Math.max(MIN_FOCUS_ZOOM, 0.5 / fraction));
     if (Math.abs(target - zoom) > 0.05) onAutoZoom(Math.round(target * 4) / 4);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- re-fit only when the focus target or image changes, not on manual zoom
   }, [focused?.key, natural, baseWidth]);
@@ -115,9 +133,21 @@ export function LabelImage({
     if (!focusKey) return;
     const el = regionRefs.current.get(focusKey);
     if (!el) return;
-    // Let the zoomed layout paint first, then center the region.
+    // Let the zoomed layout paint, then pan ONLY the nearest scroll container
+    // so the region's center meets the viewport's center. (scrollIntoView is
+    // unusable here: it also scrolls the page, and a flex-centered container
+    // makes start-side overflow unreachable.)
     const id = requestAnimationFrame(() => {
-      el.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+      const container = closestScrollable(wrapperRef.current);
+      if (!container) return;
+      const crect = container.getBoundingClientRect();
+      const rrect = el.getBoundingClientRect();
+      container.scrollTo({
+        left:
+          container.scrollLeft + (rrect.left + rrect.width / 2) - (crect.left + crect.width / 2),
+        top: container.scrollTop + (rrect.top + rrect.height / 2) - (crect.top + crect.height / 2),
+        behavior: "smooth",
+      });
     });
     return () => cancelAnimationFrame(id);
   }, [focusKey, zoom, natural, baseWidth]);
@@ -126,7 +156,13 @@ export function LabelImage({
   const zoomed = zoom !== 1 && baseWidth != null;
 
   return (
-    <div className={cn("relative inline-block max-w-full", className)}>
+    // max-w-full must come off while zoomed: the wrapper is the coordinate
+    // space for the %-positioned region overlays, so clamping it to the
+    // container while the image grows would shear every box off the artwork.
+    <div
+      ref={wrapperRef}
+      className={cn("relative inline-block", !zoomed && "max-w-full", className)}
+    >
       <img
         src={src}
         alt={alt}
