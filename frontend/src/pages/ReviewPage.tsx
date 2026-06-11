@@ -175,8 +175,8 @@ export function ReviewPage() {
   ];
 
   return (
-    <div className="pb-10">
-      <div className="mb-3.5 flex flex-wrap items-center justify-between gap-3">
+    <div className="pb-6">
+      <div className="mb-2.5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3.5">
           <Link
             to="/"
@@ -204,14 +204,14 @@ export function ReviewPage() {
         </div>
       </div>
 
-      <dl className="mb-4 grid grid-cols-2 gap-2 rounded-[10px] border border-fed-line bg-white px-5 py-3.5 shadow-card md:grid-cols-3 lg:grid-cols-6">
+      <dl className="mb-2.5 grid grid-cols-2 gap-x-4 gap-y-1 rounded-[10px] border border-fed-line bg-white px-4 py-2 shadow-card sm:grid-cols-3 lg:grid-cols-6">
         {meta.map(([key, value]) => (
-          <div key={key}>
-            <dt className="mb-[3px] text-[10.5px] font-bold uppercase tracking-[.5px] text-fed-gray-light">
+          <div key={key} className="min-w-0">
+            <dt className="text-[10px] font-bold uppercase tracking-[.5px] text-fed-gray-light">
               {key}
             </dt>
             <dd
-              className="truncate text-[13.5px] font-semibold tabular-nums text-fed-ink"
+              className="truncate text-[13px] font-semibold tabular-nums text-fed-ink"
               title={value}
             >
               {value}
@@ -220,10 +220,11 @@ export function ReviewPage() {
         ))}
       </dl>
 
-      <div className="grid items-start gap-4 lg:grid-cols-[400px_1fr_312px]">
-        {/* LEFT: submitted label with highlight boxes */}
-        <div className="overflow-hidden rounded-[10px] border border-fed-line bg-white shadow-card">
-          <div className="flex items-center justify-between border-b border-[#e6e8ea] px-4 py-3">
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,460px)_minmax(0,1fr)_320px]">
+        {/* LEFT: submitted label with highlight boxes — sized to the viewport
+            height so it fills the screen without pushing the page taller. */}
+        <div className="flex flex-col overflow-hidden rounded-[10px] border border-fed-line bg-white shadow-card xl:sticky xl:top-24">
+          <div className="flex items-center justify-between border-b border-[#e6e8ea] px-4 py-2.5">
             <h3 className="text-[13.5px] font-bold text-fed-navy">Submitted Label</h3>
             <div className="flex gap-1.5">
               <button
@@ -244,7 +245,7 @@ export function ReviewPage() {
               </button>
             </div>
           </div>
-          <div className="flex items-center justify-center overflow-auto bg-[#41464d] p-[18px]">
+          <div className="flex items-center justify-center overflow-auto bg-[#41464d] p-3">
             <div style={{ transform: `scale(${zoom})`, transition: "transform .18s" }}>
               <LabelImage
                 src={api.submissionImageUrl(detail.id)}
@@ -252,10 +253,11 @@ export function ReviewPage() {
                 regions={regions}
                 activeKey={highlight}
                 onSelect={(key) => setSelectedKey((cur) => (cur === key ? null : key))}
+                imgClassName="h-auto w-auto max-h-[calc(100vh-230px)]"
               />
             </div>
           </div>
-          <p className="flex items-center gap-[7px] border-t border-[#e6e8ea] px-4 py-[11px] text-xs text-fed-gray">
+          <p className="flex items-center gap-[7px] border-t border-[#e6e8ea] px-4 py-2 text-[11px] text-fed-gray">
             <span
               aria-hidden="true"
               className="inline-block h-[9px] w-[9px] rounded-[2px] bg-fed-green"
@@ -265,7 +267,7 @@ export function ReviewPage() {
         </div>
 
         {/* MIDDLE: checklist + warning hero */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           <ReviewChecklist
             fields={result.fields}
             regionNumbers={regionNumbers}

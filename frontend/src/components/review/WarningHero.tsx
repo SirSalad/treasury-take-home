@@ -44,22 +44,22 @@ export function WarningHero({ result }: { result: GovernmentWarningResult }) {
       className="overflow-hidden rounded-[10px] border border-fed-line bg-white shadow-card"
       style={{ borderTop: `4px solid ${meta.accent}` }}
     >
-      <div className="flex flex-wrap items-center justify-between gap-2.5 px-[18px] py-3.5">
-        <div className="flex items-center gap-2.5">
-          <h3 className="text-[15px] font-extrabold text-fed-navy">Government Warning Statement</h3>
-          <span className="rounded bg-fed-red-wash px-2 py-[3px] text-[11px] font-bold tracking-[.3px] text-fed-red-deep">
+      <div className="flex flex-wrap items-center justify-between gap-x-2.5 gap-y-1.5 px-4 py-2.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="text-[14px] font-extrabold text-fed-navy">Government Warning Statement</h3>
+          <span className="rounded bg-fed-red-wash px-1.5 py-[2px] text-[10px] font-bold tracking-[.3px] text-fed-red-deep">
             MANDATORY · 27 CFR §16.21
           </span>
         </div>
         <span
-          className="inline-flex items-center gap-[7px] text-[13px] font-extrabold"
+          className="inline-flex items-center gap-1.5 text-[13px] font-extrabold"
           style={{ color: meta.accent }}
         >
           <span aria-hidden="true">{meta.icon}</span> {meta.label}
         </span>
       </div>
 
-      <div className="flex flex-wrap gap-2 px-[18px] pb-3.5">
+      <div className="flex flex-wrap gap-1.5 px-4 pb-2.5">
         <Badge ok={found !== null} text="Statement present" />
         <Badge ok={result.header_all_caps} text="Header in capitals" />
         <Badge
@@ -68,32 +68,32 @@ export function WarningHero({ result }: { result: GovernmentWarningResult }) {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-px border-t border-[#e6e8ea] bg-[#e6e8ea] md:grid-cols-2">
-        <div className="bg-[#f3f8f4] px-4 py-3.5">
-          <div className="mb-2 text-[11px] font-bold uppercase tracking-[.5px] text-fed-green">
+      <div className="grid max-h-[150px] grid-cols-1 gap-px overflow-y-auto border-t border-[#e6e8ea] bg-[#e6e8ea] md:grid-cols-2">
+        <div className="bg-[#f3f8f4] px-3.5 py-2.5">
+          <div className="mb-1 text-[10px] font-bold uppercase tracking-[.5px] text-fed-green">
             Required by TTB
           </div>
-          <p className="text-xs leading-[1.6] text-[#2b3b2d]">
+          <p className="text-[11px] leading-[1.5] text-[#2b3b2d]">
             <strong className="font-extrabold">GOVERNMENT WARNING:</strong> {REQUIRED_BODY}
           </p>
         </div>
-        <div className="px-4 py-3.5" style={{ background: meta.detBg }}>
+        <div className="px-3.5 py-2.5" style={{ background: meta.detBg }}>
           <div
-            className="mb-2 text-[11px] font-bold uppercase tracking-[.5px]"
+            className="mb-1 text-[10px] font-bold uppercase tracking-[.5px]"
             style={{ color: meta.accent }}
           >
             Detected on Label
           </div>
           {found ? (
-            <p className="text-xs leading-[1.6] text-[#2b2b2b]">{found}</p>
+            <p className="text-[11px] leading-[1.5] text-[#2b2b2b]">{found}</p>
           ) : (
-            <p className="text-xs font-semibold leading-[1.6] text-fed-red-deep">
+            <p className="text-[11px] font-semibold leading-[1.5] text-fed-red-deep">
               No Government Warning statement could be located on this label.
             </p>
           )}
           {result.issues.length > 0 && (
             <ul
-              className="mt-2 space-y-1 text-[11.5px] leading-snug"
+              className="mt-1.5 space-y-1 text-[11px] leading-snug"
               style={{ color: meta.accent }}
             >
               {result.issues.map((issue) => (

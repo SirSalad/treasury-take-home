@@ -38,6 +38,8 @@ interface LabelImageProps {
   /** Selecting a region by clicking its box. */
   onSelect?: (key: string) => void;
   className?: string;
+  /** Extra classes for the <img>, e.g. a height cap so it sizes to the viewport. */
+  imgClassName?: string;
 }
 
 /**
@@ -54,6 +56,7 @@ export function LabelImage({
   activeKey,
   onSelect,
   className,
+  imgClassName,
 }: LabelImageProps) {
   // Natural pixel dimensions of the loaded image; boxes (in pixel space) are
   // converted to percentages against these. Until the image loads we have no
@@ -75,7 +78,7 @@ export function LabelImage({
         src={src}
         alt={alt}
         onLoad={handleLoad}
-        className="block h-auto max-w-full rounded-md border"
+        className={cn("block max-w-full rounded-md border", imgClassName ?? "h-auto")}
       />
       {natural &&
         regions.map((region) => {
