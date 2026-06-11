@@ -1,0 +1,118 @@
+{
+  "_about": "Demo seed set for the review queue: six synthetic corpus labels spanning pass/warning/fail plus one real COLA artwork from the TTB public registry (TTB ID 25006001000701). `application` is the expected COLA data each label is verified against; `decision` (optional) is recorded after verification so the seeded queue shows the full workflow — approved, flagged, and still-pending rows.",
+  "cases": [
+    {
+      "image": "old_tom_clean_pass.png",
+      "application": {
+        "serial_number": "24-001",
+        "source": "domestic",
+        "product_type": "distilled_spirits",
+        "brand_name": "OLD TOM DISTILLERY",
+        "class_type": "Kentucky Straight Bourbon Whiskey",
+        "alcohol_content_pct": 45.0,
+        "alcohol_content_text": "45% Alc./Vol. (90 Proof)",
+        "net_contents": "750 mL",
+        "name_and_address": "Bottled by Old Tom Distillery, Bardstown, KY"
+      },
+      "decision": {
+        "decision": "approve",
+        "note": "All checks green. Approved for demo."
+      }
+    },
+    {
+      "image": "coastal_vines_wine_pass.png",
+      "application": {
+        "serial_number": "24-118",
+        "source": "imported",
+        "product_type": "wine",
+        "brand_name": "COASTAL VINES",
+        "class_type": "Cabernet Sauvignon",
+        "alcohol_content_pct": 13.5,
+        "alcohol_content_text": "13.5% Alc./Vol.",
+        "net_contents": "750 mL",
+        "vintage": "2021",
+        "country_of_origin": "Product of France",
+        "name_and_address": "Imported by Coastal Vines Selections, New York, NY"
+      },
+      "decision": {
+        "decision": "approve",
+        "note": null
+      }
+    },
+    {
+      "image": "stones_throw_case_diff.png",
+      "application": {
+        "serial_number": "24-203",
+        "source": "domestic",
+        "product_type": "distilled_spirits",
+        "brand_name": "Stone's Throw",
+        "class_type": "London Dry Gin",
+        "alcohol_content_pct": 40.0,
+        "alcohol_content_text": "40% Alc./Vol. (80 Proof)",
+        "net_contents": "750 mL",
+        "name_and_address": "Distilled by Stone's Throw Spirits, Portland, OR"
+      }
+    },
+    {
+      "image": "abv_mismatch.png",
+      "application": {
+        "serial_number": "24-077",
+        "source": "domestic",
+        "product_type": "distilled_spirits",
+        "brand_name": "SILVER CREEK",
+        "class_type": "Tennessee Whiskey",
+        "alcohol_content_pct": 45.0,
+        "alcohol_content_text": "45% Alc./Vol. (90 Proof)",
+        "net_contents": "750 mL",
+        "name_and_address": "Bottled by Silver Creek Distillers, Lynchburg, TN"
+      },
+      "decision": {
+        "decision": "request_changes",
+        "note": "Label prints a different ABV than the application. Returned for correction."
+      }
+    },
+    {
+      "image": "missing_warning.png",
+      "application": {
+        "serial_number": "24-256",
+        "source": "domestic",
+        "product_type": "wine",
+        "brand_name": "CEDAR RIDGE",
+        "class_type": "Chardonnay",
+        "alcohol_content_pct": 12.5,
+        "alcohol_content_text": "12.5% Alc./Vol.",
+        "net_contents": "750 mL",
+        "vintage": "2022",
+        "name_and_address": "Produced and bottled by Cedar Ridge Vineyards, Sonoma, CA"
+      }
+    },
+    {
+      "image": "craft_ipa_us_beer_pass.png",
+      "application": {
+        "serial_number": "24-101",
+        "source": "domestic",
+        "product_type": "malt_beverage",
+        "brand_name": "Hopworks Brewing",
+        "class_type": "India Pale Ale",
+        "alcohol_content_pct": 5.5,
+        "alcohol_content_text": "ALC. 5.5% BY VOL",
+        "net_contents": "1 PT 9.4 FL OZ",
+        "name_and_address": "Brewed and bottled by Hopworks Brewing Co., Portland, OR"
+      }
+    },
+    {
+      "image": "jb_kirk_cola.jpg",
+      "application": {
+        "serial_number": "250067",
+        "source": "domestic",
+        "product_type": "distilled_spirits",
+        "brand_name": "J.B. KIRK",
+        "class_type": "Straight Bourbon Whiskey",
+        "alcohol_content_pct": 45.0,
+        "alcohol_content_text": "45% ALC/VOL",
+        "net_contents": "750 ML",
+        "name_and_address": "Produced and bottled by J.B. Kirk, Clarksville, TN"
+      }
+    }
+  ]
+}

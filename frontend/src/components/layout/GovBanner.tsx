@@ -1,9 +1,10 @@
 /**
- * USWDS-style "official government website" banner. A familiar, trust-building
- * strip that sits above the header on every federal site, with the small
- * stars-and-stripes glyph drawn in CSS (no image request, works offline).
- * Kept static (no expand/collapse) to match the "clean, obvious, no hunting
- * for buttons" guidance from the discovery interviews.
+ * USWDS-style banner strip above the header. The federal design language is
+ * part of the prototype's look, but this is a take-home exercise — so the
+ * strip carries a non-affiliation disclaimer instead of the official-website
+ * claim. The small stars-and-stripes glyph is drawn in CSS (no image request,
+ * works offline). Kept static (no expand/collapse) to match the "clean,
+ * obvious, no hunting for buttons" guidance from the discovery interviews.
  */
 export function GovBanner() {
   return (
@@ -19,7 +20,9 @@ export function GovBanner() {
         >
           <span className="absolute left-0 top-0 h-[6px] w-[7px] bg-[#3c3b6e]" />
         </span>
-        <span className="text-fed-slate">An official website of the United States government</span>
+        <span className="text-fed-slate">
+          Not endorsed or affiliated with any governmental agency
+        </span>
       </div>
     </div>
   );

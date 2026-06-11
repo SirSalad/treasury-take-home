@@ -45,6 +45,8 @@ include = ["app*"]
 [tool.setuptools.package-data]
 # Ship the vendored OCR models inside the package so installs are self-contained.
 "app.ocr" = ["models/*.onnx"]
+# Demo seed labels for SEED_DEMO / `python -m app.seed`.
+"app.seed" = ["data/*"]
 
 [tool.ruff]
 line-length = 100

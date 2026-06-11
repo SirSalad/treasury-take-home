@@ -112,6 +112,11 @@ to service `frontend`, container port `80`, and set `CORS_ORIGINS` to the
 public URL. The `docker-compose.dev.yml` overlay adds the localhost publishes
 above (override with `FRONTEND_PORT`/`BACKEND_PORT`).
 
+Set **`SEED_DEMO=1`** to populate an *empty* database with sample submissions
+on boot (passes, flags, fails, and a couple of recorded decisions), so the
+review queue demos with realistic content. It never touches a database that
+already has submissions. Same thing by hand: `python -m app.seed`.
+
 Open **http://localhost:8080** to use the app. The frontend talks to the API
 same-origin through nginx, so there are no CORS or outbound calls. On boot the
 backend applies Alembic migrations and warms the OCR model (hence the ~40s

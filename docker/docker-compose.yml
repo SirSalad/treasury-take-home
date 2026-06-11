@@ -45,6 +45,10 @@ services:
       # explicitly in case the API is called directly during development.
       # Override with the public URL when deploying behind a domain.
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
+      # Set SEED_DEMO=1 to populate an EMPTY database with sample submissions
+      # (pass/warning/fail + recorded decisions) on boot — demo data for the
+      # review queue. Always a no-op once any submission exists.
+      SEED_DEMO: ${SEED_DEMO:-0}
     depends_on:
       db:
         condition: service_healthy
