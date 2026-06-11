@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { api, ApiError, type QueueStats, type SubmissionRow } from "@/lib/api";
@@ -6,41 +6,57 @@ import { api, ApiError, type QueueStats, type SubmissionRow } from "@/lib/api";
 /**
  * My Review Queue — the workspace home (claude-design).
  *
- * Four stat cards over a clickable table of recent submissions. Row status is
- * the human-workflow state derived from the automated verdict plus any
- * recorded reviewer decision, not the raw pipeline status.
+ * Four stat cards over a sortable, filterable table of submissions. Row status
+ * is the human-workflow state derived from the automated verdict plus any
+ * recorded reviewer decision, not the raw pipeline status. Sorting and
+ * filtering are client-side over the loaded set.
  */
 
-interface QueueStatus {
-  label: string;
-  color: string;
-  bg: string;
+type StatusKey = "needs_review" | "pending" | "changes" | "info" | "unreadable" | "approved";
+
+// Order doubles as the status-column sort rank: most-urgent first.
+const STATUS_DEF: Record<StatusKey, { label: string; color: string; bg: string; order: number }> = {
+  needs_review: { label: "Needs Review", color: "#7a5a00", bg: "#faf3d1", order: 0 },
+  pending: { label: "Pending Review", color: "#005ea2", bg: "#e1effa", order: 1 },
+  changes: { label: "Changes Requested", color: "#b50909", bg: "#fdeced", order: 2 },
+  info: { label: "Info Requested", color: "#3d4551", bg: "#eef0f2", order: 3 },
+  unreadable: { label: "Unreadable", color: "#b50909", bg: "#fdeced", order: 4 },
+  approved: { label: "Approved", color: "#226e2a", bg: "#eaf4ec", order: 5 },
+};
+
+function statusKey(row: SubmissionRow): StatusKey {
+  if (row.status === "failed") return "unreadable";
+  if (row.decision === "approve") return "approved";
+  if (row.decision === "request_changes") return "changes";
+  if (row.decision === "request_info") return "info";
+  if (row.overall === "warning" || row.overall === "fail") return "needs_review";
+  return "pending";
 }
 
-function rowStatus(row: SubmissionRow): QueueStatus {
-  if (row.status === "failed") {
-    return { label: "Unreadable", color: "#b50909", bg: "#fdeced" };
+type SortCol = "status" | "id" | "brand" | "applicant" | "class" | "submitted";
+type SortDir = "asc" | "desc";
+
+function compare(a: SubmissionRow, b: SubmissionRow, col: SortCol): number {
+  switch (col) {
+    case "id":
+      return a.id - b.id;
+    case "status":
+      return STATUS_DEF[statusKey(a)].order - STATUS_DEF[statusKey(b)].order;
+    case "brand":
+      return (a.brand_name ?? "").localeCompare(b.brand_name ?? "");
+    case "applicant":
+      return (a.applicant ?? "").localeCompare(b.applicant ?? "");
+    case "class":
+      return (a.class_type ?? "").localeCompare(b.class_type ?? "");
+    case "submitted":
+      // created_at is ISO-8601, so lexical order is chronological order.
+      return (a.created_at ?? "").localeCompare(b.created_at ?? "");
   }
-  switch (row.decision) {
-    case "approve":
-      return { label: "Approved", color: "#226e2a", bg: "#eaf4ec" };
-    case "request_changes":
-      return { label: "Changes Requested", color: "#b50909", bg: "#fdeced" };
-    case "request_info":
-      return { label: "Info Requested", color: "#3d4551", bg: "#eef0f2" };
-    default:
-      break;
-  }
-  if (row.overall === "warning" || row.overall === "fail") {
-    return { label: "Needs Review", color: "#7a5a00", bg: "#faf3d1" };
-  }
-  return { label: "Pending Review", color: "#005ea2", bg: "#e1effa" };
 }
 
 function formatDate(iso: string | null): string {
   if (!iso) return "—";
-  const d = new Date(iso);
-  return d.toLocaleDateString("en-US", {
+  return new Date(iso).toLocaleDateString("en-US", {
     month: "2-digit",
     day: "2-digit",
     year: "numeric",
@@ -82,6 +98,11 @@ export function QueuePage() {
   const [stats, setStats] = useState<QueueStats | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusKey | "all">("all");
+  const [sortCol, setSortCol] = useState<SortCol>("id");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+
   useEffect(() => {
     const controller = new AbortController();
     Promise.all([api.submissions(controller.signal), api.queueStats(controller.signal)])
@@ -96,7 +117,58 @@ export function QueuePage() {
     return () => controller.abort();
   }, []);
 
+  const visible = useMemo(() => {
+    if (!rows) return [];
+    const q = query.trim().toLowerCase();
+    const filtered = rows.filter((row) => {
+      if (statusFilter !== "all" && statusKey(row) !== statusFilter) return false;
+      if (q) {
+        const hay = [
+          row.brand_name,
+          row.applicant,
+          row.class_type,
+          `sub-${String(row.id).padStart(4, "0")}`,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+    const dir = sortDir === "asc" ? 1 : -1;
+    return [...filtered].sort((a, b) => compare(a, b, sortCol) * dir);
+  }, [rows, query, statusFilter, sortCol, sortDir]);
+
+  function toggleSort(col: SortCol) {
+    if (col === sortCol) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortCol(col);
+      // Sensible default direction per column: newest/most-urgent first.
+      setSortDir(col === "id" || col === "submitted" ? "desc" : "asc");
+    }
+  }
+
   const open = (id: number) => navigate(`/review/${id}`);
+  const filtering = query.trim() !== "" || statusFilter !== "all";
+
+  function SortHeader({ col, label }: { col: SortCol; label: string }) {
+    const active = sortCol === col;
+    return (
+      <button
+        type="button"
+        onClick={() => toggleSort(col)}
+        aria-label={`Sort by ${label}${active ? (sortDir === "asc" ? ", ascending" : ", descending") : ""}`}
+        className="flex items-center gap-1 text-left uppercase tracking-[.5px] hover:text-fed-blue"
+      >
+        {label}
+        <span aria-hidden="true" className={active ? "text-fed-blue" : "text-[#c4c8cc]"}>
+          {active ? (sortDir === "asc" ? "▲" : "▼") : "▾"}
+        </span>
+      </button>
+    );
+  }
 
   return (
     <div className="pb-10">
@@ -165,16 +237,69 @@ export function QueuePage() {
         </div>
       )}
 
+      {/* Filter bar */}
+      <div className="mb-3 flex flex-wrap items-center gap-3">
+        <div className="grow sm:grow-0">
+          <label htmlFor="queue-search" className="sr-only">
+            Search the queue by brand, applicant, class, or ID
+          </label>
+          <input
+            id="queue-search"
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search brand, applicant, class, ID…"
+            className="w-full rounded-md border border-[#c4c8cc] px-3 py-2 text-sm text-fed-ink focus:border-fed-blue focus:outline-none sm:w-[320px]"
+          />
+        </div>
+        <div>
+          <label htmlFor="queue-status" className="sr-only">
+            Filter by status
+          </label>
+          <select
+            id="queue-status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as StatusKey | "all")}
+            className="rounded-md border border-[#c4c8cc] bg-white px-3 py-2 text-sm font-semibold text-fed-ink focus:border-fed-blue focus:outline-none"
+          >
+            <option value="all">All statuses</option>
+            {(Object.keys(STATUS_DEF) as StatusKey[]).map((key) => (
+              <option key={key} value={key}>
+                {STATUS_DEF[key].label}
+              </option>
+            ))}
+          </select>
+        </div>
+        {filtering && (
+          <button
+            type="button"
+            onClick={() => {
+              setQuery("");
+              setStatusFilter("all");
+            }}
+            className="text-sm font-semibold text-fed-blue hover:underline"
+          >
+            Clear filters
+          </button>
+        )}
+        {rows && (
+          <span className="ml-auto text-[13px] text-fed-gray" aria-live="polite">
+            {filtering ? `${visible.length} of ${rows.length}` : `${rows.length}`}{" "}
+            {rows.length === 1 ? "submission" : "submissions"}
+          </span>
+        )}
+      </div>
+
       <div className="overflow-hidden rounded-[10px] border border-fed-line bg-white shadow-card">
         <div
-          className={`${GRID} border-b-2 border-[#d6d7d9] bg-fed-head-bg px-[18px] py-3 text-[11.5px] font-bold uppercase tracking-[.5px] text-fed-gray`}
+          className={`${GRID} border-b-2 border-[#d6d7d9] bg-fed-head-bg px-[18px] py-3 text-[11.5px] font-bold text-fed-gray`}
         >
-          <div>Status</div>
-          <div>ID</div>
-          <div>Brand</div>
-          <div>Applicant</div>
-          <div>Class / Type</div>
-          <div>Submitted</div>
+          <SortHeader col="status" label="Status" />
+          <SortHeader col="id" label="ID" />
+          <SortHeader col="brand" label="Brand" />
+          <SortHeader col="applicant" label="Applicant" />
+          <SortHeader col="class" label="Class / Type" />
+          <SortHeader col="submitted" label="Submitted" />
           <div />
         </div>
         {rows === null && !error && (
@@ -192,8 +317,13 @@ export function QueuePage() {
             </p>
           </div>
         )}
-        {rows?.map((row) => {
-          const status = rowStatus(row);
+        {rows && rows.length > 0 && visible.length === 0 && (
+          <p className="px-[18px] py-10 text-center text-[13.5px] text-fed-gray">
+            No submissions match your filters.
+          </p>
+        )}
+        {visible.map((row) => {
+          const status = STATUS_DEF[statusKey(row)];
           return (
             <div
               key={row.id}
@@ -207,7 +337,7 @@ export function QueuePage() {
                   open(row.id);
                 }
               }}
-              className={`${GRID} cursor-pointer border-b border-fed-line-soft px-[18px] py-3.5 transition-colors last:border-b-0 hover:bg-fed-blue-wash hover:shadow-[inset_3px_0_0_#005ea2] focus-visible:bg-fed-blue-wash focus-visible:outline-none focus-visible:shadow-[inset_3px_0_0_#005ea2]`}
+              className={`${GRID} cursor-pointer border-b border-fed-line-soft px-[18px] py-3.5 transition-colors last:border-b-0 hover:bg-fed-blue-wash hover:shadow-[inset_3px_0_0_#005ea2] focus-visible:bg-fed-blue-wash focus-visible:shadow-[inset_3px_0_0_#005ea2] focus-visible:outline-none`}
             >
               <div>
                 <span
