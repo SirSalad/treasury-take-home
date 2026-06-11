@@ -47,7 +47,10 @@ _HEADER_RE = re.compile(r"government\s*warning", re.IGNORECASE)
 
 # The canonical statement's closing phrase, used to bound the candidate region so
 # trailing label text after the warning does not dilute the similarity score.
-_WARNING_TAIL = "health problems"
+# ``\s*`` between the words because OCR routinely drops the space
+# ("HEALTHPROBLEMS"); requiring one left the region unbounded and the trailing
+# label text dragged otherwise-valid warnings below the threshold.
+_TAIL_RE = re.compile(r"health\s*problems\s*\.?", re.IGNORECASE)
 
 _CANONICAL_LC = GOVERNMENT_WARNING_TEXT.lower()
 
@@ -77,15 +80,64 @@ def _bound_warning_region(region: str) -> str:
     a length window. This keeps any label text that follows the warning from
     dragging down the similarity score of an otherwise-valid statement.
     """
-    tail_idx = region.lower().find(_WARNING_TAIL)
-    if tail_idx != -1:
-        end = tail_idx + len(_WARNING_TAIL)
-        # Include a trailing period if the warning ends with one.
-        if region[end : end + 1] == ".":
-            end += 1
-        return region[:end]
+    tail = _TAIL_RE.search(region)
+    if tail is not None:
+        return region[: tail.end()]
     # No recognisable ending (truncated/altered): cap to a generous window.
     return region[: int(len(_CANONICAL_LC) * 1.1) + 5]
+
+
+# The mandatory clauses of the 27 CFR 16.21 statement. Compliance requires every
+# one to be present: a dropped or reworded clause (the real evasion) removes one,
+# which a global character-similarity score can miss when the change is small
+# relative to the whole statement. Matched OCR-tolerantly (alnum, fuzzy) so a
+# clause garbled by a character or three still counts as present.
+_REQUIRED_PHRASES = (
+    "According to the Surgeon General",
+    "women should not drink alcoholic beverages during pregnancy",
+    "because of the risk of birth defects",
+    "Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery",
+    "may cause health problems",
+)
+_REQUIRED_ALNUM = tuple(_alnum(p) for p in _REQUIRED_PHRASES)
+
+# Per-clause similarity at/above which a clause counts as present. Set between
+# OCR noise on a real clause (~0.9+) and a reworded clause (the corpus reword
+# scores ~0.4 against the original), so noise passes and tampering is caught.
+_PHRASE_PRESENT_THRESHOLD = 0.78
+
+
+def _phrase_present(needle: str, haystack: str) -> bool:
+    """Whether ``needle`` (alnum) appears in ``haystack`` (alnum), OCR-tolerantly.
+
+    Exact containment first; otherwise the best same-length window is scored, so a
+    clause with a few character slips still matches while a dropped or reworded
+    clause (absent or substantially different) does not.
+    """
+    if not needle or needle in haystack:
+        return True
+    n = len(needle)
+    if len(haystack) < n:
+        return SequenceMatcher(None, needle, haystack).ratio() >= _PHRASE_PRESENT_THRESHOLD
+    best = 0.0
+    step = max(1, n // 8)
+    for i in range(0, len(haystack) - n + 1, step):
+        ratio = SequenceMatcher(None, needle, haystack[i : i + n]).ratio()
+        if ratio > best:
+            best = ratio
+            if best >= _PHRASE_PRESENT_THRESHOLD:
+                return True
+    return best >= _PHRASE_PRESENT_THRESHOLD
+
+
+def _missing_required_phrases(region: str) -> list[str]:
+    """The mandatory clauses not found in ``region`` (OCR-tolerant)."""
+    region_alnum = _alnum(region)
+    return [
+        phrase
+        for phrase, alnum in zip(_REQUIRED_PHRASES, _REQUIRED_ALNUM, strict=True)
+        if not _phrase_present(alnum, region_alnum)
+    ]
 
 
 def _wording_similarity(region: str) -> float:
@@ -137,13 +189,24 @@ def verify_government_warning(
 
     region = _bound_warning_region(normalised[header.start() :])
     similarity = _wording_similarity(region)
+    missing_phrases = _missing_required_phrases(region)
 
     issues: list[str] = []
     if not header_all_caps:
         issues.append(
             f"Header is not in all caps; 'GOVERNMENT WARNING' is required, found {header_text!r}."
         )
-    if similarity < similarity_threshold:
+    if missing_phrases:
+        # A required clause is gone — the real evasion. (When OCR merely failed to
+        # read part of the statement the effect is the same: the tool will not
+        # claim compliance on wording it could not recover.)
+        issues.append(
+            "Required clause(s) missing or altered: "
+            + "; ".join(f"{p!r}" for p in missing_phrases)
+            + "."
+        )
+    elif similarity < similarity_threshold:
+        # Every clause is present but the statement is broadly garbled.
         issues.append(
             "Warning wording does not match the required statement "
             f"(similarity {similarity:.2f} < {similarity_threshold:.2f})."

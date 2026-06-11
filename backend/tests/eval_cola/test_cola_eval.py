@@ -47,7 +47,7 @@ _ACCURACY_FLOORS = {
     "brand_name": 29,
     "alcohol_content": 23,
     "net_contents": 26,
-    "government_warning": 10,
+    "government_warning": 13,
 }
 
 

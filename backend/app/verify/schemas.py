@@ -40,14 +40,16 @@ GOVERNMENT_WARNING_TEXT = (
 # the warning, then inspected case-sensitively for the all-caps requirement.
 WARNING_HEADER = "GOVERNMENT WARNING"
 
-# Word-level wording match threshold against the canonical statement. OCR
-# introduces minor noise (an "O"/"0" slip within one word), so an exact compare
-# is too brittle; a real evasion (a dropped sentence, a reworded clause — several
-# words gone) drops the word-level score well below this. The check is
-# deliberately conservative: a wording deviation it cannot attribute to noise is
-# flagged ALTERED for human review rather than passed. Tunable. See
+# Wording match threshold against the canonical statement. Compliance also
+# requires every mandatory clause to be present (see
+# :func:`app.verify.warning._missing_required_phrases`), which is what actually
+# catches an evasion (a dropped or reworded clause removes a required phrase);
+# this character-level ratio is a secondary guard against broader garbling.
+# Calibrated to real OCR: a standard warning read off a real label lands ~0.85+,
+# so 0.80 avoids false ALTEREDs on noisy-but-valid statements while the
+# phrase check carries the tamper-detection load. Tunable. See
 # :func:`app.verify.warning._wording_similarity`.
-DEFAULT_SIMILARITY_THRESHOLD = 0.95
+DEFAULT_SIMILARITY_THRESHOLD = 0.80
 
 # Constraints we cannot verify from OCR *text* alone — surfaced so the verdict is
 # honest about its blind spots rather than implying full compliance.

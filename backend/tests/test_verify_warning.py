@@ -86,6 +86,29 @@ def test_space_stripped_warning_is_compliant() -> None:
     assert result.header_all_caps is True
 
 
+def test_dropped_clause_is_altered_despite_high_similarity() -> None:
+    # A single mandatory clause removed leaves most of the long statement intact,
+    # so the global character similarity stays high — yet it is a real evasion.
+    # The per-clause presence check must flag it even though similarity would not.
+    dropped = GOVERNMENT_WARNING_TEXT.replace(
+        " (2) Consumption of alcoholic beverages impairs your ability to drive a "
+        "car or operate machinery, and may cause health problems.",
+        "",
+    )
+    result = verify_government_warning(dropped)
+    assert result.verdict is WarningVerdict.ALTERED
+    assert result.header_all_caps is True
+    assert any("clause" in issue.lower() for issue in result.issues)
+
+
+def test_clause_with_ocr_noise_still_present() -> None:
+    # A mandatory clause garbled by a few OCR slips (and space-stripping) still
+    # counts as present — the phrase check is OCR-tolerant, not exact.
+    noisy = re.sub(r"\s+", "", GOVERNMENT_WARNING_TEXT).replace("alcoholic", "alcholic")
+    result = verify_government_warning(noisy)
+    assert result.verdict is WarningVerdict.COMPLIANT
+
+
 # --- Missing -----------------------------------------------------------------
 
 
@@ -118,8 +141,8 @@ def test_truncated_warning_is_altered() -> None:
     result = verify_government_warning(TRUNCATED_WARNING)
     assert result.verdict is WarningVerdict.ALTERED
     assert result.header_all_caps is True
-    assert result.similarity < 1.0
-    assert any("wording" in issue for issue in result.issues)
+    # A truncated statement drops mandatory clauses, which is what flags it.
+    assert any("clause" in issue.lower() for issue in result.issues)
 
 
 def test_reworded_warning_is_altered() -> None:
