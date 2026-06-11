@@ -37,7 +37,7 @@ const DETAIL: SubmissionDetail = {
   application: { brand_name: "Stone's Throw IPA", product_type: "malt_beverage" },
 };
 
-const STATS: QueueStats = { pending: 3, flagged: 1, cleared_week: 12, avg_scan_ms: 3100 };
+const STATS: QueueStats = { pending: 3, flagged: 1, cleared_week: 12, median_scan_ms: 3100 };
 
 // The queue and review pages fetch on mount; serve them canned data so the
 // audit exercises the fully-rendered states, not the loading placeholders.

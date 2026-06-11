@@ -61,6 +61,11 @@ jobs:
       - name: Production build
         run: pnpm build
 
+      - name: Generated API types freshness (openapi-typescript)
+        # src/lib/api.gen.ts must match the committed backend/openapi.json —
+        # the client's wire types are generated, never hand-edited.
+        run: pnpm gen:api:check
+
   backend:
     name: Backend — lint, format, types, tests
     runs-on: ubuntu-latest
@@ -93,6 +98,11 @@ jobs:
 
       - name: Type-check (mypy)
         run: mypy
+
+      - name: OpenAPI spec freshness
+        # backend/openapi.json (the committed contract the frontend generates
+        # its client types from) must match the FastAPI app.
+        run: python scripts/export_openapi.py --check
 
       - name: Tests (pytest)
         # Run the correctness suite (unit + golden corpus). The `perf` (5s OCR

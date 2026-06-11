@@ -1,0 +1,1654 @@
+{
+  "components": {
+    "schemas": {
+      "AuditEventRow": {
+        "description": "One audit-log entry as returned by the API.",
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "actor": {
+            "title": "Actor",
+            "type": "string"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "submission_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submission Id"
+          }
+        },
+        "required": [
+          "id",
+          "created_at",
+          "action",
+          "actor",
+          "submission_id",
+          "detail"
+        ],
+        "title": "AuditEventRow",
+        "type": "object"
+      },
+      "Body_verify_api_verify_post": {
+        "properties": {
+          "alcohol_content_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alcohol Content Pct"
+          },
+          "alcohol_content_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alcohol Content Text"
+          },
+          "appellation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Appellation"
+          },
+          "brand_name": {
+            "minLength": 1,
+            "title": "Brand Name",
+            "type": "string"
+          },
+          "class_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Class Type"
+          },
+          "country_of_origin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country Of Origin"
+          },
+          "fanciful_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fanciful Name"
+          },
+          "image": {
+            "anyOf": [
+              {
+                "contentMediaType": "application/octet-stream",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A single label image (older clients).",
+            "title": "Image"
+          },
+          "images": {
+            "anyOf": [
+              {
+                "items": {
+                  "contentMediaType": "application/octet-stream",
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The filing's label images in order (front, back, \u2026).",
+            "title": "Images"
+          },
+          "name_and_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name And Address"
+          },
+          "net_contents": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Contents"
+          },
+          "product_type": {
+            "$ref": "#/components/schemas/ProductType",
+            "default": "distilled_spirits"
+          },
+          "serial_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Serial Number"
+          },
+          "source": {
+            "$ref": "#/components/schemas/ProductSource",
+            "default": "domestic"
+          },
+          "vintage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vintage"
+          }
+        },
+        "required": [
+          "brand_name"
+        ],
+        "title": "Body_verify_api_verify_post",
+        "type": "object"
+      },
+      "BoundingBox": {
+        "description": "Axis-aligned bounding box, derived from a detection polygon.\n\nMost downstream logic (reading order, region matching) only needs an\naxis-aligned box; the original :attr:`TextLine.polygon` is kept for callers\nthat care about rotation.",
+        "properties": {
+          "x_max": {
+            "title": "X Max",
+            "type": "number"
+          },
+          "x_min": {
+            "title": "X Min",
+            "type": "number"
+          },
+          "y_max": {
+            "title": "Y Max",
+            "type": "number"
+          },
+          "y_min": {
+            "title": "Y Min",
+            "type": "number"
+          }
+        },
+        "required": [
+          "x_min",
+          "y_min",
+          "x_max",
+          "y_max"
+        ],
+        "title": "BoundingBox",
+        "type": "object"
+      },
+      "DecisionInput": {
+        "description": "The reviewer's decision plus an optional internal note.",
+        "properties": {
+          "decision": {
+            "$ref": "#/components/schemas/ReviewDecision"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "required": [
+          "decision"
+        ],
+        "title": "DecisionInput",
+        "type": "object"
+      },
+      "FieldResult": {
+        "description": "One field's verification result \u2014 the per-field row of the contract.\n\n``field`` is the logical comparison key (matching the application columns\nand the corpus golden field keys): ``brand_name``, ``class_type``,\n``alcohol_content``, ``net_contents``, ``name_and_address``,\n``country_of_origin``, ``vintage``, \u2026 ``expected`` is the application value;\n``found`` is what was recovered from the label (``None`` when nothing\nplausible was located). ``score`` is the comparison confidence/similarity in\n``[0, 1]``. ``span``/``box`` locate the matched text for highlighting in the\ncomparison UI.",
+        "properties": {
+          "box": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BoundingBox"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "expected": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "found": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Found"
+          },
+          "image_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Index"
+          },
+          "reason": {
+            "default": "",
+            "title": "Reason",
+            "type": "string"
+          },
+          "score": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Score",
+            "type": "number"
+          },
+          "span": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SourceSpan"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/FieldStatus"
+          }
+        },
+        "required": [
+          "field",
+          "status"
+        ],
+        "title": "FieldResult",
+        "type": "object"
+      },
+      "FieldStatus": {
+        "description": "Per-field outcome of comparing the label against the application.\n\nString values match ``tests.corpus.schema.FieldVerdict`` and the fuzzy\nmatcher's ``app.match.MatchStatus`` (which shares the first three), so a\n:class:`app.match.FieldMatch` maps straight onto a :class:`FieldResult`.\n\n* ``MATCH`` \u2014 present and equivalent.\n* ``SOFT_WARNING`` \u2014 present but differing in a human-equivalent way (case /\n  punctuation only) or a near miss worth a human glance.\n* ``MISMATCH`` \u2014 absent, or too different to be the same value.\n* ``NOT_CHECKED`` \u2014 the application did not supply this field, so there was\n  nothing to verify against (does not affect the overall verdict).",
+        "enum": [
+          "match",
+          "soft_warning",
+          "mismatch",
+          "not_checked"
+        ],
+        "title": "FieldStatus",
+        "type": "string"
+      },
+      "GovernmentWarningResult": {
+        "description": "Result of verifying one label's Government Health Warning.\n\n``found_text`` is the located warning region (``None`` when no header was\nfound). ``header_all_caps`` is ``None`` when there is no header to inspect.\n``similarity`` is the wording match against :data:`GOVERNMENT_WARNING_TEXT`\nin ``[0, 1]`` (``0.0`` when missing). ``issues`` explains any non-compliance;\n``limitations`` records what could not be checked from text alone.",
+        "properties": {
+          "box": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BoundingBox"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "found_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Found Text"
+          },
+          "header_all_caps": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Header All Caps"
+          },
+          "image_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Index"
+          },
+          "issues": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Issues",
+            "type": "array"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "similarity": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Similarity",
+            "type": "number"
+          },
+          "span": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SourceSpan"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/WarningVerdict"
+          }
+        },
+        "required": [
+          "verdict"
+        ],
+        "title": "GovernmentWarningResult",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "ImageQuality": {
+        "description": "How readable the uploaded image was, for retake guidance in the UI.",
+        "properties": {
+          "level": {
+            "enum": [
+              "ok",
+              "low"
+            ],
+            "title": "Level",
+            "type": "string"
+          },
+          "mean_confidence": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Mean Confidence",
+            "type": "number"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "text_regions": {
+            "minimum": 0.0,
+            "title": "Text Regions",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "level",
+          "mean_confidence",
+          "text_regions"
+        ],
+        "title": "ImageQuality",
+        "type": "object"
+      },
+      "OverallVerdict": {
+        "description": "Roll-up verdict for a whole label, surfaced to the agent.\n\nMirrors ``tests.corpus.schema.OverallVerdict``. ``WARNING`` is the engine's\nname for the \"needs review\" middle state: the label is plausibly fine but\nsomething (a soft field warning) warrants a human glance before approval.",
+        "enum": [
+          "pass",
+          "warning",
+          "fail"
+        ],
+        "title": "OverallVerdict",
+        "type": "string"
+      },
+      "ProductSource": {
+        "description": "Origin of the product, per TTB form 5100.31 (OMB 1513-0020).",
+        "enum": [
+          "domestic",
+          "imported"
+        ],
+        "title": "ProductSource",
+        "type": "string"
+      },
+      "ProductType": {
+        "description": "Class of alcohol beverage governed by TTB labeling rules.",
+        "enum": [
+          "wine",
+          "distilled_spirits",
+          "malt_beverage"
+        ],
+        "title": "ProductType",
+        "type": "string"
+      },
+      "QueueStats": {
+        "description": "Counts for the stat cards above the queue.",
+        "properties": {
+          "cleared_week": {
+            "title": "Cleared Week",
+            "type": "integer"
+          },
+          "flagged": {
+            "title": "Flagged",
+            "type": "integer"
+          },
+          "median_scan_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median Scan Ms"
+          },
+          "pending": {
+            "title": "Pending",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "pending",
+          "flagged",
+          "cleared_week",
+          "median_scan_ms"
+        ],
+        "title": "QueueStats",
+        "type": "object"
+      },
+      "ReviewDecision": {
+        "description": "The reviewer's judgment on a verified label.",
+        "enum": [
+          "approve",
+          "request_changes",
+          "request_info"
+        ],
+        "title": "ReviewDecision",
+        "type": "string"
+      },
+      "SourceSpan": {
+        "description": "Where a candidate was found in the OCR output.\n\n``line_index`` indexes :attr:`app.ocr.schemas.OcrResult.lines` (``None`` when\na rule was run over a bare string with no line context). ``start``/``end``\nare character offsets into that line's text, so callers can highlight the\nexact substring that matched.",
+        "properties": {
+          "end": {
+            "title": "End",
+            "type": "integer"
+          },
+          "line_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Line Index"
+          },
+          "start": {
+            "title": "Start",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "start",
+          "end"
+        ],
+        "title": "SourceSpan",
+        "type": "object"
+      },
+      "SubmissionDetail": {
+        "description": "Full submission: the persisted verification result and application.",
+        "properties": {
+          "applicant": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applicant"
+          },
+          "application": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application"
+          },
+          "brand_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand Name"
+          },
+          "class_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Class Type"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "decided_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided At"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReviewDecision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "decision_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Note"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "image_filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Filename"
+          },
+          "images": {
+            "items": {
+              "$ref": "#/components/schemas/SubmissionImageRow"
+            },
+            "title": "Images",
+            "type": "array"
+          },
+          "overall": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Overall"
+          },
+          "processing_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Processing Ms"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SubmissionStatus"
+          },
+          "warning_verdict": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warning Verdict"
+          }
+        },
+        "required": [
+          "id",
+          "created_at",
+          "status",
+          "brand_name",
+          "applicant",
+          "class_type",
+          "overall",
+          "warning_verdict",
+          "processing_ms",
+          "image_filename",
+          "decision",
+          "decided_at",
+          "result",
+          "error",
+          "decision_note",
+          "application"
+        ],
+        "title": "SubmissionDetail",
+        "type": "object"
+      },
+      "SubmissionImageRow": {
+        "description": "One image of the submission's label set (``index`` = display order).",
+        "properties": {
+          "filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filename"
+          },
+          "index": {
+            "title": "Index",
+            "type": "integer"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          }
+        },
+        "required": [
+          "index",
+          "filename",
+          "kind"
+        ],
+        "title": "SubmissionImageRow",
+        "type": "object"
+      },
+      "SubmissionRow": {
+        "description": "One queue row: enough to render the table without the full result.",
+        "properties": {
+          "applicant": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applicant"
+          },
+          "brand_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand Name"
+          },
+          "class_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Class Type"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "decided_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided At"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReviewDecision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "image_filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Filename"
+          },
+          "overall": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Overall"
+          },
+          "processing_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Processing Ms"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SubmissionStatus"
+          },
+          "warning_verdict": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warning Verdict"
+          }
+        },
+        "required": [
+          "id",
+          "created_at",
+          "status",
+          "brand_name",
+          "applicant",
+          "class_type",
+          "overall",
+          "warning_verdict",
+          "processing_ms",
+          "image_filename",
+          "decision",
+          "decided_at"
+        ],
+        "title": "SubmissionRow",
+        "type": "object"
+      },
+      "SubmissionStatus": {
+        "description": "Lifecycle of a single label verification job.",
+        "enum": [
+          "pending",
+          "processing",
+          "completed",
+          "failed"
+        ],
+        "title": "SubmissionStatus",
+        "type": "string"
+      },
+      "TimingInfo": {
+        "description": "Where the wall-clock time went, so agents can see the 5s budget holding.",
+        "properties": {
+          "ocr_ms": {
+            "title": "Ocr Ms",
+            "type": "integer"
+          },
+          "total_ms": {
+            "title": "Total Ms",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total_ms",
+          "ocr_ms"
+        ],
+        "title": "TimingInfo",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "VerdictSummary": {
+        "description": "Counts of per-field statuses \u2014 a quick at-a-glance roll-up for the UI.",
+        "properties": {
+          "match": {
+            "default": 0,
+            "title": "Match",
+            "type": "integer"
+          },
+          "mismatch": {
+            "default": 0,
+            "title": "Mismatch",
+            "type": "integer"
+          },
+          "not_checked": {
+            "default": 0,
+            "title": "Not Checked",
+            "type": "integer"
+          },
+          "soft_warning": {
+            "default": 0,
+            "title": "Soft Warning",
+            "type": "integer"
+          }
+        },
+        "title": "VerdictSummary",
+        "type": "object"
+      },
+      "VerificationImageInfo": {
+        "description": "One image of the verified filing, with its readability grade.",
+        "properties": {
+          "filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filename"
+          },
+          "index": {
+            "title": "Index",
+            "type": "integer"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/ImageQuality"
+          }
+        },
+        "required": [
+          "index",
+          "filename",
+          "quality"
+        ],
+        "title": "VerificationImageInfo",
+        "type": "object"
+      },
+      "VerificationResponse": {
+        "description": "The API response for one verification (a filing's full label set).\n\n``image_filename`` mirrors the first image for older clients; ``images``\nlists every uploaded label with its per-image readability. The result's\nfields carry ``image_index`` into this list.",
+        "properties": {
+          "application_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Id"
+          },
+          "image_filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Filename"
+          },
+          "image_quality": {
+            "$ref": "#/components/schemas/ImageQuality"
+          },
+          "images": {
+            "items": {
+              "$ref": "#/components/schemas/VerificationImageInfo"
+            },
+            "title": "Images",
+            "type": "array"
+          },
+          "result": {
+            "$ref": "#/components/schemas/VerificationResult"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SubmissionStatus"
+          },
+          "submission_id": {
+            "title": "Submission Id",
+            "type": "integer"
+          },
+          "timing": {
+            "$ref": "#/components/schemas/TimingInfo"
+          }
+        },
+        "required": [
+          "submission_id",
+          "application_id",
+          "status",
+          "image_filename",
+          "images",
+          "timing",
+          "result",
+          "image_quality"
+        ],
+        "title": "VerificationResponse",
+        "type": "object"
+      },
+      "VerificationResult": {
+        "description": "The complete verification output for one label: the stable JSON contract.\n\nThis is what is persisted to ``Submission.result`` and rendered by the\ncomparison UI / batch results. It bundles the overall roll-up, every\nper-field result, the dedicated Government Health Warning result (kept\nseparate because it carries its own verdict vocabulary), a status summary,\nand a human-readable rationale for the overall verdict.",
+        "properties": {
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/FieldResult"
+            },
+            "title": "Fields",
+            "type": "array"
+          },
+          "government_warning": {
+            "$ref": "#/components/schemas/GovernmentWarningResult"
+          },
+          "overall": {
+            "$ref": "#/components/schemas/OverallVerdict"
+          },
+          "rationale": {
+            "default": "",
+            "title": "Rationale",
+            "type": "string"
+          },
+          "schema_version": {
+            "default": 2,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/VerdictSummary"
+          }
+        },
+        "required": [
+          "overall",
+          "government_warning",
+          "summary"
+        ],
+        "title": "VerificationResult",
+        "type": "object"
+      },
+      "WarningVerdict": {
+        "description": "Outcome of the Government Health Warning check.\n\nMirrors ``tests.corpus.schema.WarningVerdict`` (the golden-data enum) so the\nverifier's output can be compared directly against the corpus expectations.",
+        "enum": [
+          "compliant",
+          "altered",
+          "missing"
+        ],
+        "title": "WarningVerdict",
+        "type": "string"
+      }
+    }
+  },
+  "info": {
+    "title": "TTB Label Verification API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/audit": {
+      "get": {
+        "description": "Newest-first audit trail, optionally scoped to one submission.",
+        "operationId": "list_events_api_audit_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 2000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "submission_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Submission Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AuditEventRow"
+                  },
+                  "title": "Response List Events Api Audit Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Events",
+        "tags": [
+          "audit"
+        ]
+      }
+    },
+    "/api/health": {
+      "get": {
+        "description": "Liveness/readiness probe.\n\nExposed at the bare ``/health`` for the container healthcheck (which hits the\nbackend directly) and under ``/api/health`` so the browser can reach it via\nthe same ``/api`` reverse-proxy that fronts every other endpoint.",
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Health Api Health Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health"
+      }
+    },
+    "/api/submissions": {
+      "get": {
+        "description": "Most recent submissions, newest first.",
+        "operationId": "list_submissions_api_submissions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SubmissionRow"
+                  },
+                  "title": "Response List Submissions Api Submissions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Submissions",
+        "tags": [
+          "submissions"
+        ]
+      }
+    },
+    "/api/submissions/stats": {
+      "get": {
+        "description": "Queue counts: pending, flagged for judgment, cleared this week, avg scan.",
+        "operationId": "queue_stats_api_submissions_stats_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueueStats"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Queue Stats",
+        "tags": [
+          "submissions"
+        ]
+      }
+    },
+    "/api/submissions/{submission_id}": {
+      "get": {
+        "description": "One submission with its persisted verification result.",
+        "operationId": "get_submission_api_submissions__submission_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "submission_id",
+            "required": true,
+            "schema": {
+              "title": "Submission Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Submission",
+        "tags": [
+          "submissions"
+        ]
+      }
+    },
+    "/api/submissions/{submission_id}/decision": {
+      "post": {
+        "description": "Record the reviewer's judgment; idempotent overwrite is allowed.",
+        "operationId": "record_decision_api_submissions__submission_id__decision_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "submission_id",
+            "required": true,
+            "schema": {
+              "title": "Submission Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Record Decision",
+        "tags": [
+          "submissions"
+        ]
+      }
+    },
+    "/api/submissions/{submission_id}/image": {
+      "get": {
+        "description": "The first stored label image (legacy single-image clients).",
+        "operationId": "get_submission_image_api_submissions__submission_id__image_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "submission_id",
+            "required": true,
+            "schema": {
+              "title": "Submission Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Submission Image",
+        "tags": [
+          "submissions"
+        ]
+      }
+    },
+    "/api/submissions/{submission_id}/images/{index}": {
+      "get": {
+        "description": "One image of the submission's label set, by display order.",
+        "operationId": "get_submission_image_at_api_submissions__submission_id__images__index__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "submission_id",
+            "required": true,
+            "schema": {
+              "title": "Submission Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "index",
+            "required": true,
+            "schema": {
+              "title": "Index",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Submission Image At",
+        "tags": [
+          "submissions"
+        ]
+      }
+    },
+    "/api/verify": {
+      "post": {
+        "description": "Verify a filing's label image set against its expected application data.\n\nAccepts the full set of label images a COLA carries (repeated ``images``\nparts) \u2014 the mandatory content is split across them (warning on the back,\nABV on the front) \u2014 or a single ``image`` for older clients. Fields merge\non best verdict across the set; the result records which image each\nverdict came from.",
+        "operationId": "verify_api_verify_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_verify_api_verify_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Verify",
+        "tags": [
+          "verification"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "description": "Liveness/readiness probe.\n\nExposed at the bare ``/health`` for the container healthcheck (which hits the\nbackend directly) and under ``/api/health`` so the browser can reach it via\nthe same ``/api`` reverse-proxy that fronts every other endpoint.",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Health Health Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health"
+      }
+    }
+  }
+}

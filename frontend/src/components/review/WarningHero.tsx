@@ -61,7 +61,7 @@ export function WarningHero({ result }: { result: GovernmentWarningResult }) {
 
       <div className="flex flex-wrap gap-1.5 px-4 pb-2.5">
         <Badge ok={found !== null} text="Statement present" />
-        <Badge ok={result.header_all_caps} text="Header in capitals" />
+        <Badge ok={result.header_all_caps ?? null} text="Header in capitals" />
         <Badge
           ok={found === null ? false : result.similarity >= 0.97}
           text={`Wording ${found === null ? "" : `${Math.round(result.similarity * 100)}%`} exact`}
@@ -91,12 +91,12 @@ export function WarningHero({ result }: { result: GovernmentWarningResult }) {
               No Government Warning statement could be located on this label.
             </p>
           )}
-          {result.issues.length > 0 && (
+          {(result.issues ?? []).length > 0 && (
             <ul
               className="mt-1.5 space-y-1 text-[11px] leading-snug"
               style={{ color: meta.accent }}
             >
-              {result.issues.map((issue) => (
+              {(result.issues ?? []).map((issue) => (
                 <li key={issue}>• {issue}</li>
               ))}
             </ul>

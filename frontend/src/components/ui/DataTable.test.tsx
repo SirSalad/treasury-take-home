@@ -128,3 +128,49 @@ describe("DataTable", () => {
     expect(names()).toHaveLength(3);
   });
 });
+
+describe("DataTable pagination", () => {
+  const MANY: Row[] = Array.from({ length: 7 }, (_, i) => ({
+    id: i + 1,
+    name: `Row${String(i + 1).padStart(2, "0")}`,
+    kind: i % 2 ? "beer" : "wine",
+  }));
+
+  it("pages the rows and walks with Previous/Next", () => {
+    render(<DataTable columns={COLUMNS} rows={MANY} getRowKey={(r) => r.id} pageSize={3} />);
+
+    expect(screen.getAllByText(/Row\d\d/)).toHaveLength(3);
+    expect(screen.getByText(/Showing 1–3 of 7/)).toBeDefined();
+    expect(screen.getByRole("button", { name: /previous/i })).toHaveProperty("disabled", true);
+
+    fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    expect(screen.getByText("Row07")).toBeDefined();
+    expect(screen.getByText(/Showing 7–7 of 7/)).toBeDefined();
+    expect(screen.getByRole("button", { name: /next/i })).toHaveProperty("disabled", true);
+  });
+
+  it("returns to the first page when a search narrows the results", () => {
+    render(
+      <DataTable
+        columns={COLUMNS}
+        rows={MANY}
+        getRowKey={(r) => r.id}
+        pageSize={3}
+        search={{ ariaLabel: "Search", placeholder: "Search", text: (r) => r.name }}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    expect(screen.getByText(/Showing 4–6 of 7/)).toBeDefined();
+
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "Row01" } });
+    expect(screen.getByText("Row01")).toBeDefined();
+    expect(screen.queryByText(/Showing/)).toBeNull(); // one page: pager hidden
+  });
+
+  it("renders everything on one page when pageSize is omitted", () => {
+    render(<DataTable columns={COLUMNS} rows={MANY} getRowKey={(r) => r.id} />);
+    expect(screen.getAllByText(/Row\d\d/)).toHaveLength(7);
+    expect(screen.queryByRole("navigation", { name: /pagination/i })).toBeNull();
+  });
+});

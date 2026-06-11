@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 
 import { cn } from "@/lib/utils";
 
@@ -18,27 +18,34 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 shadow-header">
       <div className="border-b-4 border-fed-gold bg-gradient-to-b from-fed-navy-light to-fed-navy">
-        <div className="mx-auto flex max-w-[1480px] items-center gap-[18px] px-7 py-[13px]">
-          <div
-            aria-hidden="true"
-            className="flex h-12 w-12 flex-none items-center justify-center rounded-full"
-            style={{
-              background: "radial-gradient(circle at 50% 36%, #224d85, #0b1d38)",
-              boxShadow:
-                "inset 0 0 0 2px #ffbe2e, inset 0 0 0 4px #162e51, 0 0 0 1px rgba(255,190,46,.35), 0 2px 6px rgba(0,0,0,.35)",
-            }}
+        <div className="mx-auto max-w-[1480px] px-7 py-[13px]">
+          {/* The agency identity is a home link — everyone clicks the logo. */}
+          <Link
+            to="/"
+            aria-label="TTB COLA Label Verification — back to the Review Queue"
+            className="flex w-fit items-center gap-[18px] rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-fed-gold"
           >
-            <span className="text-[19px] leading-none text-fed-gold [text-shadow:0_1px_2px_rgba(0,0,0,.4)]">
-              ★
-            </span>
-          </div>
-          <div className="text-[21px] font-extrabold tracking-[2px] text-white">TTB</div>
-          <div className="whitespace-nowrap border-l border-[#2c4d78] pl-4 leading-[1.22]">
-            <p className="text-[12.5px] font-bold text-white">
-              Alcohol and Tobacco Tax and Trade Bureau
-            </p>
-            <p className="text-[11px] text-[#9fb6d4]">U.S. Department of the Treasury</p>
-          </div>
+            <div
+              aria-hidden="true"
+              className="flex h-12 w-12 flex-none items-center justify-center rounded-full"
+              style={{
+                background: "radial-gradient(circle at 50% 36%, #224d85, #0b1d38)",
+                boxShadow:
+                  "inset 0 0 0 2px #ffbe2e, inset 0 0 0 4px #162e51, 0 0 0 1px rgba(255,190,46,.35), 0 2px 6px rgba(0,0,0,.35)",
+              }}
+            >
+              <span className="text-[19px] leading-none text-fed-gold [text-shadow:0_1px_2px_rgba(0,0,0,.4)]">
+                ★
+              </span>
+            </div>
+            <div className="text-[21px] font-extrabold tracking-[2px] text-white">TTB</div>
+            <div className="whitespace-nowrap border-l border-[#2c4d78] pl-4 leading-[1.22]">
+              <p className="text-[12.5px] font-bold text-white">
+                Alcohol and Tobacco Tax and Trade Bureau
+              </p>
+              <p className="text-[11px] text-[#9fb6d4]">U.S. Department of the Treasury</p>
+            </div>
+          </Link>
         </div>
       </div>
       <div className="bg-fed-blue">

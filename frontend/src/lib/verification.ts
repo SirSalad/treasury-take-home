@@ -2,130 +2,36 @@
  * The verification-result contract returned by `POST /api/verify`, mirrored on
  * the client.
  *
- * These shapes track `app.verify.schemas` and `app.api.schemas` on the backend
- * (the stable JSON contract the comparison UI and batch results consume). String
- * enum values are kept identical so a parsed response maps straight onto these
- * types — see `RESULT_SCHEMA_VERSION` for the compatibility marker.
- *
- * The fetch wiring that produces a {@link VerificationResponse} lives with the
- * single-flow page; this module owns only the shapes and the small helpers the
- * comparison view needs (status → color mapping, field display labels).
+ * The wire shapes are **generated** from the backend's OpenAPI spec
+ * (`pnpm gen:api` -> `src/lib/api.gen.ts`, from `backend/openapi.json`) and
+ * re-exported here under their established names, so the client can never
+ * silently drift from the FastAPI/pydantic models — CI regenerates both
+ * artefacts and fails on any diff. This module keeps only the names and the
+ * small display helpers the comparison view needs.
  */
 
+import type { components } from "@/lib/api.gen";
 import type { VerificationStatus } from "@/lib/status";
+
+type Schemas = components["schemas"];
 
 /** Wire-shape version; bumped by the backend when the contract changes. */
 export const RESULT_SCHEMA_VERSION = 2;
 
-/** Per-field outcome of comparing the label against the application. */
-export type FieldStatus = "match" | "soft_warning" | "mismatch" | "not_checked";
-
-/** Roll-up verdict for a whole label. */
-export type OverallVerdict = "pass" | "warning" | "fail";
-
-/** Outcome of the dedicated Government Health Warning check. */
-export type WarningVerdict = "compliant" | "altered" | "missing";
-
-/** Submission lifecycle status (mirrors `app.models.enums.SubmissionStatus`). */
-export type SubmissionStatus = "pending" | "processing" | "completed" | "failed";
-
-/**
- * Axis-aligned bounding box in the original image's pixel coordinate space.
- * Overlays scale these against the rendered image's natural dimensions.
- */
-export interface BoundingBox {
-  x_min: number;
-  y_min: number;
-  x_max: number;
-  y_max: number;
-}
-
-/** Character span within an OCR line, for highlighting the matched substring. */
-export interface SourceSpan {
-  line_index: number | null;
-  start: number;
-  end: number;
-}
-
-/** One field's verification result — a row of the comparison. */
-export interface FieldResult {
-  field: string;
-  status: FieldStatus;
-  expected: string | null;
-  found: string | null;
-  score: number;
-  span: SourceSpan | null;
-  box: BoundingBox | null;
-  /** Which of the submission's images carried this verdict (null = single image). */
-  image_index: number | null;
-  reason: string;
-}
-
-/** Result of verifying one label's Government Health Warning. */
-export interface GovernmentWarningResult {
-  verdict: WarningVerdict;
-  found_text: string | null;
-  header_all_caps: boolean | null;
-  similarity: number;
-  issues: string[];
-  limitations: string[];
-  span: SourceSpan | null;
-  box: BoundingBox | null;
-  /** Which of the submission's images carried this verdict (null = single image). */
-  image_index: number | null;
-}
-
-/** Counts of per-field statuses — a quick at-a-glance roll-up. */
-export interface VerdictSummary {
-  match: number;
-  soft_warning: number;
-  mismatch: number;
-  not_checked: number;
-}
-
-/** The complete verification output for one label. */
-export interface VerificationResult {
-  schema_version: number;
-  overall: OverallVerdict;
-  fields: FieldResult[];
-  government_warning: GovernmentWarningResult;
-  summary: VerdictSummary;
-  rationale: string;
-}
-
-/** Where wall-clock time went, so the 5s budget is visible. */
-export interface TimingInfo {
-  total_ms: number;
-  ocr_ms: number;
-}
-
-/** How readable the uploaded image was, for retake guidance. */
-export interface ImageQuality {
-  level: "ok" | "low";
-  mean_confidence: number;
-  text_regions: number;
-  message: string | null;
-}
-
-/** One image of the verified filing, with its readability grade. */
-export interface VerificationImageInfo {
-  index: number;
-  filename: string | null;
-  quality: ImageQuality;
-}
-
-/** The full `POST /api/verify` response. */
-export interface VerificationResponse {
-  submission_id: number;
-  application_id: number | null;
-  status: SubmissionStatus;
-  image_filename: string | null;
-  images: VerificationImageInfo[];
-  timing: TimingInfo;
-  result: VerificationResult;
-  /** Worst readability across the uploaded images (retake guidance). */
-  image_quality: ImageQuality;
-}
+export type FieldStatus = Schemas["FieldStatus"];
+export type OverallVerdict = Schemas["OverallVerdict"];
+export type WarningVerdict = Schemas["WarningVerdict"];
+export type SubmissionStatus = Schemas["SubmissionStatus"];
+export type BoundingBox = Schemas["BoundingBox"];
+export type SourceSpan = Schemas["SourceSpan"];
+export type FieldResult = Schemas["FieldResult"];
+export type GovernmentWarningResult = Schemas["GovernmentWarningResult"];
+export type VerdictSummary = Schemas["VerdictSummary"];
+export type VerificationResult = Schemas["VerificationResult"];
+export type TimingInfo = Schemas["TimingInfo"];
+export type ImageQuality = Schemas["ImageQuality"];
+export type VerificationImageInfo = Schemas["VerificationImageInfo"];
+export type VerificationResponse = Schemas["VerificationResponse"];
 
 // ---- Display helpers ----------------------------------------------------
 
