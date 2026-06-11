@@ -33,6 +33,7 @@ const DETAIL: SubmissionDetail = {
   result: SAMPLE_RESULT,
   error: null,
   decision_note: null,
+  images: [{ index: 0, filename: "stones_throw.png", kind: null }],
   application: { brand_name: "Stone's Throw IPA", product_type: "malt_beverage" },
 };
 

@@ -23,6 +23,7 @@ export const SAMPLE_RESULT: VerificationResult = {
       score: 1.0,
       span: { line_index: 0, start: 0, end: 12 },
       box: { x_min: 120, y_min: 40, x_max: 480, y_max: 110 },
+      image_index: null,
       reason: "Exact match.",
     },
     {
@@ -33,6 +34,7 @@ export const SAMPLE_RESULT: VerificationResult = {
       score: 0.97,
       span: { line_index: 2, start: 0, end: 33 },
       box: { x_min: 90, y_min: 130, x_max: 520, y_max: 175 },
+      image_index: null,
       reason: "Matches after normalizing case.",
     },
     {
@@ -43,6 +45,7 @@ export const SAMPLE_RESULT: VerificationResult = {
       score: 0.98,
       span: { line_index: 4, start: 0, end: 13 },
       box: { x_min: 200, y_min: 320, x_max: 400, y_max: 360 },
+      image_index: null,
       reason: "Matches after normalizing case.",
     },
     {
@@ -53,6 +56,7 @@ export const SAMPLE_RESULT: VerificationResult = {
       score: 0.4,
       span: { line_index: 5, start: 0, end: 6 },
       box: { x_min: 220, y_min: 380, x_max: 380, y_max: 420 },
+      image_index: null,
       reason: "Label states a different net contents than the application.",
     },
     {
@@ -63,6 +67,7 @@ export const SAMPLE_RESULT: VerificationResult = {
       score: 0.0,
       span: null,
       box: null,
+      image_index: null,
       reason: "Not supplied on the application.",
     },
   ],
@@ -78,5 +83,6 @@ export const SAMPLE_RESULT: VerificationResult = {
     ],
     span: { line_index: 8, start: 0, end: 20 },
     box: { x_min: 60, y_min: 460, x_max: 540, y_max: 560 },
+    image_index: null,
   },
 };
