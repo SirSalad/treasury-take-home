@@ -1,5 +1,5 @@
 {
- "_about": "Real COLA label artwork scraped from the TTB Public COLA Registry (ttbonline.gov/colasonline, public records) on 2026-06-10: 30 approved 2025-2026 applications, 10 each wine / distilled spirits / malt, selected from advanced-search results for common class types with no cherry-picking beyond brand de-duplication. This is the product's intended input distribution: clean, head-on label artwork as filed with TTB form 5100.31. `registry` holds the filed application fields verbatim; `label_truth` holds what is physically printed on the artwork, annotated manually from the full-resolution images (the current 5100.31 revision no longer carries ABV/net-contents fields, so those exist only on the label). `expect` is the verification pipeline's observed result at the time the set was built and is asserted monotonically: the eval fails on regression, passes on improvement. Known gaps encoded here: government-warning text rotated 90 degrees on can wraps / keg collars is usually not detected (warning='missing'), and handwritten or tiny-print ABV does not extract.",
+ "_about": "GOLDEN correctness eval over 30 real TTB COLA labels (scraped from the Public COLA Registry 2026-06-10; see README.md). Each is a real, correctly-filed COLA, so the filed application agrees with what is printed and a perfect tool should verify every field. `registry` is the filed application verbatim; `label_truth` is what is printed (hand-annotated from the artwork); `golden` is the resulting correct verdict per field \u2014 the ground truth the pipeline is scored true/false against. brand_name golden of 'match'/'soft_warning' both mean the brand is verified (case/form aside). Scoring takes the best verdict across the full set of label images, since a COLA submission is the set of affixed labels. The eval surfaces every failing case (it does not hide OCR limits behind monotone baselines) and asserts per-field accuracy floors so the pipeline cannot regress and the bar rises as OCR improves.",
  "cases": [
   {
    "ttbid": "25001001000024",
@@ -24,6 +24,12 @@
     "government_warning": "present",
     "notes": "varietal PETIT MANSENG; quilt-art front label"
    },
+   "golden": {
+    "brand_name": "soft_warning",
+    "alcohol_content": "match",
+    "government_warning": "compliant",
+    "net_contents": "match"
+   },
    "product_type": "wine",
    "images": [
     {
@@ -34,13 +40,7 @@
      "file": "images/25001001000024_1.jpg",
      "kind": "Label Image: Back"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "soft_warning",
-    "abv_at_least": "match",
-    "warning_at_least": "missing"
-   }
+   ]
   },
   {
    "ttbid": "25001001000028",
@@ -65,19 +65,19 @@
     "government_warning": "present",
     "notes": "MALBEC; low-contrast serif text over photo; rotated side text"
    },
+   "golden": {
+    "brand_name": "match",
+    "alcohol_content": "match",
+    "government_warning": "compliant",
+    "net_contents": "match"
+   },
    "product_type": "wine",
    "images": [
     {
      "file": "images/25001001000028_0.jpg",
      "kind": "Label Image: Brand (front) or keg collar"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "match",
-    "abv_at_least": "match",
-    "warning_at_least": "missing"
-   }
+   ]
   },
   {
    "ttbid": "25001001000029",
@@ -102,6 +102,12 @@
     "government_warning": "present",
     "notes": "CHARDONNAY Columbia Valley; tiny ABV at label edge"
    },
+   "golden": {
+    "brand_name": "match",
+    "alcohol_content": "match",
+    "government_warning": "compliant",
+    "net_contents": "match"
+   },
    "product_type": "wine",
    "images": [
     {
@@ -112,13 +118,7 @@
      "file": "images/25001001000029_1.jpg",
      "kind": "Label Image: Back"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "match",
-    "abv_at_least": "mismatch",
-    "warning_at_least": "compliant"
-   }
+   ]
   },
   {
    "ttbid": "25001001000031",
@@ -143,19 +143,19 @@
     "government_warning": "present",
     "notes": "PLOW SEASON CONCORD; same low-contrast style as 1822 Malbec"
    },
+   "golden": {
+    "brand_name": "soft_warning",
+    "alcohol_content": "match",
+    "government_warning": "compliant",
+    "net_contents": "match"
+   },
    "product_type": "wine",
    "images": [
     {
      "file": "images/25001001000031_0.jpg",
      "kind": "Label Image: Brand (front) or keg collar"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "match",
-    "abv_at_least": "match",
-    "warning_at_least": "missing"
-   }
+   ]
   },
   {
    "ttbid": "25001001000039",
@@ -180,6 +180,12 @@
     "government_warning": "present",
     "notes": "Sauvignon Blanc Rattlesnake Hills; white-on-black + barcode"
    },
+   "golden": {
+    "brand_name": "soft_warning",
+    "alcohol_content": "match",
+    "government_warning": "compliant",
+    "net_contents": "match"
+   },
    "product_type": "wine",
    "images": [
     {
@@ -190,13 +196,7 @@
      "file": "images/25001001000039_1.jpg",
      "kind": "Label Image: Back"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "match",
-    "abv_at_least": "match",
-    "warning_at_least": "compliant"
-   }
+   ]
   },
   {
    "ttbid": "25001001000044",
@@ -221,6 +221,12 @@
     "government_warning": "present",
     "notes": "Vin de France import; sparse typographic label"
    },
+   "golden": {
+    "brand_name": "soft_warning",
+    "alcohol_content": "match",
+    "government_warning": "compliant",
+    "net_contents": "match"
+   },
    "product_type": "wine",
    "images": [
     {
@@ -231,13 +237,7 @@
      "file": "images/25001001000044_1.jpg",
      "kind": "Label Image: Back"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "soft_warning",
-    "abv_at_least": "match",
-    "warning_at_least": "missing"
-   }
+   ]
   },
   {
    "ttbid": "25001001000045",
@@ -262,6 +262,12 @@
     "government_warning": "present",
     "notes": "accented brand; filed brand has no accents/Domaine"
    },
+   "golden": {
+    "brand_name": "soft_warning",
+    "alcohol_content": "match",
+    "government_warning": "compliant",
+    "net_contents": "match"
+   },
    "product_type": "wine",
    "images": [
     {
@@ -272,13 +278,7 @@
      "file": "images/25001001000045_1.jpg",
      "kind": "Label Image: Back"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "soft_warning",
-    "abv_at_least": "match",
-    "warning_at_least": "missing"
-   }
+   ]
   },
   {
    "ttbid": "25001001000049",
@@ -303,6 +303,12 @@
     "government_warning": "present",
     "notes": "\u00c9glantine; no vintage printed"
    },
+   "golden": {
+    "brand_name": "soft_warning",
+    "alcohol_content": "match",
+    "government_warning": "compliant",
+    "net_contents": "match"
+   },
    "product_type": "wine",
    "images": [
     {
@@ -313,13 +319,7 @@
      "file": "images/25001001000049_1.jpg",
      "kind": "Label Image: Back"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "soft_warning",
-    "abv_at_least": "match",
-    "warning_at_least": "missing"
-   }
+   ]
   },
   {
    "ttbid": "25001001000051",
@@ -344,6 +344,12 @@
     "government_warning": "present",
     "notes": "all-text label, no art"
    },
+   "golden": {
+    "brand_name": "match",
+    "alcohol_content": "match",
+    "government_warning": "compliant",
+    "net_contents": "match"
+   },
    "product_type": "wine",
    "images": [
     {
@@ -354,13 +360,7 @@
      "file": "images/25001001000051_1.jpg",
      "kind": "Label Image: Back"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "match",
-    "abv_at_least": "match",
-    "warning_at_least": "compliant"
-   }
+   ]
   },
   {
    "ttbid": "25001001000052",
@@ -385,6 +385,12 @@
     "government_warning": "present",
     "notes": "space inside \"13.5 %\"; pink low-contrast label"
    },
+   "golden": {
+    "brand_name": "match",
+    "alcohol_content": "match",
+    "government_warning": "compliant",
+    "net_contents": "match"
+   },
    "product_type": "wine",
    "images": [
     {
@@ -395,13 +401,7 @@
      "file": "images/25001001000052_1.jpg",
      "kind": "Label Image: Back"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "match",
-    "abv_at_least": "match",
-    "warning_at_least": "altered"
-   }
+   ]
   },
   {
    "ttbid": "25005001000033",
@@ -426,6 +426,12 @@
     "government_warning": "present",
     "notes": "100 PROOF; tiny warning strip on black back label"
    },
+   "golden": {
+    "brand_name": "soft_warning",
+    "alcohol_content": "match",
+    "government_warning": "compliant",
+    "net_contents": "match"
+   },
    "product_type": "distilled_spirits",
    "images": [
     {
@@ -436,13 +442,7 @@
      "file": "images/25005001000033_1.jpg",
      "kind": "Label Image: Back"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "soft_warning",
-    "abv_at_least": "match",
-    "warning_at_least": "missing"
-   }
+   ]
   },
   {
    "ttbid": "25005001000060",
@@ -467,6 +467,12 @@
     "government_warning": "present",
     "notes": "90 proof; handwritten story over burning-paper photo; warning body lowercase"
    },
+   "golden": {
+    "brand_name": "match",
+    "alcohol_content": "match",
+    "government_warning": "compliant",
+    "net_contents": "match"
+   },
    "product_type": "distilled_spirits",
    "images": [
     {
@@ -477,13 +483,7 @@
      "file": "images/25005001000060_1.jpg",
      "kind": "Label Image: Neck"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "match",
-    "abv_at_least": "mismatch",
-    "warning_at_least": "missing"
-   }
+   ]
   },
   {
    "ttbid": "25006001000237",
@@ -508,6 +508,12 @@
     "government_warning": "present",
     "notes": "Four Grain Straight Bourbon"
    },
+   "golden": {
+    "brand_name": "match",
+    "alcohol_content": "match",
+    "government_warning": "compliant",
+    "net_contents": "match"
+   },
    "product_type": "distilled_spirits",
    "images": [
     {
@@ -518,13 +524,7 @@
      "file": "images/25006001000237_1.jpg",
      "kind": "Label Image: Back"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "match",
-    "abv_at_least": "match",
-    "warning_at_least": "compliant"
-   }
+   ]
   },
   {
    "ttbid": "25006001000265",
@@ -549,19 +549,19 @@
     "government_warning": "present",
     "notes": "McAfee's Old No 8; dense small print"
    },
+   "golden": {
+    "brand_name": "match",
+    "alcohol_content": "match",
+    "government_warning": "compliant",
+    "net_contents": "match"
+   },
    "product_type": "distilled_spirits",
    "images": [
     {
      "file": "images/25006001000265_0.jpg",
      "kind": "Label Image: Brand (front) or keg collar"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "match",
-    "abv_at_least": "mismatch",
-    "warning_at_least": "altered"
-   }
+   ]
   },
   {
    "ttbid": "25006001000701",
@@ -586,6 +586,12 @@
     "government_warning": "present",
     "notes": "90 proof; long family-history paragraph on back"
    },
+   "golden": {
+    "brand_name": "match",
+    "alcohol_content": "match",
+    "government_warning": "compliant",
+    "net_contents": "match"
+   },
    "product_type": "distilled_spirits",
    "images": [
     {
@@ -596,13 +602,7 @@
      "file": "images/25006001000701_1.jpg",
      "kind": "Label Image: Back"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "match",
-    "abv_at_least": "match",
-    "warning_at_least": "missing"
-   }
+   ]
   },
   {
    "ttbid": "25009001000323",
@@ -627,19 +627,19 @@
     "government_warning": "present",
     "notes": "(80 proof); illustrated GTA-style art behind text"
    },
+   "golden": {
+    "brand_name": "match",
+    "alcohol_content": "match",
+    "government_warning": "compliant",
+    "net_contents": "match"
+   },
    "product_type": "distilled_spirits",
    "images": [
     {
      "file": "images/25009001000323_0.jpg",
      "kind": "Label Image: Brand (front) or keg collar"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "match",
-    "abv_at_least": "match",
-    "warning_at_least": "missing"
-   }
+   ]
   },
   {
    "ttbid": "25009001000342",
@@ -664,6 +664,12 @@
     "government_warning": "present",
     "notes": "filed brand SOCIETY; cask 133.3; 700ml; perspective-skewed scan"
    },
+   "golden": {
+    "brand_name": "soft_warning",
+    "alcohol_content": "match",
+    "government_warning": "compliant",
+    "net_contents": "match"
+   },
    "product_type": "distilled_spirits",
    "images": [
     {
@@ -678,13 +684,7 @@
      "file": "images/25009001000342_2.jpg",
      "kind": "Label Image: Other"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "match",
-    "abv_at_least": "match",
-    "warning_at_least": "missing"
-   }
+   ]
   },
   {
    "ttbid": "25010001000207",
@@ -709,19 +709,19 @@
     "government_warning": "present",
     "notes": "(80 proof); agave spirit; for-sale-in-Michigan-only exemption"
    },
+   "golden": {
+    "brand_name": "match",
+    "alcohol_content": "match",
+    "government_warning": "compliant",
+    "net_contents": "match"
+   },
    "product_type": "distilled_spirits",
    "images": [
     {
      "file": "images/25010001000207_0.jpg",
      "kind": "Label Image: Brand (front) or keg collar"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "soft_warning",
-    "abv_at_least": "mismatch",
-    "warning_at_least": "compliant"
-   }
+   ]
   },
   {
    "ttbid": "25010001000661",
@@ -746,6 +746,12 @@
     "government_warning": "present",
     "notes": "PROOF 100; front label artwork is rotated 90deg in the filing; warning on bottle photo"
    },
+   "golden": {
+    "brand_name": "soft_warning",
+    "alcohol_content": "match",
+    "government_warning": "compliant",
+    "net_contents": "match"
+   },
    "product_type": "distilled_spirits",
    "images": [
     {
@@ -764,13 +770,7 @@
      "file": "images/25010001000661_3.jpg",
      "kind": "Label Image: Neck"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "soft_warning",
-    "abv_at_least": "mismatch",
-    "warning_at_least": "missing"
-   }
+   ]
   },
   {
    "ttbid": "25013001000307",
@@ -795,6 +795,12 @@
     "government_warning": "present",
     "notes": "100 Proof; FACTORY SELECT; ornate engraved style"
    },
+   "golden": {
+    "brand_name": "soft_warning",
+    "alcohol_content": "match",
+    "government_warning": "compliant",
+    "net_contents": "match"
+   },
    "product_type": "distilled_spirits",
    "images": [
     {
@@ -805,13 +811,7 @@
      "file": "images/25013001000307_1.jpg",
      "kind": "Label Image: Back"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "match",
-    "abv_at_least": "match",
-    "warning_at_least": "missing"
-   }
+   ]
   },
   {
    "ttbid": "26008001000604",
@@ -836,19 +836,18 @@
     "government_warning": "present",
     "notes": "keg collar; brand+style handwritten-font; Nauti American Lager"
    },
+   "golden": {
+    "brand_name": "soft_warning",
+    "alcohol_content": "match",
+    "government_warning": "compliant"
+   },
    "product_type": "malt_beverage",
    "images": [
     {
      "file": "images/26008001000604_0.jpg",
      "kind": "Label Image: Brand (front) or keg collar"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "soft_warning",
-    "abv_at_least": "mismatch",
-    "warning_at_least": "altered"
-   }
+   ]
   },
   {
    "ttbid": "26016001000083",
@@ -873,19 +872,18 @@
     "government_warning": "present",
     "notes": "Shankalicious can wrap; script font over busy golf art"
    },
+   "golden": {
+    "brand_name": "soft_warning",
+    "alcohol_content": "match",
+    "government_warning": "compliant"
+   },
    "product_type": "malt_beverage",
    "images": [
     {
      "file": "images/26016001000083_0.jpg",
      "kind": "Label Image: Brand (front) or keg collar"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "soft_warning",
-    "abv_at_least": "match",
-    "warning_at_least": "missing"
-   }
+   ]
   },
   {
    "ttbid": "26016001000296",
@@ -910,6 +908,12 @@
     "government_warning": "present",
     "notes": "keg collar; LOS BRAVOS; warning on separate Molson Coors collar"
    },
+   "golden": {
+    "brand_name": "soft_warning",
+    "alcohol_content": "match",
+    "government_warning": "compliant",
+    "net_contents": "match"
+   },
    "product_type": "malt_beverage",
    "images": [
     {
@@ -920,13 +924,7 @@
      "file": "images/26016001000296_1.jpg",
      "kind": "Label Image: Other"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "soft_warning",
-    "abv_at_least": "match",
-    "warning_at_least": "missing"
-   }
+   ]
   },
   {
    "ttbid": "26016001000418",
@@ -951,19 +949,19 @@
     "government_warning": "present",
     "notes": "filed brand OVER THE MOON; vertical/rotated type on can wrap"
    },
+   "golden": {
+    "brand_name": "soft_warning",
+    "alcohol_content": "match",
+    "government_warning": "compliant",
+    "net_contents": "match"
+   },
    "product_type": "malt_beverage",
    "images": [
     {
      "file": "images/26016001000418_0.jpg",
      "kind": "Label Image: Brand (front) or keg collar"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "soft_warning",
-    "abv_at_least": "match",
-    "warning_at_least": "missing"
-   }
+   ]
   },
   {
    "ttbid": "26019001000340",
@@ -988,19 +986,19 @@
     "government_warning": "present",
     "notes": "filed brand LOWER EAST SIDE; genuine 3% lager; rotated warning"
    },
+   "golden": {
+    "brand_name": "soft_warning",
+    "alcohol_content": "match",
+    "government_warning": "compliant",
+    "net_contents": "match"
+   },
    "product_type": "malt_beverage",
    "images": [
     {
      "file": "images/26019001000340_0.jpg",
      "kind": "Label Image: Brand (front) or keg collar"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "soft_warning",
-    "abv_at_least": "match",
-    "warning_at_least": "missing"
-   }
+   ]
   },
   {
    "ttbid": "26020001000048",
@@ -1025,19 +1023,19 @@
     "government_warning": "present",
     "notes": "PHOTOGRAPH of a keg collar with real handwriting (Marzen Lager, MOBA Brewing)"
    },
+   "golden": {
+    "brand_name": "soft_warning",
+    "alcohol_content": "match",
+    "government_warning": "compliant",
+    "net_contents": "match"
+   },
    "product_type": "malt_beverage",
    "images": [
     {
      "file": "images/26020001000048_0.jpg",
      "kind": "Label Image: Brand (front) or keg collar"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "soft_warning",
-    "abv_at_least": "mismatch",
-    "warning_at_least": "missing"
-   }
+   ]
   },
   {
    "ttbid": "26021001000305",
@@ -1062,19 +1060,19 @@
     "government_warning": "present",
     "notes": "filed brand HAZY INDIA PALE ALE; tie-dye can wrap, rotated text"
    },
+   "golden": {
+    "brand_name": "soft_warning",
+    "alcohol_content": "match",
+    "government_warning": "compliant",
+    "net_contents": "match"
+   },
    "product_type": "malt_beverage",
    "images": [
     {
      "file": "images/26021001000305_0.jpg",
      "kind": "Label Image: Brand (front) or keg collar"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "soft_warning",
-    "abv_at_least": "match",
-    "warning_at_least": "missing"
-   }
+   ]
   },
   {
    "ttbid": "26021001000539",
@@ -1099,19 +1097,19 @@
     "government_warning": "present",
     "notes": "Czech Style Dark Lager; rotated warning"
    },
+   "golden": {
+    "brand_name": "match",
+    "alcohol_content": "match",
+    "government_warning": "compliant",
+    "net_contents": "match"
+   },
    "product_type": "malt_beverage",
    "images": [
     {
      "file": "images/26021001000539_0.jpg",
      "kind": "Label Image: Brand (front) or keg collar"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "soft_warning",
-    "abv_at_least": "match",
-    "warning_at_least": "missing"
-   }
+   ]
   },
   {
    "ttbid": "26022001000421",
@@ -1136,19 +1134,19 @@
     "government_warning": "present",
     "notes": "keg collar with calendar ring; Schwarzbier Lager"
    },
+   "golden": {
+    "brand_name": "soft_warning",
+    "alcohol_content": "match",
+    "government_warning": "compliant",
+    "net_contents": "match"
+   },
    "product_type": "malt_beverage",
    "images": [
     {
      "file": "images/26022001000421_0.jpg",
      "kind": "Label Image: Brand (front) or keg collar"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "soft_warning",
-    "abv_at_least": "match",
-    "warning_at_least": "altered"
-   }
+   ]
   },
   {
    "ttbid": "26023001000320",
@@ -1173,19 +1171,19 @@
     "government_warning": "present",
     "notes": "keg collar; white-on-blue; Leopard Mask Brewing"
    },
+   "golden": {
+    "brand_name": "soft_warning",
+    "alcohol_content": "match",
+    "government_warning": "compliant",
+    "net_contents": "match"
+   },
    "product_type": "malt_beverage",
    "images": [
     {
      "file": "images/26023001000320_0.jpg",
      "kind": "Label Image: Brand (front) or keg collar"
     }
-   ],
-   "expect": {
-    "quality_best": "ok",
-    "brand_at_least": "mismatch",
-    "abv_at_least": "match",
-    "warning_at_least": "missing"
-   }
+   ]
   }
  ]
 }
