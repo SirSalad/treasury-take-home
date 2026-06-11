@@ -32,4 +32,5 @@ def test_all_core_tables_registered() -> None:
         "submissions",
         "batches",
         "batch_items",
+        "audit_events",
     }
