@@ -308,3 +308,47 @@ def test_result_serialises_to_json() -> None:
     result = verify_government_warning(GOVERNMENT_WARNING_TEXT)
     restored = GovernmentWarningResult.model_validate_json(result.model_dump_json())
     assert restored == result
+
+
+def test_garbled_header_with_full_statement_is_compliant() -> None:
+    # Tightly curved print garbles the header itself ("GOVERNMEIT WARNINIG" on
+    # an unwrapped keg collar); the fuzzy token fallback must still find it
+    # when the full statement was read.
+    text = GOVERNMENT_WARNING_TEXT.replace("GOVERNMENT WARNING", "GOVERNMEIT WARNINIG")
+    # Force the fragmented path: split the garbled header words apart.
+    text = text.replace("GOVERNMEIT WARNINIG:", "GOVERNMEIT\nSOME OTHER LINE\nWARNINIG:")
+    result = verify_government_warning(text)
+    assert result.verdict is WarningVerdict.COMPLIANT
+    assert result.header_all_caps is True
+
+
+def test_garbled_header_without_statement_never_passes() -> None:
+    # Header-like garble with no statement: graded ALTERED (something
+    # header-shaped is printed, the wording is not) — the point is it can
+    # never read as compliant.
+    result = verify_government_warning("GOVERNMEIT\nWARNINIG\nKEG MAY RUPTURE")
+    assert result.verdict is not WarningVerdict.COMPLIANT
+
+
+def test_multi_read_union_with_all_words_is_compliant() -> None:
+    # The arc rescue verifies over the union of several unwrapped reads: the
+    # same statement appears multiple times, interleaved and partially garbled,
+    # so the sequence score collapses — but every word is present, repeatedly.
+    half_a = "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not"
+    half_b = (
+        "drink alcoholic beverages during pregnancy because of the risk of birth defects. "
+        "(2) Consumption of alcoholic beverages impairs your ability to drive a car or "
+        "operate machinery, and may cause health problems."
+    )
+    union = "\n".join([half_a, "RE-ORDERS: KEGCOLLAR.COM", half_b, half_b, half_a])
+    result = verify_government_warning(union)
+    assert result.verdict is WarningVerdict.COMPLIANT
+
+
+def test_borderline_similarity_with_clauses_present_still_respects_threshold() -> None:
+    # The low-sequence-signal rescue must not override a *configured* strict
+    # threshold on a contiguous, slightly-noisy statement (sim far above 0.6).
+    noisy = GOVERNMENT_WARNING_TEXT.replace("machinery", "machlnery")
+    assert (
+        verify_government_warning(noisy, similarity_threshold=1.0).verdict is WarningVerdict.ALTERED
+    )

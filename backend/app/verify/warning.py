@@ -176,6 +176,26 @@ def _word_present(word: str, haystack: str) -> bool:
     )
 
 
+def _fuzzy_token(word: str, normalised: str) -> str | None:
+    """The best OCR-tolerant occurrence of ``word`` in ``normalised``, or None.
+
+    Slides a same-length window over the *case-preserved* alphanumeric content
+    so the caller can still judge the header's casing on what was actually
+    printed ("GOVERNMEIT" passes the all-caps check; "Governmeit" fails it).
+    """
+    cased = re.sub(r"[^A-Za-z0-9]", "", normalised)
+    low = cased.lower()
+    n = len(word)
+    if len(low) < n:
+        return None
+    best, best_at = 0.0, -1
+    for i in range(len(low) - n + 1):
+        ratio = SequenceMatcher(None, word, low[i : i + n]).ratio()
+        if ratio > best:
+            best, best_at = ratio, i
+    return cased[best_at : best_at + n] if best >= _WORD_PRESENT_THRESHOLD else None
+
+
 def _statement_words_recovered(text: str) -> bool:
     """Whether *every* word of the canonical statement appears in ``text``.
 
@@ -232,25 +252,32 @@ def verify_government_warning(
         region = _bound_warning_region(normalised[header.start() :])
     else:
         # Fragmented read: the header words landed on separate detected lines
-        # (rotated columns, curved keg collars). Both must still be present.
+        # (rotated columns, curved keg collars). Both must still be present —
+        # exactly, or as an OCR-garbled near-spelling ("GOVERNMEIT WARNINIG" on
+        # tightly curved print), found by fuzzy window.
         tokens = list(_HEADER_TOKEN_RE.finditer(normalised))
         words = {m.group().lower() for m in tokens}
-        if {"government", "warning"} - words:
-            return GovernmentWarningResult(
-                verdict=WarningVerdict.MISSING,
-                found_text=None,
-                header_all_caps=None,
-                similarity=0.0,
-                issues=["No Government Warning found on the label."],
-                limitations=limitations,
-            )
-        # The two words may also occur in other label text; the header is judged
-        # all-caps when an all-caps occurrence of each word exists.
-        header_texts = [
-            next((m.group() for m in tokens if m.group() == word.upper()), word)
-            for word in ("government", "warning")
-        ]
-        header_start, header_end = tokens[0].span()
+        header_texts = []
+        for word in ("government", "warning"):
+            if word in words:
+                # Stray lowercase uses elsewhere must not fail the casing check
+                # when an all-caps occurrence exists.
+                header_texts.append(
+                    next((m.group() for m in tokens if m.group() == word.upper()), word)
+                )
+            else:
+                fuzzy = _fuzzy_token(word, normalised)
+                if fuzzy is None:
+                    return GovernmentWarningResult(
+                        verdict=WarningVerdict.MISSING,
+                        found_text=None,
+                        header_all_caps=None,
+                        similarity=0.0,
+                        issues=["No Government Warning found on the label."],
+                        limitations=limitations,
+                    )
+                header_texts.append(fuzzy)
+        header_start, header_end = tokens[0].span() if tokens else (0, 0)
         # Reading order is scrambled, so no contiguous region can be bounded;
         # score against everything read and rely on the word-coverage check.
         region = normalised
@@ -261,7 +288,11 @@ def verify_government_warning(
     similarity = _wording_similarity(region)
     missing_phrases = _missing_required_phrases(region)
     fragmented = False
-    if missing_phrases and _statement_words_recovered(normalised):
+    # Below this, the sequence comparison carries no signal: real OCR noise or
+    # tampering on a located statement stays far above it, while a scrambled
+    # multi-read union (arc unwraps, fragmented columns) lands well under.
+    sequence_meaningless = similarity < 0.6
+    if (missing_phrases or sequence_meaningless) and _statement_words_recovered(normalised):
         # The sequence checks failed, yet every word of the statement was read:
         # a fragmented read (justified column, rotated wrap, curved collar)
         # whose printed order OCR could not preserve — not an alteration, which

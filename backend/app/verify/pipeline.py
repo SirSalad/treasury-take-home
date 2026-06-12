@@ -48,7 +48,7 @@ from app.verify.schemas import (
     VerificationResult,
     WarningVerdict,
 )
-from app.verify.warning import verify_warning_from_ocr
+from app.verify.warning import verify_government_warning, verify_warning_from_ocr
 
 # Maps a point in a rescue frame (rotated/cropped image) back to coordinates on
 # the original (preprocessed) image, so boxes always overlay the upload.
@@ -145,6 +145,14 @@ def verify_label_image(
             rescued = _zoom_rescue_warning(frames[1:], result.government_warning, ocr)
             if rescued is not None:
                 result = build_result(result.fields, rescued)
+
+    # Last resort for circular layouts (keg collars / cap rings): the warning
+    # follows an arc, unreadable in any straight orientation. Unwrap the label
+    # around its detected circle so the arc becomes a horizontal line.
+    if result.government_warning.verdict is not WarningVerdict.COMPLIANT:
+        rescued = _arc_rescue_warning(base, result.government_warning, ocr)
+        if rescued is not None:
+            result = build_result(result.fields, rescued)
 
     return result, primary
 
@@ -332,6 +340,139 @@ def _warning_improves(candidate: GovernmentWarningResult, *, over: GovernmentWar
     if _WARNING_RANK[candidate.verdict] != _WARNING_RANK[over.verdict]:
         return _WARNING_RANK[candidate.verdict] < _WARNING_RANK[over.verdict]
     return candidate.similarity > over.similarity
+
+
+# Arc rescue bounds: how many candidate circles to unwrap, and the angular
+# sampling of the polar strip (≈ one sample per circumference pixel at the
+# radii keg collars use).
+_ARC_MAX_CIRCLES = 3
+_ARC_ANGULAR_SAMPLES = 3600
+
+# Words that mark a strip line as part of the warning statement, for locating
+# the block to re-read tightly.
+_ARC_WARNING_KEYWORDS = (
+    "government",
+    "warning",
+    "surgeon",
+    "pregnancy",
+    "birth",
+    "consumption",
+    "machinery",
+    "health",
+)
+
+
+def _arc_rescue_warning(
+    image: np.ndarray,
+    current: GovernmentWarningResult,
+    ocr: OcrService,
+) -> GovernmentWarningResult | None:
+    """Re-read a circular label by unwrapping it around its detected circle.
+
+    Keg collars and cap rings print the Government Warning along an arc —
+    every word at a different angle, unreadable in any straight orientation.
+    The label's circular cutout/rim is a true circle in flat artwork, so a
+    Hough detection gives the arc's center; a polar unwrap around it turns the
+    arc into a horizontal line of text. The strip is tiled half a turn past
+    360° so a line crossing the polar seam appears contiguous in the copy
+    (word coverage is set-based, so the duplicated words are harmless).
+
+    Returns the improved verdict, or ``None`` when no circle helps. Like every
+    rescue, it can only recover printed words — a dropped or reworded clause is
+    absent at any unwrap angle and still fails the coverage check.
+    """
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if image.ndim == 3 else image
+    height, width = gray.shape[:2]
+    shortest = min(height, width)
+    circles = cv2.HoughCircles(
+        cv2.medianBlur(gray, 5),
+        cv2.HOUGH_GRADIENT,
+        dp=1.5,
+        minDist=shortest // 4,
+        param1=120,
+        param2=80,
+        minRadius=shortest // 8,
+        maxRadius=int(shortest * 0.6),
+    )
+    if circles is None:
+        return None
+
+    best: GovernmentWarningResult | None = None
+    texts: list[str] = []
+    for cx, cy, radius in circles[0][:_ARC_MAX_CIRCLES]:
+        corner = max(float(np.hypot(x - cx, y - cy)) for x in (0, width) for y in (0, height))
+        max_radius = min(radius * 2.2, corner)
+        strip = cv2.warpPolar(
+            image,
+            (int(max_radius), _ARC_ANGULAR_SAMPLES),
+            (float(cx), float(cy)),
+            max_radius,
+            cv2.WARP_POLAR_LINEAR,
+        )
+        strip = cv2.rotate(strip, cv2.ROTATE_90_COUNTERCLOCKWISE)  # angle → x-axis
+
+        # Whole-strip read: detection sees the (downscaled) full strip, which
+        # groups the long unwrapped lines well; recognition still works from
+        # the strip's native resolution. A half-turn roll re-reads the strip
+        # with the polar seam moved, so a line the seam cut lands contiguous.
+        read = ocr.extract(strip)
+        if not read.lines:
+            continue
+        texts.append(read.full_text)
+        rolled = ocr.extract(np.roll(strip, strip.shape[1] // 2, axis=1))
+        if rolled.lines:
+            texts.append(rolled.full_text)
+
+        # Tight re-read of the warning block: detection drops lines in the
+        # densely-stacked statement at strip scale, so crop the block (the
+        # extract above reports boxes in its downscaled frame — scale back),
+        # read it both ways up, slightly enlarged. Unwrapped arc text comes out
+        # upside-down whenever the arc runs the lower half of the circle.
+        scale_back = strip.shape[1] / max(1, ocr.max_side)
+        keyword_boxes = [
+            line.box
+            for line in read.lines
+            if any(k in line.text.lower() for k in _ARC_WARNING_KEYWORDS)
+        ]
+        if keyword_boxes and scale_back > 0:
+            x0 = max(0, int(min(b.x_min for b in keyword_boxes) * scale_back) - 20)
+            x1 = min(strip.shape[1], int(max(b.x_max for b in keyword_boxes) * scale_back) + 20)
+            y0 = max(0, int(min(b.y_min for b in keyword_boxes) * scale_back) - 20)
+            y1 = min(strip.shape[0], int(max(b.y_max for b in keyword_boxes) * scale_back) + 20)
+            block = strip[y0:y1, x0:x1]
+            if block.size:
+                # Two scales x both orientations: detection on dense curved
+                # stacks is fickle, and any one read recovering a line is
+                # enough for the union's word coverage.
+                for scale in (1.5, 2.0):
+                    zoomed = cv2.resize(
+                        block, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC
+                    )
+                    for oriented in (zoomed, cv2.rotate(zoomed, cv2.ROTATE_180)):
+                        reread = ocr.extract(oriented, max_side=max(oriented.shape[:2]))
+                        if reread.lines:
+                            texts.append(reread.full_text)
+
+        # Verify over the union of every arc read so far: each pass recovers a
+        # different stretch of the circle, and the word-coverage check needs
+        # the full inventory, not any single read. Tampering stays caught — a
+        # dropped or reworded word is absent from every read.
+        rescued = verify_government_warning("\n".join(texts))
+        if rescued.verdict is WarningVerdict.MISSING:
+            continue
+        # The strip's geometry has no meaning on the original image.
+        rescued.box = None
+        rescued.span = None
+        rescued.limitations = [
+            *rescued.limitations,
+            "Read by unwrapping the label's circular layout; the highlight box is "
+            "unavailable for arc text.",
+        ]
+        if _warning_improves(rescued, over=best or current):
+            best = rescued
+            if best.verdict is WarningVerdict.COMPLIANT:
+                break
+    return best
 
 
 def _zoom_rescue_warning(

@@ -88,8 +88,12 @@ in `manifest.json` (note kept in its `notes`).
 
 - **Leinenkugel's keg cap (warning `missing`, net contents `mismatch`)**: the
   text follows the cap's printed **arc**, every word at a different angle.
-  Straight-line OCR cannot assemble it, and a polar unwrap doesn't converge
-  because the curve is a perspective-distorted cone, not a concentric circle.
-  Needs proper curved-text rectification — tracked as a follow-up.
+  Flat circular collars are now handled by the **arc rescue**
+  (`app/verify/pipeline.py`: Hough-detect the collar's circle, polar-unwrap
+  around it, verify over the union of the unwrapped reads) — verified against
+  a real Stillwater keg collar. Leinenkugel's specifically remains open: it is
+  a *photograph of a cone*, so the printed curve is a perspective-distorted
+  ellipse with no detectable circle center. Needs perspective rectification
+  first — tracked as a follow-up.
 - One brand mismatch: Giro Splendido's script logotype on a blue keg collar
   (no OCR-recoverable text in the logotype; it lands in review, not auto-pass).
