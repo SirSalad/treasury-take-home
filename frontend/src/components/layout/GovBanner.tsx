@@ -21,7 +21,7 @@ export function GovBanner() {
           <span className="absolute left-0 top-0 h-[6px] w-[7px] bg-[#3c3b6e]" />
         </span>
         <span className="text-fed-slate">
-          Not endorsed or affiliated with any governmental agency
+          Not endorsed by or affiliated with any governmental agency
         </span>
       </div>
     </div>
