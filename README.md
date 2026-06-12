@@ -437,21 +437,5 @@ size-capped (20 MB) to bound memory.
   similarity ratios tuned against the corpus, not learned probabilities. They are
   deliberately conservative — borderline cases become a SOFT_WARNING (a human
   glance) rather than a silent pass or a hard fail.
-- **Latency: pipeline speed vs. capacity, both now measured.** The best-of-N
-  gate captures the latency one request achieves uncontended (~0.9s p50 on the
-  dedicated host, ~80% under budget). Contention-driven *tail* latency under
-  concurrent load — once deferred as "a capacity question, not a pipeline
-  question" — is now measured directly, since the deployment moved from a 4-vCPU
-  **shared** VPS to a **dedicated** 12-vCPU / 31 GB host. The load harness
-  (`tests/perf/loadtest.py`) drives a concurrency sweep and reports the result:
-  a single process holds the 5s p99 budget up to **~4 concurrent in-flight
-  requests** (p99 ~4.6s) and breaches by 8 (p99 ~10s); throughput is flat at
-  **~1 verification/second** regardless of concurrency, because ONNXRuntime
-  already saturates every core for a single inference, so concurrent requests
-  time-share rather than scale. The capacity ceiling is therefore real but
-  well-understood: it is a *provisioning* lever (run more processes/replicas, or
-  cap intra-op threads per request to trade single-request latency for
-  concurrent throughput), not a pipeline limitation. See
-  [`docs/perf.md`](docs/perf.md) for the full envelope.
 
 Further design notes live in [`docs/`](docs/).
