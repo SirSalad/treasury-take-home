@@ -212,7 +212,7 @@ def verify_label(expected: ExpectedFields, ocr_result: OcrResult) -> Verificatio
         fields.append(_verify_presence("net_contents", expected.net_contents, ocr_result))
 
     if expected.name_and_address:
-        fields.append(_verify_presence("name_and_address", expected.name_and_address, ocr_result))
+        fields.append(_verify_name_address(expected.name_and_address, ocr_result))
 
     if expected.country_of_origin:
         fields.append(_verify_presence("country_of_origin", expected.country_of_origin, ocr_result))
@@ -228,6 +228,11 @@ def verify_label(expected: ExpectedFields, ocr_result: OcrResult) -> Verificatio
     # matcher's best window is then just noise, so don't surface it (or box it)
     # as what was "found" on the label.
     fields = _clear_unlocated_mismatches(fields)
+
+    # Class/type wording legitimately differs between the filing and the label
+    # (a registry "TABLE WHITE WINE" prints as a varietal), so not finding the
+    # filed wording is "could not confirm", not evidence of a violation.
+    fields = _soften_class_type_mismatch(fields)
 
     warning = verify_warning_from_ocr(ocr_result)
     return build_result(fields, warning)
@@ -318,6 +323,123 @@ def _verify_presence(field: str, expected: str, ocr: OcrResult) -> FieldResult:
         span=span,
         box=box,
         reason=presence.reason,
+    )
+
+
+def _soften_class_type_mismatch(fields: list[FieldResult]) -> list[FieldResult]:
+    """Downgrade a class/type MISMATCH (nothing similar found) to review.
+
+    The registry's class/type wording and the label's are routinely different
+    on legitimate filings — wine prints a grape varietal where the registry
+    says "TABLE WHITE WINE". Failing to find the *filed wording* therefore is
+    not evidence the label lacks a class designation; it goes to a human as a
+    soft warning instead of being rejected as a violation.
+    """
+    softened: list[FieldResult] = []
+    for field in fields:
+        if field.field == "class_type" and field.status is FieldStatus.MISMATCH:
+            field = field.model_copy(
+                update={
+                    "status": FieldStatus.SOFT_WARNING,
+                    "reason": (
+                        "the filed class/type wording was not found on the label; labels "
+                        "often word the designation differently (e.g. a grape varietal "
+                        "serves as a wine's class) — confirm visually"
+                    ),
+                }
+            )
+        softened.append(field)
+    return softened
+
+
+# Parses the city/state(/ZIP) tail of an address segment: "Banner Elk NC 28604",
+# "Bardstown, KY". The label requirement (27 CFR 4.35/5.36/7.30) is the
+# bottler's *name* and *place* (city + state) — the street address is optional
+# on the label, so it must not drag the comparison down.
+_PLACE_RE = re.compile(
+    r"^(?P<city>[A-Za-z .'-]+?)[,\s]+(?P<state>[A-Z]{2})(?:\s+\d{5}(?:-\d{4})?)?$"
+)
+
+
+def _verify_name_address(expected: str, ocr: OcrResult) -> FieldResult:
+    """Verify the bottler/producer statement by its regulatory parts.
+
+    The filed value (often the permit's full applicant block: legal name,
+    street, city/state/ZIP) is almost never printed verbatim. What the label
+    must carry is the responsible party's *name* and *city + state*. The
+    expected string is split on commas into name candidates, street parts
+    (contain digits; ignored), and a place; the verdict is graded on what was
+    actually recovered:
+
+    * name and place found  -> MATCH
+    * one of the two found  -> SOFT_WARNING (a human glances at the statement)
+    * neither found         -> MISMATCH
+
+    Falls back to whole-string fuzzy presence when the value has no parseable
+    structure (a single unsegmented name).
+    """
+    segments = [s.strip() for s in expected.split(",") if s.strip()]
+    place: tuple[str, str] | None = None
+    names: list[str] = []
+    pending_city: str | None = None
+    for segment in segments:
+        m = _PLACE_RE.match(segment)
+        if m and place is None:
+            place = (m.group("city").strip(), m.group("state"))
+            continue
+        is_state = re.fullmatch(r"[A-Z]{2}(\s+\d{5}(-\d{4})?)?", segment) is not None
+        if is_state and pending_city and place is None:
+            # "…, Bardstown, KY": the state arrived as its own segment.
+            place = (pending_city, segment.split()[0])
+            continue
+        if any(ch.isdigit() for ch in segment):
+            continue  # street address — optional on the label
+        names.append(segment)
+        pending_city = segment
+    if place and place[0] in names:
+        names.remove(place[0])
+
+    if not names or place is None:
+        # No parseable structure: grade the whole string as before.
+        return _verify_presence("name_and_address", expected, ocr)
+
+    text = ocr.full_text
+    name_scores = [score_presence(name, text) for name in names]
+    best_name = max(name_scores, key=lambda p: p.score)
+    name_found = best_name.status is not MatchStatus.MISMATCH
+
+    city, state = place
+    city_presence = score_presence(city, text)
+    city_found = city_presence.status is not MatchStatus.MISMATCH
+    state_found = re.search(rf"\b{re.escape(state)}\b", text, re.IGNORECASE) is not None
+    place_found = city_found and state_found
+
+    if name_found and place_found:
+        status = FieldStatus.MATCH
+        reason = f"bottler name ({best_name.matched_text!r}) and place ({city}, {state}) found"
+    elif name_found or place_found:
+        status = FieldStatus.SOFT_WARNING
+        missing = f"place ({city}, {state})" if name_found else "bottler name"
+        found_part = "bottler name" if name_found else f"place ({city}, {state})"
+        reason = (
+            f"{found_part} found, but the {missing} was not — check the responsibility "
+            "statement on the label"
+        )
+    else:
+        status = FieldStatus.MISMATCH
+        reason = f"neither the bottler name nor the place ({city}, {state}) was found on the label"
+
+    located = best_name if name_found else (city_presence if city_found else None)
+    span, box = _locate(ocr, located.matched_text) if located else (None, None)
+    return FieldResult(
+        field="name_and_address",
+        status=status,
+        expected=expected,
+        found=located.matched_text if located else None,
+        score=max(best_name.score, city_presence.score if place_found else 0.0),
+        span=span,
+        box=box,
+        reason=reason,
     )
 
 

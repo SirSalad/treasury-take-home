@@ -175,3 +175,81 @@ def test_vintage_wrong_year_is_hard_mismatch() -> None:
     result = _verify_vintage("2021", ocr)
     assert result.status is FieldStatus.MISMATCH
     assert result.found == "2020"
+
+
+# --- Regulatory semantics: class/type wording and the bottler statement --------
+
+
+def _ocr_lines(*texts: str) -> OcrResult:
+    return OcrResult(lines=[_line(t, float(i) * 24.0) for i, t in enumerate(texts)], elapsed_ms=0.0)
+
+
+def test_class_type_wording_not_found_goes_to_review_not_fail() -> None:
+    """The registry's class wording routinely differs from the label's (a wine
+    prints its varietal where the filing says TABLE WHITE WINE) — absence of the
+    filed wording is "could not confirm", not a violation."""
+    app = Application(brand_name="GRANDFATHER VINEYARD", class_type="TABLE WHITE WINE")
+    ocr = _ocr_lines("GRANDFATHER VINEYARD", "PETIT MANSENG", "750 mL")
+    result = verify_label(app, ocr)
+    class_type = next(f for f in result.fields if f.field == "class_type")
+    assert class_type.status is FieldStatus.SOFT_WARNING
+    assert "confirm" in class_type.reason
+
+
+def test_class_type_printed_verbatim_still_matches() -> None:
+    app = Application(brand_name="OLD TOM", class_type="Kentucky Straight Bourbon Whiskey")
+    ocr = _ocr_lines("OLD TOM", "Kentucky Straight Bourbon Whiskey")
+    result = verify_label(app, ocr)
+    class_type = next(f for f in result.fields if f.field == "class_type")
+    assert class_type.status is FieldStatus.MATCH
+
+
+def test_name_address_matches_on_name_plus_city_state() -> None:
+    """The label rule is name + city/state; the street and ZIP from the permit
+    block are optional on the label and must not drag the verdict down."""
+    app = Application(
+        brand_name="GRANDFATHER VINEYARD",
+        name_and_address=(
+            "Grandfather Vineyard and Winery LLC, 225 VINEYARD LN, Banner Elk NC 28604"
+        ),
+    )
+    ocr = _ocr_lines(
+        "GRANDFATHER VINEYARD",
+        "Produced and bottled by Grandfather Vineyard and Winery LLC",
+        "Banner Elk, NC",
+    )
+    result = verify_label(app, ocr)
+    address = next(f for f in result.fields if f.field == "name_and_address")
+    assert address.status is FieldStatus.MATCH
+
+
+def test_name_address_name_only_is_review() -> None:
+    app = Application(
+        brand_name="OLD TOM",
+        name_and_address="Old Tom Distillery, 1 Barrel Way, Bardstown KY 40004",
+    )
+    ocr = _ocr_lines("OLD TOM", "Bottled by Old Tom Distillery")
+    result = verify_label(app, ocr)
+    address = next(f for f in result.fields if f.field == "name_and_address")
+    assert address.status is FieldStatus.SOFT_WARNING
+    assert "place" in address.reason
+
+
+def test_name_address_nothing_found_is_mismatch() -> None:
+    app = Application(
+        brand_name="OLD TOM",
+        name_and_address="Old Tom Distillery, 1 Barrel Way, Bardstown KY 40004",
+    )
+    ocr = _ocr_lines("OLD TOM", "45% Alc./Vol.", "750 mL")
+    result = verify_label(app, ocr)
+    address = next(f for f in result.fields if f.field == "name_and_address")
+    assert address.status is FieldStatus.MISMATCH
+
+
+def test_name_address_state_as_own_segment_parses() -> None:
+    # "…, Bardstown, KY" — the state arrives as its own comma segment.
+    app = Application(brand_name="OLD TOM", name_and_address="Old Tom Distillery, Bardstown, KY")
+    ocr = _ocr_lines("OLD TOM", "Bottled by Old Tom Distillery, Bardstown, KY")
+    result = verify_label(app, ocr)
+    address = next(f for f in result.fields if f.field == "name_and_address")
+    assert address.status is FieldStatus.MATCH
