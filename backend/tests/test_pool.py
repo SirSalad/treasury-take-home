@@ -61,6 +61,26 @@ def test_total_distinct_records() -> None:
     assert len({r["id"] for r in records}) == _TOTAL_RECORDS, "record ids must be unique"
 
 
+def test_ocr_stress_is_out_of_seed_scope_but_stays_in_the_pool() -> None:
+    """COLA scope: the seeder skips ocr_stress; the OCR eval view still keeps 18.
+
+    The OCR-stress records are real-world / out-of-distribution photos that are
+    *not* reviewable COLA submissions, so the demo queue excludes them. They must
+    nonetheless remain in the pool so the OCR robustness eval can read them as a
+    filtered view — that split is the whole point of the pool-with-views design.
+    """
+    records = load_pool()
+    # Every ocr_stress record is ocr_stress-only, so excluding them drops no COLA
+    # record: COLA seed scope is exactly the pool minus the 18 OCR-stress photos.
+    ocr = [r for r in records if OCR_STRESS in r["use_cases"]]
+    assert len(ocr) == 18
+    assert all(r["use_cases"] == [OCR_STRESS] for r in ocr)
+    cola_scope = [r for r in records if OCR_STRESS not in r["use_cases"]]
+    assert len(cola_scope) == 41
+    # The OCR eval view is unchanged and still reads its full set from the pool.
+    assert len(records_for(OCR_STRESS)) == 18
+
+
 def test_multi_image_coverage() -> None:
     multi = [r for r in load_pool() if len(r["images"]) > 1]
     assert len(multi) >= _MIN_MULTI_IMAGE

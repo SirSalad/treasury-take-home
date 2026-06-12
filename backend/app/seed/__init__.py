@@ -5,12 +5,15 @@ database with labels run through the real verification pipeline so the queue,
 stat cards, and audit trail all demo with realistic data.
 
 The seed is a **filtered view over the canonical data pool** (:mod:`app.pool`):
-it seeds *every* pool record — the 30 real TTB COLA filings (the same multi-image
-sets the golden eval scores), the 18 out-of-distribution OCR-stress photos, and
-the 10 synthetic golden-corpus labels (6 of which carry a recorded reviewer
-decision so the queue demos the full approve/flag/pending workflow) — for 59 live
-submissions. There is no seed-private copy of the data: the pool is the single
-source of truth, shared with the evals.
+it seeds every **COLA application/label** record — the 30 real TTB COLA filings
+(the same multi-image sets the golden eval scores), the 10 synthetic
+golden-corpus labels (6 of which carry a recorded reviewer decision so the queue
+demos the full approve/flag/pending workflow), and the one extra real COLA
+(jb_kirk) — for 41 live submissions. The 18 out-of-distribution ``ocr_stress``
+records (real-world bottle/RTD photos, deliberately-bad captures) are **excluded**:
+they exist only to stress-test OCR as an eval view, not as reviewable COLA
+submissions. There is no seed-private copy of the data — the pool is the single
+source of truth, and the OCR-stress eval still reads its 18 records from it.
 
 Seeding is **idempotent per case**: a case whose front image is already present
 as a submission is skipped, so it is safe to run on every container boot and to
@@ -38,7 +41,7 @@ from app.models.enums import SubmissionStatus
 from app.models.submission import Submission
 from app.models.submission_image import SubmissionImage
 from app.ocr.service import ImageInput, OcrResult, OcrService
-from app.pool import load_pool, pool_images, record_images
+from app.pool import OCR_STRESS, load_pool, pool_images, record_images
 from app.verify import verify_label_images
 
 
@@ -165,6 +168,12 @@ def seed_demo(db: Session, ocr: SupportsExtract, upload_dir: str = "uploads") ->
 
     created = 0
     for record in load_pool():
+        # COLA scope only: the review queue is for COLA applications/labels. The
+        # OCR-stress records (real-world bottle/RTD photos and deliberately-bad
+        # captures) live in the pool solely to exercise OCR robustness as an eval
+        # view — they are not reviewable submissions, so the seeder skips them.
+        if OCR_STRESS in record["use_cases"]:
+            continue
         filenames = record_images(record)
         prior = existing.get(filenames[0])
         if prior is None:

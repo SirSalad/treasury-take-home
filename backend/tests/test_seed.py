@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.models.audit import AuditEvent
 from app.models.submission import Submission
-from app.pool import load_pool, record_images
+from app.pool import OCR_STRESS, load_pool, record_images
 from app.seed import seed_demo
 from app.verify import GOVERNMENT_WARNING_TEXT
 from tests.test_api_verify import _FakeOcr
@@ -21,10 +21,14 @@ from tests.test_api_verify import _FakeOcr
 # one of the COLA set's images — the seeder exercises plumbing, not OCR.
 _LINES = ["OLD TOM DISTILLERY", "45% Alc./Vol.", "750 mL", GOVERNMENT_WARNING_TEXT]
 
-# Every distinct pool record seeds one submission: 30 real COLA + 18 OCR-stress
-# + 10 synthetic corpus (6 of which double as the base demo set) + 1 base-only
-# real COLA (jb_kirk) = 59. The base/corpus reuse is deduped, not double-seeded.
-_TOTAL = 59
+# The seeder is COLA-scope only: 30 real COLA + 10 synthetic corpus (6 of which
+# double as the base demo set) + 1 base-only real COLA (jb_kirk) = 41. The 18
+# OCR-stress records stay in the pool (the OCR eval reads them) but are NOT
+# seeded — they are not reviewable COLA submissions.
+_TOTAL = 41
+
+# Front images of the out-of-scope OCR-stress records: none of these may seed.
+_OCR_STRESS_FRONTS = {record_images(r)[0] for r in load_pool() if OCR_STRESS in r["use_cases"]}
 
 
 def test_seed_populates_empty_database(db_session: Session, tmp_path) -> None:
@@ -34,6 +38,11 @@ def test_seed_populates_empty_database(db_session: Session, tmp_path) -> None:
     submissions = db_session.scalars(select(Submission)).all()
     assert len(submissions) == _TOTAL
     assert all(s.result is not None and s.application is not None for s in submissions)
+
+    # COLA scope only: not a single OCR-stress photo leaks into the review queue.
+    assert len(_OCR_STRESS_FRONTS) == 18
+    seeded_fronts = {s.image_filename for s in submissions}
+    assert seeded_fronts.isdisjoint(_OCR_STRESS_FRONTS)
 
     # Decisions recorded on the curated corpus cases that declare one
     # (2 approve, 1 request_changes) so the queue demos the full workflow.
@@ -50,10 +59,9 @@ def test_seed_populates_empty_database(db_session: Session, tmp_path) -> None:
 def test_seed_preserves_multi_image_filings(db_session: Session, tmp_path) -> None:
     # A COLA filing is its full label set (warning on the back, ABV on the
     # front); the seed must mirror the multi-image pool records, not flatten.
-    multi = {
-        record_images(r)[0]: record_images(r) for r in load_pool() if len(record_images(r)) > 1
-    }
-    assert multi, "expected multi-image records in the pool"
+    seeded = [r for r in load_pool() if OCR_STRESS not in r["use_cases"]]
+    multi = {record_images(r)[0]: record_images(r) for r in seeded if len(record_images(r)) > 1}
+    assert multi, "expected multi-image records in the COLA seed scope"
 
     seed_demo(db_session, _FakeOcr(_LINES), upload_dir=str(tmp_path))
     by_front = {s.image_filename: s for s in db_session.scalars(select(Submission))}
@@ -67,7 +75,7 @@ def test_seed_preserves_multi_image_filings(db_session: Session, tmp_path) -> No
         assert all(Path(img.image_ref).is_file() for img in sub.images)
 
     # Single-image cases stay legacy rows (image on ``image_ref``, no image set).
-    single_front = next(record_images(r)[0] for r in load_pool() if len(record_images(r)) == 1)
+    single_front = next(record_images(r)[0] for r in seeded if len(record_images(r)) == 1)
     assert by_front[single_front].images == []
 
 
