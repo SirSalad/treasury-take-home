@@ -22,7 +22,7 @@ home screen. Click **New Verification**, fill in the application fields, and
 upload the label images — front and back together, the way a COLA is filed
 (samples live in
 [`backend/tests/corpus/images/`](backend/tests/corpus/images/) and
-[`backend/tests/eval_cola/images/`](backend/tests/eval_cola/images/)) — to get a
+[`backend/app/pool/images/`](backend/app/pool/images/)) — to get a
 field-by-field verdict with per-image highlight boxes. **Batch upload** runs
 the same pipeline over a CSV manifest + image set.
 
@@ -222,10 +222,11 @@ producing a confident wrong verdict.
 cd backend && pytest -m eval -s        # slow (real OCR over ~18 labels); runs offline
 ```
 
-Cases live in `tests/eval/manifest.json` (ground truth + expected quality/verdict).
-The photos are committed under `tests/eval/images/` so it runs offline and
-deterministically — see `tests/eval/images/ATTRIBUTION.md` for each image's source
-and licence (`commons_file` is only used to re-fetch if a local image is missing).
+Cases are the `ocr_stress` view of the canonical pool (`app/pool/pool.json`:
+ground truth + expected quality/verdict). The photos are committed under
+`app/pool/images/` so it runs offline and deterministically — see
+`app/pool/images/ATTRIBUTION.md` for each image's source and licence
+(`provenance.commons_file` is only used to re-fetch if a local image is missing).
 The eval is deselected from the default suite and CI. It
 prints a per-case scorecard, e.g.:
 
