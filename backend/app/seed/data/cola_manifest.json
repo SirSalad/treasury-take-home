@@ -1,5 +1,5 @@
 {
-  "_about": "Real COLA labels scraped from the TTB Public COLA Registry (see tests/eval_cola). Front-label artwork + the filed application fields, seeded into the review queue as demo data. Each case is traceable to the public record via its TTB ID.",
+  "_about": "Real COLA filings scraped from the TTB Public COLA Registry, mirroring tests/eval_cola one-for-one (same TTB IDs and image sets). Each case carries the filing's full label set (front + back/neck where present) under 'images', plus the filed application fields, seeded into the review queue as multi-image demo submissions. Each case is traceable to the public record via its TTB ID.",
   "cases": [
     {
       "images": [

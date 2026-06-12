@@ -11,11 +11,15 @@ from sqlalchemy.orm import Session
 from app.models.audit import AuditEvent
 from app.models.submission import Submission
 from app.seed import _case_images, seed_demo
+from app.verify import GOVERNMENT_WARNING_TEXT
 from tests.test_api_verify import _FakeOcr
 
 # Whatever the fake OCR "reads", every seeded label persists a full pipeline
 # result; the per-case verdicts just come out mostly mismatched, which is fine.
-_LINES = ["OLD TOM DISTILLERY", "45% Alc./Vol.", "750 mL"]
+# The compliant warning line keeps the fake's reads off the adaptive rescue
+# passes (rotation/zoom/arc), which a warning-less read would trigger on every
+# one of the COLA set's images — the seeder exercises plumbing, not OCR.
+_LINES = ["OLD TOM DISTILLERY", "45% Alc./Vol.", "750 mL", GOVERNMENT_WARNING_TEXT]
 
 # 7 curated corpus cases + 30 real COLA cases.
 _TOTAL = 37
@@ -96,8 +100,9 @@ def test_seed_heals_missing_image_files(db_session: Session, tmp_path) -> None:
     seed_demo(db_session, _FakeOcr(_LINES), upload_dir=str(tmp_path))
     submissions = db_session.scalars(select(Submission)).all()
     # Wipe every file: the front (image_ref) plus each label of multi-image rows.
-    refs = [Path(s.image_ref) for s in submissions]
-    refs += [Path(img.image_ref) for s in submissions for img in s.images]
+    # A multi-image row's image_ref mirrors images[0], so dedupe to one set.
+    refs = {Path(s.image_ref) for s in submissions}
+    refs |= {Path(img.image_ref) for s in submissions for img in s.images}
     for ref in refs:
         ref.unlink()
     assert not any(ref.is_file() for ref in refs)

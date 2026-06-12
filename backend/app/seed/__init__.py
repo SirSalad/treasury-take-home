@@ -30,7 +30,7 @@ from datetime import UTC, datetime
 from importlib import resources
 from importlib.resources.abc import Traversable
 from pathlib import Path
-from typing import Protocol
+from typing import Protocol, cast
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -42,7 +42,7 @@ from app.models.application import Application
 from app.models.enums import SubmissionStatus
 from app.models.submission import Submission
 from app.models.submission_image import SubmissionImage
-from app.ocr.service import ImageInput, OcrResult
+from app.ocr.service import ImageInput, OcrResult, OcrService
 from app.verify import verify_label_images
 
 # Each entry: (manifest filename, sub-directory holding that manifest's images).
@@ -60,7 +60,8 @@ class SupportsExtract(Protocol):
     surface (``max_side`` plus ``extract``), not just a one-shot ``extract``.
     """
 
-    max_side: int
+    @property
+    def max_side(self) -> int: ...
 
     def extract(self, image: ImageInput, *, max_side: int | None = None) -> OcrResult: ...
 
@@ -94,13 +95,17 @@ def _seed_case(
     started = datetime.now(UTC)
     # The same adaptive, multi-image pipeline the API uses: each label is read,
     # then per-field verdicts merge on the best read across the filing's set.
-    result, reads = verify_label_images(application, datas, ocr=ocr)
+    # ``ocr`` is the structural OCR surface (real service or a test fake); the
+    # pipeline is typed against the concrete service, so narrow it here.
+    result, reads = verify_label_images(application, datas, ocr=cast(OcrService, ocr))
 
     app_row = Application(**application.model_dump())
     db.add(app_row)
     db.flush()
 
-    refs = [_store_upload(upload_dir, name, data) for name, data in zip(filenames, datas, strict=True)]
+    refs = [
+        _store_upload(upload_dir, name, data) for name, data in zip(filenames, datas, strict=True)
+    ]
     submission = Submission(
         application=app_row,
         # Legacy columns mirror the front image; the full set lives in ``images``
@@ -192,21 +197,24 @@ def seed_demo(db: Session, ocr: SupportsExtract, upload_dir: str = "uploads") ->
     return created
 
 
-def _heal_missing_files(
-    prior: Submission, upload_dir: str, image_dir: Traversable
-) -> None:
+def _heal_missing_files(prior: Submission, upload_dir: str, image_dir: Traversable) -> None:
     """Restore any of a seeded row's image files that have gone missing on disk.
 
-    Covers both the legacy ``image_ref`` (front image) and every label of a
-    multi-image filing, so the review screen renders again after the uploads
-    directory was lost.
+    Covers every label of a multi-image filing as well as the legacy
+    ``image_ref`` (which mirrors the front image), so the review screen renders
+    again after the uploads directory was lost.
     """
-    if not Path(prior.image_ref).is_file() and prior.image_filename:
-        prior.image_ref = _store_upload(
-            upload_dir, prior.image_filename, (image_dir / prior.image_filename).read_bytes()
-        )
-    for img in prior.images:
-        if not Path(img.image_ref).is_file() and img.image_filename:
-            img.image_ref = _store_upload(
-                upload_dir, img.image_filename, (image_dir / img.image_filename).read_bytes()
-            )
+
+    def restore(filename: str | None, current: str) -> str:
+        if filename and not Path(current).is_file():
+            return _store_upload(upload_dir, filename, (image_dir / filename).read_bytes())
+        return current
+
+    if prior.images:
+        # Multi-image: heal the set, then re-point the legacy column at the
+        # (possibly restored) front label so the two never diverge.
+        for img in prior.images:
+            img.image_ref = restore(img.image_filename, img.image_ref)
+        prior.image_ref = prior.images[0].image_ref
+    else:
+        prior.image_ref = restore(prior.image_filename, prior.image_ref)
