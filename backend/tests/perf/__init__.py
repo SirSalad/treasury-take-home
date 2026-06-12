@@ -13,6 +13,14 @@ interviews. Public surface::
 See :mod:`tests.perf.harness` for the methodology (notably best-of-N sampling,
 which keeps the measurement — and the CI gate — robust to the transient CPU
 contention of shared runners).
+
+For the complementary question — what the *tail* does under concurrent
+contention — see :mod:`tests.perf.loadtest`::
+
+    from tests.perf import benchmark_load
+
+    report = benchmark_load()
+    print(report.format())  # p50/p95/p99 + throughput across a concurrency sweep
 """
 
 from .harness import (
@@ -21,10 +29,18 @@ from .harness import (
     benchmark_corpus,
     percentile,
 )
+from .loadtest import (
+    LoadReport,
+    LoadResult,
+    benchmark_load,
+)
 
 __all__ = [
     "BenchmarkReport",
     "CaseTiming",
+    "LoadReport",
+    "LoadResult",
     "benchmark_corpus",
+    "benchmark_load",
     "percentile",
 ]

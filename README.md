@@ -370,10 +370,14 @@ fixtures cannot drift apart.
 The discovery interviews made < 5s a hard product constraint (the prior vendor's
 30–40s pilot got abandoned). A perf harness (`backend/tests/perf/`) times
 preprocess + OCR + extract over the labelled corpus and gates p95 against the
-budget in CI. On a 6-core dev host the corpus runs ~2.4s p50, leaving roughly
-30–50% headroom. The main lever is the resolution cap; recognition cost scales
-with the number of detected text regions, so text-dense wine labels are the
-slowest. Full detail in [`docs/perf.md`](docs/perf.md).
+budget in CI. On the dedicated 12-vCPU host the corpus runs ~0.9s p50 best-of-N,
+leaving ~80% headroom (about 2.5× faster than the old shared box). A companion
+load harness (`loadtest.py`) measures the tail under concurrent contention: the
+single process holds the 5s tail to ~4 in-flight requests and clears ~1
+verification/second — past that, capacity comes from scaling out, not a faster
+pipeline. The main single-request lever is the resolution cap; recognition cost
+scales with the number of detected text regions, so text-dense wine labels are
+the slowest. Full detail in [`docs/perf.md`](docs/perf.md).
 
 ### Error handling
 
@@ -436,8 +440,21 @@ size-capped (20 MB) to bound memory.
   similarity ratios tuned against the corpus, not learned probabilities. They are
   deliberately conservative — borderline cases become a SOFT_WARNING (a human
   glance) rather than a silent pass or a hard fail.
-- **Latency is measured best-of-N** on a CPU host, which captures the latency the
-  pipeline *can* achieve, not contention-driven tail latency under production
-  load — that's a capacity question, not a pipeline question.
+- **Latency: pipeline speed vs. capacity, both now measured.** The best-of-N
+  gate captures the latency one request achieves uncontended (~0.9s p50 on the
+  dedicated host, ~80% under budget). Contention-driven *tail* latency under
+  concurrent load — once deferred as "a capacity question, not a pipeline
+  question" — is now measured directly, since the deployment moved from a 4-vCPU
+  **shared** VPS to a **dedicated** 12-vCPU / 31 GB host. The load harness
+  (`tests/perf/loadtest.py`) drives a concurrency sweep and reports the result:
+  a single process holds the 5s p99 budget up to **~4 concurrent in-flight
+  requests** (p99 ~4.6s) and breaches by 8 (p99 ~10s); throughput is flat at
+  **~1 verification/second** regardless of concurrency, because ONNXRuntime
+  already saturates every core for a single inference, so concurrent requests
+  time-share rather than scale. The capacity ceiling is therefore real but
+  well-understood: it is a *provisioning* lever (run more processes/replicas, or
+  cap intra-op threads per request to trade single-request latency for
+  concurrent throughput), not a pipeline limitation. See
+  [`docs/perf.md`](docs/perf.md) for the full envelope.
 
 Further design notes live in [`docs/`](docs/).
