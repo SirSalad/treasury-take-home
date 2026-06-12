@@ -15,7 +15,7 @@ blocks outbound ML endpoints).
 
 ## Live demo
 
-**🔗 https://sculpture-confident-provided-acting.trycloudflare.com**
+**🔗 http://treasurytakehome-application-xkgxxc-1d267a-149-56-24-135.sslip.io/**
 
 Open the URL: the **Review Queue** (stat cards over recent submissions) is the
 home screen. Click **New Verification**, fill in the application fields, and
@@ -27,11 +27,12 @@ field-by-field verdict with per-image highlight boxes. **Batch upload** runs
 the same pipeline over a CSV manifest + image set.
 
 The full Docker Compose stack (Postgres + FastAPI + nginx-served frontend) runs
-on a VPS; the public HTTPS URL is a Cloudflare tunnel terminating at the
-frontend, which proxies `/api/*` to the backend. See
-[Deployment](#deployment) for how it's wired. The tunnel uses a free
-quick-tunnel hostname, so the URL changes if the tunnel is restarted — the value
-above is current as of deploy.
+on a dedicated 12-vCPU host behind a reverse-proxy PaaS (Dokploy/Traefik) that
+routes the domain to the frontend container, which proxies `/api/*` to the
+backend — no code changes between local and prod. See [Deployment](#deployment)
+for how it's wired. The hostname is stable (a [sslip.io](https://sslip.io)
+wildcard encoding the host IP), so the link above stays the same across
+restarts.
 
 ## Stack
 
@@ -162,36 +163,31 @@ alongside it.
 ## Deployment
 
 The [live demo](#live-demo) runs the **same Docker Compose stack** above on a
-small VPS, fronted by a Cloudflare tunnel for public HTTPS — no code changes
-between local and prod.
+dedicated 12-vCPU / 31 GB host, fronted by a reverse-proxy PaaS — no code
+changes between local and prod.
 
 ```
-reviewer ──HTTPS──▶ Cloudflare edge ──tunnel──▶ cloudflared ──▶ :8080 frontend ──/api/*──▶ :8000 backend ──▶ :5432 db
+reviewer ──HTTP──▶ PaaS proxy (Dokploy/Traefik) ──▶ frontend:80 ──/api/*──▶ backend:8000 ──▶ db:5432
 ```
 
-- **Stack** — `docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml up -d`
-  (the dev overlay publishes `:8080`, which the tunnel points at; a
-  reverse-proxy PaaS like Dokploy needs only the base file). Each service
-  carries `restart: unless-stopped`, so the stack survives a host reboot.
-- **Public URL** — a [`cloudflared`](https://github.com/cloudflare/cloudflared)
-  quick tunnel exposes the frontend (`:8080`) over HTTPS. It runs as a systemd
-  service (`cloudflared-ttb.service`, `Restart=on-failure`,
-  `WantedBy=multi-user.target`) pointing at `http://localhost:8080`, so it comes
-  back after a crash or reboot:
-
-  ```bash
-  cloudflared tunnel --no-autoupdate --url http://localhost:8080
-  ```
-
-  The tunnel terminates TLS at Cloudflare's edge and forwards plain HTTP to the
-  frontend; the frontend serves the SPA and proxies `/api/*` to the backend, so
-  the browser only ever talks same-origin HTTPS.
-- **Why a tunnel** — it needs no inbound firewall rule, no certificate
-  management, and no DNS setup, which keeps the prototype deploy to a single
-  command. The trade-off is the quick-tunnel hostname is ephemeral: restarting
-  the tunnel mints a new `*.trycloudflare.com` URL. A production deploy would use
-  a named Cloudflare tunnel (or a reverse proxy + Let's Encrypt) bound to a
-  stable domain.
+- **Stack** — `docker compose -f docker/docker-compose.yml up -d`. The base file
+  publishes **no** host ports; the PaaS reaches the containers over the Docker
+  network and routes the public domain to service `frontend` (port 80), which
+  serves the SPA and proxies `/api/*` to the backend. Everything else
+  (`backend:8000`, `db:5432`) stays internal. Each service carries
+  `restart: unless-stopped`, so the stack survives a host reboot. (For local
+  development, add `-f docker/docker-compose.dev.yml` to publish `:8080`/`:8000`.)
+- **Public URL** — the PaaS assigns a stable
+  [sslip.io](https://sslip.io) hostname — wildcard DNS that encodes the host IP,
+  so no DNS records to manage and the URL is fixed across restarts. The frontend
+  is same-origin with its `/api/*` routes, so the browser only ever talks to one
+  host.
+- **Why a PaaS** — routing the base compose file through the proxy needs no
+  inbound port publishing, no per-service firewall rules, and no DNS setup beyond
+  the auto-assigned hostname, which keeps the prototype deploy to a single
+  `up -d`. A production deploy would bind a named domain with TLS (the proxy can
+  terminate Let's Encrypt) and add the identity gateway noted under
+  [Assumptions & trade-offs](#assumptions--trade-offs).
 
 ## Lint & test
 
@@ -407,7 +403,7 @@ size-capped (20 MB) to bound memory.
   retention policy. A direct consequence worth stating plainly: with no auth
   layer, every API route — including the submission queue (`/api/submissions`)
   and the append-only audit trail (`/api/audit`) — is readable by anyone who can
-  reach the service, and the live demo is a public HTTPS URL. That is an
+  reach the service, and the live demo is a public, unauthenticated URL. That is an
   accepted trade-off for a throwaway prototype seeded with synthetic data; a
   real deployment would put the whole app behind an identity gateway (the COLA
   SSO / Cloudflare Access / a bearer-token middleware), scope the audit trail to
