@@ -162,12 +162,12 @@ def _seed_case(
 def seed_demo(db: Session, ocr: SupportsExtract, upload_dir: str = "uploads") -> int:
     """Seed demo submissions through the real pipeline; returns rows created.
 
-    Idempotent per case: any case whose image is already a submission is
+    Idempotent per case: any case whose front image is already a submission is
     skipped, so re-running tops the queue up rather than duplicating.
     """
     data = resources.files("app.seed") / "data"
-    # Existing seeded rows, keyed by image filename, so we can both skip
-    # already-seeded cases and heal ones whose image file has gone missing
+    # Existing seeded rows, keyed by front-image filename, so we can both skip
+    # already-seeded cases and heal ones whose image files have gone missing
     # (e.g. a redeploy recreated the container before uploads were on a volume).
     existing: dict[str, Submission] = {
         s.image_filename: s
@@ -180,16 +180,33 @@ def seed_demo(db: Session, ocr: SupportsExtract, upload_dir: str = "uploads") ->
         manifest = json.loads((data / manifest_name).read_text())
         image_dir = data if subdir == "." else data / subdir
         for case in manifest["cases"]:
-            prior = existing.get(case["image"])
+            filenames = _case_images(case)
+            prior = existing.get(filenames[0])
             if prior is None:
                 _seed_case(db, ocr, upload_dir, image_dir, case)
                 created += 1
-            elif not Path(prior.image_ref).is_file():
-                # Row survived but its image file did not — restore it from the
-                # packaged bytes so the review screen renders again.
-                prior.image_ref = _store_upload(
-                    upload_dir, case["image"], (image_dir / case["image"]).read_bytes()
-                )
+            else:
+                _heal_missing_files(prior, upload_dir, image_dir)
 
     db.commit()
     return created
+
+
+def _heal_missing_files(
+    prior: Submission, upload_dir: str, image_dir: Traversable
+) -> None:
+    """Restore any of a seeded row's image files that have gone missing on disk.
+
+    Covers both the legacy ``image_ref`` (front image) and every label of a
+    multi-image filing, so the review screen renders again after the uploads
+    directory was lost.
+    """
+    if not Path(prior.image_ref).is_file() and prior.image_filename:
+        prior.image_ref = _store_upload(
+            upload_dir, prior.image_filename, (image_dir / prior.image_filename).read_bytes()
+        )
+    for img in prior.images:
+        if not Path(img.image_ref).is_file() and img.image_filename:
+            img.image_ref = _store_upload(
+                upload_dir, img.image_filename, (image_dir / img.image_filename).read_bytes()
+            )
