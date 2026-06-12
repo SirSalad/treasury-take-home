@@ -400,7 +400,19 @@ size-capped (20 MB) to bound memory.
 - **No real authn/PII handling** — per the IT interview, nothing sensitive is
   stored for the exercise. Uploaded images are written to a local directory and
   referenced from the DB; a production deployment would use an object store and
-  retention policy.
+  retention policy. A direct consequence worth stating plainly: with no auth
+  layer, every API route — including the submission queue (`/api/submissions`)
+  and the append-only audit trail (`/api/audit`) — is readable by anyone who can
+  reach the service, and the live demo is a public HTTPS URL. That is an
+  accepted trade-off for a throwaway prototype seeded with synthetic data; a
+  real deployment would put the whole app behind an identity gateway (the COLA
+  SSO / Cloudflare Access / a bearer-token middleware), scope the audit trail to
+  authorized reviewers, and add per-reviewer attribution to recorded decisions.
+  The defensive measures that *are* in place — strict origin-pinned CORS, upload
+  size/count caps, decode-before-process validation, ORM-only queries (no raw
+  SQL), random server-side filenames (no path traversal), and no outbound
+  network calls — are the input-handling half of defense-in-depth; the
+  authn/authz half is the documented gap above.
 
 ### Known limitations
 
