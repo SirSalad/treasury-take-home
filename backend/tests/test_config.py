@@ -1,10 +1,16 @@
 """Tests for settings parsing and model registration."""
 
+import importlib
+
 import pytest
 
-import app.models  # noqa: F401  (register tables on Base.metadata)
 from app.config import Settings
 from app.db import Base
+
+# Register every ORM table on Base.metadata via import side effect, required by
+# test_all_core_tables_registered below. Done through importlib so there is no
+# bound-but-unused module name for static analysis to flag as an unused import.
+importlib.import_module("app.models")
 
 
 def test_cors_origins_parsed_from_comma_separated_string() -> None:

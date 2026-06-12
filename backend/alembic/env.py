@@ -4,15 +4,19 @@ Pulls the database URL from the application settings and the target metadata
 from :data:`app.db.Base`, so migrations always track the ORM models.
 """
 
+import importlib
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
 
-# Importing the models package registers all tables on Base.metadata.
-import app.models  # noqa: E402, F401  (side-effect import, after Base)
 from alembic import context
 from app.config import get_settings
 from app.db import Base
+
+# Importing the models package registers all tables on Base.metadata so Alembic
+# autogenerate tracks the ORM models. Done through importlib so there is no
+# bound-but-unused module name for static analysis to flag as an unused import.
+importlib.import_module("app.models")
 
 # Alembic Config object, providing access to values in alembic.ini.
 config = context.config

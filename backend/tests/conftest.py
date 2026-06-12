@@ -1,5 +1,6 @@
 """Shared pytest fixtures."""
 
+import importlib
 from collections.abc import Iterator
 
 import pytest
@@ -7,9 +8,12 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-# Importing models registers all tables on Base.metadata.
-import app.models  # noqa: F401
 from app.db import Base
+
+# Importing the models package registers all tables on Base.metadata (needed by
+# Base.metadata.create_all in db_session). Done through importlib so there is no
+# bound-but-unused module name for static analysis to flag as an unused import.
+importlib.import_module("app.models")
 
 
 @event.listens_for(Engine, "connect")

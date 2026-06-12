@@ -54,9 +54,11 @@ class SupportsExtract(Protocol):
     """
 
     @property
-    def max_side(self) -> int: ...
+    def max_side(self) -> int:
+        """Longest output edge (px) the service downsamples inputs to before OCR."""
 
-    def extract(self, image: ImageInput, *, max_side: int | None = None) -> OcrResult: ...
+    def extract(self, image: ImageInput, *, max_side: int | None = None) -> OcrResult:
+        """Run OCR on a single image and return its extracted-text result."""
 
 
 def _content_type(filename: str) -> str:

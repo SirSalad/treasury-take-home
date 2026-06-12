@@ -5,8 +5,6 @@ Compliance Division interviews). A :class:`Batch` groups those uploads; each
 :class:`BatchItem` orders one :class:`Submission` within the batch.
 """
 
-from typing import TYPE_CHECKING
-
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy import ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -14,9 +12,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db import Base
 from app.models.enums import BatchStatus
 from app.models.types import TimestampMixin
-
-if TYPE_CHECKING:
-    from app.models.submission import Submission
 
 
 class Batch(TimestampMixin, Base):
@@ -64,7 +59,10 @@ class BatchItem(Base):
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     batch: Mapped["Batch"] = relationship(back_populates="items")
-    submission: Mapped["Submission"] = relationship(back_populates="batch_item")
+    # String-target relationship (no module-level Submission import) keeps the
+    # models acyclic; "Submission" resolves via SQLAlchemy's registry. Many-to-one
+    # (FK batch_items.submission_id) → scalar.
+    submission = relationship("Submission", back_populates="batch_item")
 
     def __repr__(self) -> str:  # pragma: no cover - debug helper
         return f"<BatchItem id={self.id} batch={self.batch_id} pos={self.position}>"

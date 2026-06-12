@@ -25,7 +25,7 @@ jobs:
         run: docker build -f docker/Dockerfile.frontend -t ttb-frontend:ci .
 
       - name: Trivy scan — backend image
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ttb-backend:ci
           severity: HIGH,CRITICAL
@@ -33,7 +33,7 @@ jobs:
           exit-code: "1"
 
       - name: Trivy scan — frontend image
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ttb-frontend:ci
           severity: HIGH,CRITICAL

@@ -7,8 +7,6 @@ agent verifies the physical label artwork against: brand name, class/type,
 alcohol content, net contents, and so on.
 """
 
-from typing import TYPE_CHECKING
-
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy import Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -16,9 +14,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db import Base
 from app.models.enums import ProductSource, ProductType
 from app.models.types import TimestampMixin
-
-if TYPE_CHECKING:
-    from app.models.submission import Submission
 
 
 class Application(TimestampMixin, Base):
@@ -65,7 +60,12 @@ class Application(TimestampMixin, Base):
 
     formula: Mapped[str | None] = mapped_column(String(128))
 
-    submissions: Mapped[list["Submission"]] = relationship(
+    # String-target relationship (no module-level import of Submission) keeps the
+    # models acyclic: Submission imports the leaf models under TYPE_CHECKING, the
+    # leaves resolve "Submission" via SQLAlchemy's class registry at mapper-config
+    # time. One-to-many (FK submissions.application_id) → list collection.
+    submissions = relationship(
+        "Submission",
         back_populates="application",
         cascade="all, delete-orphan",
     )

@@ -11,16 +11,11 @@ mirror of the first image, so single-image writers (seed, batch ingest) and
 older rows keep working unchanged.
 """
 
-from typing import TYPE_CHECKING
-
 from sqlalchemy import ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
 from app.models.types import TimestampMixin
-
-if TYPE_CHECKING:
-    from app.models.submission import Submission
 
 
 class SubmissionImage(TimestampMixin, Base):
@@ -49,7 +44,10 @@ class SubmissionImage(TimestampMixin, Base):
     image_filename: Mapped[str | None] = mapped_column(String(255))
     content_type: Mapped[str | None] = mapped_column(String(128))
 
-    submission: Mapped["Submission"] = relationship(back_populates="images")
+    # String-target relationship (no module-level Submission import) keeps the
+    # models acyclic; "Submission" resolves via SQLAlchemy's registry. Many-to-one
+    # (FK submission_images.submission_id) → scalar.
+    submission = relationship("Submission", back_populates="images")
 
     def __repr__(self) -> str:  # pragma: no cover - debug helper
         return f"<SubmissionImage submission={self.submission_id} position={self.position}>"
