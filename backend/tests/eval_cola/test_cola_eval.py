@@ -25,18 +25,41 @@ Marked ``eval`` and deselected by default; run with ``pytest -m eval``.
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
-
 import pytest
 
 from app.api.schemas import ApplicationInput
 from app.ocr.service import get_ocr_service
+from app.pool import COLA_GOLDEN, pool_images, records_for
 from app.verify.pipeline import verify_label_images
 
 pytestmark = pytest.mark.eval
 
-_HERE = Path(__file__).parent
+
+def _cola_cases() -> list[dict]:
+    """The real-COLA golden cases as a filtered view over the canonical pool.
+
+    Each ``cola_golden`` pool record is projected back to the case shape this
+    eval scores against (registry / label_truth / golden / images), so the
+    measured accuracy is identical to scoring the legacy manifest — only the
+    data *source* moved into the shared pool.
+    """
+    images = pool_images()
+    cases: list[dict] = []
+    for record in records_for(COLA_GOLDEN):
+        golden = record["cola_golden"]
+        cases.append(
+            {
+                "ttbid": record["provenance"]["ttbid"],
+                "category": golden["category"],
+                "registry": golden["registry"],
+                "label_truth": golden["label_truth"],
+                "golden": golden["golden"],
+                "product_type": golden["product_type"],
+                "images": [str(images / name) for name in record["images"]],
+            }
+        )
+    return cases
+
 
 # Minimum number of cases the pipeline must verify correctly per field — the
 # current measured accuracy. Raise these as OCR improves; never lower them.
@@ -71,7 +94,7 @@ def _application(case: dict) -> ApplicationInput:
 
 
 def test_cola_golden_accuracy() -> None:
-    manifest = json.loads((_HERE / "manifest.json").read_text())
+    cases = _cola_cases()
     ocr = get_ocr_service()
 
     totals: dict[str, int] = {}
@@ -79,10 +102,9 @@ def test_cola_golden_accuracy() -> None:
     rows: list[str] = []
     failures: list[str] = []
 
-    for case in manifest["cases"]:
+    for case in cases:
         application = _application(case)
-        images = [str(_HERE / image["file"]) for image in case["images"]]
-        verdict, _ = verify_label_images(application, images, ocr=ocr)
+        verdict, _ = verify_label_images(application, case["images"], ocr=ocr)
 
         by_field = {f.field: f.status.value for f in verdict.fields}
         actual = {

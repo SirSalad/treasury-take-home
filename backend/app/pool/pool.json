@@ -1,0 +1,2830 @@
+{
+  "_about": "Canonical data pool: the single source of truth for demo seeding and the filtered-view evals. Each record carries the filed `application`, its `images` (front first, deduped under images/), `provenance`/licence, `use_cases` tags, and optional per-use-case annotation blocks: `cola_golden` (real-COLA golden verdicts), `ocr_expect` (OOD OCR ground_truth+expect), `corpus_golden` (synthetic golden). Consumers filter by use_case: cola_golden=30, ocr_stress=18, corpus_golden=10, base_seed=7 (the 6 corpus reuses carry a reviewer decision; jb_kirk is base-only). Seeding all distinct records yields 59 live submissions. The corpus_golden records are authored upstream by tests/corpus/cases.py and kept in sync by tests/test_pool.py.",
+  "records": [
+    {
+      "id": "cola_25001001000024",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "domestic",
+        "product_type": "wine",
+        "brand_name": "GRANDFATHER VINEYARD AND WINERY LLC",
+        "class_type": "TABLE WHITE WINE",
+        "alcohol_content_pct": 14.0,
+        "alcohol_content_text": "14% alc. by vol.",
+        "net_contents": "750ml",
+        "name_and_address": "Grandfather Vineyard Wines, Grandfather Vineyard and Winery LLC, 225 VINEYARD LN, , Banner Elk NC 28604",
+        "serial_number": "25PTMN",
+        "vintage": "2024"
+      },
+      "images": [
+        "25001001000024_0.jpg",
+        "25001001000024_1.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "25001001000024"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "GRANDFATHER VINEYARD AND WINERY LLC",
+          "fanciful_name": null,
+          "class_type": "TABLE WHITE WINE",
+          "origin": "AMERICAN",
+          "serial_number": "25PTMN",
+          "permit": "BWN-NC-15080",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "Grandfather Vineyard Wines, Grandfather Vineyard and Winery LLC / 225 VINEYARD LN /  / Banner Elk NC 28604"
+        },
+        "label_truth": {
+          "printed_brand": "GRANDFATHER VINEYARD & WINERY",
+          "alcohol_content_pct": 14.0,
+          "alcohol_content_text": "14% alc. by vol.",
+          "net_contents": "750ml",
+          "vintage": "2024",
+          "government_warning": "present",
+          "notes": "varietal PETIT MANSENG; quilt-art front label"
+        },
+        "golden": {
+          "brand_name": "soft_warning",
+          "alcohol_content": "match",
+          "government_warning": "compliant",
+          "net_contents": "match"
+        },
+        "product_type": "wine",
+        "category": "wine"
+      }
+    },
+    {
+      "id": "cola_25001001000028",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "domestic",
+        "product_type": "wine",
+        "brand_name": "1822",
+        "class_type": "TABLE RED WINE",
+        "alcohol_content_pct": 12.0,
+        "alcohol_content_text": "12% Alcohol by volume",
+        "net_contents": "750ml",
+        "name_and_address": "1822 LLC, 600 MT.PLEASANT RD, , West Newton PA 15089, , MALBEC (Used on label)",
+        "serial_number": "2510SM",
+        "vintage": "2025"
+      },
+      "images": [
+        "25001001000028_0.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "25001001000028"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "1822",
+          "fanciful_name": null,
+          "class_type": "TABLE RED WINE",
+          "origin": "AMERICAN",
+          "serial_number": "2510SM",
+          "permit": "BWN-PA-21426",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "1822 LLC / 600 MT.PLEASANT RD /  / West Newton PA 15089 /  / MALBEC (Used on label)"
+        },
+        "label_truth": {
+          "printed_brand": "1822",
+          "alcohol_content_pct": 12.0,
+          "alcohol_content_text": "12% Alcohol by volume",
+          "net_contents": "750ml",
+          "vintage": "2025",
+          "government_warning": "present",
+          "notes": "MALBEC; low-contrast serif text over photo; rotated side text"
+        },
+        "golden": {
+          "brand_name": "match",
+          "alcohol_content": "match",
+          "government_warning": "compliant",
+          "net_contents": "match"
+        },
+        "product_type": "wine",
+        "category": "wine"
+      }
+    },
+    {
+      "id": "cola_25001001000029",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "domestic",
+        "product_type": "wine",
+        "brand_name": "ANTHONY'S",
+        "class_type": "TABLE WHITE WINE",
+        "alcohol_content_pct": 13.0,
+        "alcohol_content_text": "13% ALC/VOL",
+        "net_contents": "750 ML",
+        "name_and_address": "Four Feathers Wine Estates, Four Feathers Wine Estates, LLC, 101 BENITZ RD, , Prosser WA 99350, , DOLAN AND WEISS CELLARS (Used on label)",
+        "serial_number": "25ANCH",
+        "vintage": "2023"
+      },
+      "images": [
+        "25001001000029_0.jpg",
+        "25001001000029_1.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "25001001000029"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "ANTHONY'S",
+          "fanciful_name": null,
+          "class_type": "TABLE WHITE WINE",
+          "origin": "WASHINGTON",
+          "serial_number": "25ANCH",
+          "permit": "BWN-WA-21018",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "Four Feathers Wine Estates, Four Feathers Wine Estates, LLC / 101 BENITZ RD /  / Prosser WA 99350 /  / DOLAN AND WEISS CELLARS (Used on label)"
+        },
+        "label_truth": {
+          "printed_brand": "ANTHONY'S",
+          "alcohol_content_pct": 13.0,
+          "alcohol_content_text": "13% ALC/VOL",
+          "net_contents": "750 ML",
+          "vintage": "2023",
+          "government_warning": "present",
+          "notes": "CHARDONNAY Columbia Valley; tiny ABV at label edge"
+        },
+        "golden": {
+          "brand_name": "match",
+          "alcohol_content": "match",
+          "government_warning": "compliant",
+          "net_contents": "match"
+        },
+        "product_type": "wine",
+        "category": "wine"
+      }
+    },
+    {
+      "id": "cola_25001001000031",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "domestic",
+        "product_type": "wine",
+        "brand_name": "1822LLC",
+        "class_type": "TABLE RED WINE",
+        "alcohol_content_pct": 13.0,
+        "alcohol_content_text": "13% Alcohol by volume",
+        "net_contents": "750ml",
+        "name_and_address": "1822 LLC, 600 MT.PLEASANT RD, , West Newton PA 15089, , 1822 (Used on label)",
+        "serial_number": "2510SM",
+        "fanciful_name": "PLOW SEASON"
+      },
+      "images": [
+        "25001001000031_0.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "25001001000031"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "1822LLC",
+          "fanciful_name": "PLOW SEASON",
+          "class_type": "TABLE RED WINE",
+          "origin": "AMERICAN",
+          "serial_number": "2510SM",
+          "permit": "BWN-PA-21426",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "1822 LLC / 600 MT.PLEASANT RD /  / West Newton PA 15089 /  / 1822 (Used on label)"
+        },
+        "label_truth": {
+          "printed_brand": "1822",
+          "alcohol_content_pct": 13.0,
+          "alcohol_content_text": "13% Alcohol by volume",
+          "net_contents": "750ml",
+          "vintage": null,
+          "government_warning": "present",
+          "notes": "PLOW SEASON CONCORD; same low-contrast style as 1822 Malbec"
+        },
+        "golden": {
+          "brand_name": "soft_warning",
+          "alcohol_content": "match",
+          "government_warning": "compliant",
+          "net_contents": "match"
+        },
+        "product_type": "wine",
+        "category": "wine"
+      }
+    },
+    {
+      "id": "cola_25001001000039",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "domestic",
+        "product_type": "wine",
+        "brand_name": "DARKROCK",
+        "class_type": "TABLE WHITE WINE",
+        "alcohol_content_pct": 13.9,
+        "alcohol_content_text": "ALC 13.9% BY VOL",
+        "net_contents": "750 ML",
+        "name_and_address": "Four Feathers Wine Estates, Four Feathers Wine Estates, LLC, 101 BENITZ RD, , Prosser WA 99350, , DARKROCK WINE (Used on label)",
+        "serial_number": "25DSBR",
+        "vintage": "2024"
+      },
+      "images": [
+        "25001001000039_0.jpg",
+        "25001001000039_1.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "25001001000039"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "DARKROCK",
+          "fanciful_name": null,
+          "class_type": "TABLE WHITE WINE",
+          "origin": "WASHINGTON",
+          "serial_number": "25DSBR",
+          "permit": "BWN-WA-21018",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "Four Feathers Wine Estates, Four Feathers Wine Estates, LLC / 101 BENITZ RD /  / Prosser WA 99350 /  / DARKROCK WINE (Used on label)"
+        },
+        "label_truth": {
+          "printed_brand": "DarkRock",
+          "alcohol_content_pct": 13.9,
+          "alcohol_content_text": "ALC 13.9% BY VOL",
+          "net_contents": "750 ML",
+          "vintage": "2024",
+          "government_warning": "present",
+          "notes": "Sauvignon Blanc Rattlesnake Hills; white-on-black + barcode"
+        },
+        "golden": {
+          "brand_name": "soft_warning",
+          "alcohol_content": "match",
+          "government_warning": "compliant",
+          "net_contents": "match"
+        },
+        "product_type": "wine",
+        "category": "wine"
+      }
+    },
+    {
+      "id": "cola_25001001000044",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "imported",
+        "product_type": "wine",
+        "brand_name": "SAMUEL BOULAY",
+        "class_type": "TABLE RED WINE",
+        "alcohol_content_pct": 13.0,
+        "alcohol_content_text": "alc. 13% by vol.",
+        "net_contents": "750 ml",
+        "name_and_address": "CAMO&CO SELECTIONS LLC, 12510 W FIELDING CIR APT 3, , Playa Vista CA 90094",
+        "serial_number": "25BO01",
+        "fanciful_name": "SPIGAO",
+        "vintage": "2019",
+        "country_of_origin": "France"
+      },
+      "images": [
+        "25001001000044_0.jpg",
+        "25001001000044_1.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "25001001000044"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "SAMUEL BOULAY",
+          "fanciful_name": "SPIGAO",
+          "class_type": "TABLE RED WINE",
+          "origin": "FRANCE",
+          "serial_number": "25BO01",
+          "permit": "CA-I-22369",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "CAMO&CO SELECTIONS LLC / 12510 W FIELDING CIR APT 3 /  / Playa Vista CA 90094"
+        },
+        "label_truth": {
+          "printed_brand": "Samuel Boulay",
+          "alcohol_content_pct": 13.0,
+          "alcohol_content_text": "alc. 13% by vol.",
+          "net_contents": "750 ml",
+          "vintage": "2019",
+          "government_warning": "present",
+          "notes": "Vin de France import; sparse typographic label"
+        },
+        "golden": {
+          "brand_name": "soft_warning",
+          "alcohol_content": "match",
+          "government_warning": "compliant",
+          "net_contents": "match"
+        },
+        "product_type": "wine",
+        "category": "wine"
+      }
+    },
+    {
+      "id": "cola_25001001000045",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "imported",
+        "product_type": "wine",
+        "brand_name": "STEPHANE CYRAN",
+        "class_type": "TABLE RED WINE",
+        "alcohol_content_pct": 11.5,
+        "alcohol_content_text": "alc. 11.5% by vol.",
+        "net_contents": "750 ml",
+        "name_and_address": "CAMO&CO SELECTIONS LLC, 12510 W FIELDING CIR APT 3, , Playa Vista CA 90094",
+        "serial_number": "25CY01",
+        "fanciful_name": "A LURELURE",
+        "vintage": "2022",
+        "country_of_origin": "France"
+      },
+      "images": [
+        "25001001000045_0.jpg",
+        "25001001000045_1.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "25001001000045"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "STEPHANE CYRAN",
+          "fanciful_name": "A LURELURE",
+          "class_type": "TABLE RED WINE",
+          "origin": "FRANCE",
+          "serial_number": "25CY01",
+          "permit": "CA-I-22369",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "CAMO&CO SELECTIONS LLC / 12510 W FIELDING CIR APT 3 /  / Playa Vista CA 90094"
+        },
+        "label_truth": {
+          "printed_brand": "Domaine Stéphane Cyran",
+          "alcohol_content_pct": 11.5,
+          "alcohol_content_text": "alc. 11.5% by vol.",
+          "net_contents": "750 ml",
+          "vintage": "2022",
+          "government_warning": "present",
+          "notes": "accented brand; filed brand has no accents/Domaine"
+        },
+        "golden": {
+          "brand_name": "soft_warning",
+          "alcohol_content": "match",
+          "government_warning": "compliant",
+          "net_contents": "match"
+        },
+        "product_type": "wine",
+        "category": "wine"
+      }
+    },
+    {
+      "id": "cola_25001001000049",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "imported",
+        "product_type": "wine",
+        "brand_name": "PATRICK DESPLATS",
+        "class_type": "TABLE RED WINE",
+        "alcohol_content_pct": 12.0,
+        "alcohol_content_text": "alc. 12% by vol.",
+        "net_contents": "750ml",
+        "name_and_address": "CAMO&CO SELECTIONS LLC, 12510 W FIELDING CIR APT 3, , Playa Vista CA 90094",
+        "serial_number": "25DE01",
+        "fanciful_name": "EGLANTINE",
+        "country_of_origin": "France"
+      },
+      "images": [
+        "25001001000049_0.jpg",
+        "25001001000049_1.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "25001001000049"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "PATRICK DESPLATS",
+          "fanciful_name": "EGLANTINE",
+          "class_type": "TABLE RED WINE",
+          "origin": "FRANCE",
+          "serial_number": "25DE01",
+          "permit": "CA-I-22369",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "CAMO&CO SELECTIONS LLC / 12510 W FIELDING CIR APT 3 /  / Playa Vista CA 90094"
+        },
+        "label_truth": {
+          "printed_brand": "Patrick Desplats",
+          "alcohol_content_pct": 12.0,
+          "alcohol_content_text": "alc. 12% by vol.",
+          "net_contents": "750ml",
+          "vintage": null,
+          "government_warning": "present",
+          "notes": "Églantine; no vintage printed"
+        },
+        "golden": {
+          "brand_name": "soft_warning",
+          "alcohol_content": "match",
+          "government_warning": "compliant",
+          "net_contents": "match"
+        },
+        "product_type": "wine",
+        "category": "wine"
+      }
+    },
+    {
+      "id": "cola_25001001000051",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "imported",
+        "product_type": "wine",
+        "brand_name": "LA PORTE SAINT JEAN",
+        "class_type": "TABLE WHITE WINE",
+        "alcohol_content_pct": 12.5,
+        "alcohol_content_text": "ALC. 12.5% BY VOL.",
+        "net_contents": "750ML",
+        "name_and_address": "Avant-Garde Wine & Spirits, Avant-Garde Wine & Spirits LLC, 8114 RIPPLEWOOD DR, , Austin TX 78757",
+        "serial_number": "250001",
+        "fanciful_name": "LE BLANC",
+        "vintage": "2020",
+        "country_of_origin": "France"
+      },
+      "images": [
+        "25001001000051_0.jpg",
+        "25001001000051_1.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "25001001000051"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "LA PORTE SAINT JEAN",
+          "fanciful_name": "LE BLANC",
+          "class_type": "TABLE WHITE WINE",
+          "origin": "FRANCE",
+          "serial_number": "250001",
+          "permit": "TX-I-21837",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "Avant-Garde Wine & Spirits, Avant-Garde Wine & Spirits LLC / 8114 RIPPLEWOOD DR /  / Austin TX 78757"
+        },
+        "label_truth": {
+          "printed_brand": "LA PORTE SAINT JEAN",
+          "alcohol_content_pct": 12.5,
+          "alcohol_content_text": "ALC. 12.5% BY VOL.",
+          "net_contents": "750ML",
+          "vintage": "2020",
+          "government_warning": "present",
+          "notes": "all-text label, no art"
+        },
+        "golden": {
+          "brand_name": "match",
+          "alcohol_content": "match",
+          "government_warning": "compliant",
+          "net_contents": "match"
+        },
+        "product_type": "wine",
+        "category": "wine"
+      }
+    },
+    {
+      "id": "cola_25001001000052",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "imported",
+        "product_type": "wine",
+        "brand_name": "BENOIT COURAULT",
+        "class_type": "TABLE RED WINE",
+        "alcohol_content_pct": 13.5,
+        "alcohol_content_text": "ALC. 13.5 % BY VOL",
+        "net_contents": "750 ML",
+        "name_and_address": "Avant-Garde Wine & Spirits, Avant-Garde Wine & Spirits LLC, 8114 RIPPLEWOOD DR, , Austin TX 78757",
+        "serial_number": "250002",
+        "fanciful_name": "LA GRANDE MAILLE",
+        "country_of_origin": "France"
+      },
+      "images": [
+        "25001001000052_0.jpg",
+        "25001001000052_1.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "25001001000052"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "BENOIT COURAULT",
+          "fanciful_name": "LA GRANDE MAILLE",
+          "class_type": "TABLE RED WINE",
+          "origin": "FRANCE",
+          "serial_number": "250002",
+          "permit": "TX-I-21837",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "Avant-Garde Wine & Spirits, Avant-Garde Wine & Spirits LLC / 8114 RIPPLEWOOD DR /  / Austin TX 78757"
+        },
+        "label_truth": {
+          "printed_brand": "BENOIT COURAULT",
+          "alcohol_content_pct": 13.5,
+          "alcohol_content_text": "ALC. 13.5 % BY VOL",
+          "net_contents": "750 ML",
+          "vintage": null,
+          "government_warning": "present",
+          "notes": "space inside \"13.5 %\"; pink low-contrast label"
+        },
+        "golden": {
+          "brand_name": "match",
+          "alcohol_content": "match",
+          "government_warning": "compliant",
+          "net_contents": "match"
+        },
+        "product_type": "wine",
+        "category": "wine"
+      }
+    },
+    {
+      "id": "cola_25005001000033",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "domestic",
+        "product_type": "distilled_spirits",
+        "brand_name": "PLASM BOURBON CO.",
+        "class_type": "STRAIGHT BOURBON WHISKY",
+        "alcohol_content_pct": 50.0,
+        "alcohol_content_text": "50% ALC./VOL.",
+        "net_contents": "750 ML",
+        "name_and_address": "Melting Faces, LLC, 142 E MARKET ST, , West Chester PA 19382, , PLASM BOURBON CO. (Used on label)",
+        "serial_number": "250001",
+        "fanciful_name": "SINGLE BARREL WHEATED BOURBON"
+      },
+      "images": [
+        "25005001000033_0.jpg",
+        "25005001000033_1.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "25005001000033"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "PLASM BOURBON CO.",
+          "fanciful_name": "SINGLE BARREL WHEATED BOURBON",
+          "class_type": "STRAIGHT BOURBON WHISKY",
+          "origin": "PENNSYLVANIA",
+          "serial_number": "250001",
+          "permit": "DSP-PA-20248",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "Melting Faces, LLC / 142 E MARKET ST /  / West Chester PA 19382 /  / PLASM BOURBON CO. (Used on label)"
+        },
+        "label_truth": {
+          "printed_brand": "PLASM",
+          "alcohol_content_pct": 50.0,
+          "alcohol_content_text": "50% ALC./VOL.",
+          "net_contents": "750 ML",
+          "vintage": null,
+          "government_warning": "present",
+          "notes": "100 PROOF; tiny warning strip on black back label"
+        },
+        "golden": {
+          "brand_name": "soft_warning",
+          "alcohol_content": "match",
+          "government_warning": "compliant",
+          "net_contents": "match"
+        },
+        "product_type": "distilled_spirits",
+        "category": "spirits"
+      }
+    },
+    {
+      "id": "cola_25005001000060",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "domestic",
+        "product_type": "distilled_spirits",
+        "brand_name": "COYOTE DAWN",
+        "class_type": "STRAIGHT BOURBON WHISKY",
+        "alcohol_content_pct": 45.0,
+        "alcohol_content_text": "45% Alc by Vol",
+        "net_contents": "750 ml",
+        "name_and_address": "Faber Distilling, Millstone Spirits Group LLC, 118 MAIN ST N, , Trumbauersville PA 18970, , MIDNIGHT MADNESS DISTILLING (Used on label)",
+        "serial_number": "25CD25"
+      },
+      "images": [
+        "25005001000060_0.jpg",
+        "25005001000060_1.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "25005001000060"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "COYOTE DAWN",
+          "fanciful_name": null,
+          "class_type": "STRAIGHT BOURBON WHISKY",
+          "origin": "PENNSYLVANIA",
+          "serial_number": "25CD25",
+          "permit": "DSP-PA-20001",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "Faber Distilling, Millstone Spirits Group LLC / 118 MAIN ST N /  / Trumbauersville PA 18970 /  / MIDNIGHT MADNESS DISTILLING (Used on label)"
+        },
+        "label_truth": {
+          "printed_brand": "COYOTE DAWN",
+          "alcohol_content_pct": 40.0,
+          "alcohol_content_text": "40% Alc by Vol",
+          "net_contents": "750 ml",
+          "vintage": null,
+          "government_warning": "present",
+          "notes": "80 proof; handwritten story over burning-paper photo; warning body lowercase; annotation fix 2026-06-11: zoomed crop shows the label prints 40% Alc by Vol / 80 PROOF, the earlier 45%/90-proof annotation was a misread"
+        },
+        "golden": {
+          "brand_name": "match",
+          "alcohol_content": "match",
+          "government_warning": "compliant",
+          "net_contents": "match"
+        },
+        "product_type": "distilled_spirits",
+        "category": "spirits"
+      }
+    },
+    {
+      "id": "cola_25006001000237",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "domestic",
+        "product_type": "distilled_spirits",
+        "brand_name": "LAWS",
+        "class_type": "STRAIGHT BOURBON WHISKY",
+        "alcohol_content_pct": 47.5,
+        "alcohol_content_text": "ALC/VOL. 47.5%",
+        "net_contents": "750ml",
+        "name_and_address": "One Tier llc dba BOTLD, One Tier LLC, 190 TOWN CENTER RD, , King of Prussia PA 19406, , BOTLD (Used on label)",
+        "serial_number": "250053"
+      },
+      "images": [
+        "25006001000237_0.jpg",
+        "25006001000237_1.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "25006001000237"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "LAWS",
+          "fanciful_name": null,
+          "class_type": "STRAIGHT BOURBON WHISKY",
+          "origin": "PENNSYLVANIA",
+          "serial_number": "250053",
+          "permit": "DSP-PA-20186",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "One Tier llc dba BOTLD, One Tier LLC / 190 TOWN CENTER RD /  / King of Prussia PA 19406 /  / BOTLD (Used on label)"
+        },
+        "label_truth": {
+          "printed_brand": "LAWS",
+          "alcohol_content_pct": 47.5,
+          "alcohol_content_text": "ALC/VOL. 47.5%",
+          "net_contents": "750ml",
+          "vintage": null,
+          "government_warning": "present",
+          "notes": "Four Grain Straight Bourbon"
+        },
+        "golden": {
+          "brand_name": "match",
+          "alcohol_content": "match",
+          "government_warning": "compliant",
+          "net_contents": "match"
+        },
+        "product_type": "distilled_spirits",
+        "category": "spirits"
+      }
+    },
+    {
+      "id": "cola_25006001000265",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "domestic",
+        "product_type": "distilled_spirits",
+        "brand_name": "BENCHMARK",
+        "class_type": "STRAIGHT BOURBON WHISKY",
+        "alcohol_content_pct": 40.0,
+        "alcohol_content_text": "40% ALC. BY VOL.",
+        "net_contents": "750 ML",
+        "name_and_address": "SAZERAC COMPANY, INC., 101 MAGAZINE ST, , NEW ORLEANS LA 70130, , SAZERAC CO (Used on label)",
+        "serial_number": "250007"
+      },
+      "images": [
+        "25006001000265_0.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "25006001000265"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "BENCHMARK",
+          "fanciful_name": null,
+          "class_type": "STRAIGHT BOURBON WHISKY",
+          "origin": "LOUISIANA",
+          "serial_number": "250007",
+          "permit": "LA-I-244",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "SAZERAC COMPANY, INC. / 101 MAGAZINE ST /  / NEW ORLEANS LA 70130 /  / SAZERAC CO (Used on label)"
+        },
+        "label_truth": {
+          "printed_brand": "BENCHMARK",
+          "alcohol_content_pct": 40.0,
+          "alcohol_content_text": "40% ALC. BY VOL.",
+          "net_contents": "750 ML",
+          "vintage": null,
+          "government_warning": "present",
+          "notes": "McAfee's Old No 8; dense small print"
+        },
+        "golden": {
+          "brand_name": "match",
+          "alcohol_content": "match",
+          "government_warning": "compliant",
+          "net_contents": "match"
+        },
+        "product_type": "distilled_spirits",
+        "category": "spirits"
+      }
+    },
+    {
+      "id": "cola_25006001000701",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "domestic",
+        "product_type": "distilled_spirits",
+        "brand_name": "J.B. KIRK",
+        "class_type": "STRAIGHT BOURBON WHISKY",
+        "alcohol_content_pct": 45.0,
+        "alcohol_content_text": "45% ALC/VOL",
+        "net_contents": "750 ML",
+        "name_and_address": "Old Glory Distilling Company, Cunningham Spirits LLC, 451 ALFRED THUN RD, , CLARKSVILLE TN 37040, , J.B. KIRK (Used on label)",
+        "serial_number": "250001"
+      },
+      "images": [
+        "25006001000701_0.jpg",
+        "25006001000701_1.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "25006001000701"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "J.B. KIRK",
+          "fanciful_name": null,
+          "class_type": "STRAIGHT BOURBON WHISKY",
+          "origin": "TENNESSEE",
+          "serial_number": "250001",
+          "permit": "DSP-TN-21028",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "Old Glory Distilling Company, Cunningham Spirits LLC / 451 ALFRED THUN RD /  / CLARKSVILLE TN 37040 /  / J.B. KIRK (Used on label)"
+        },
+        "label_truth": {
+          "printed_brand": "J.B. KIRK",
+          "alcohol_content_pct": 45.0,
+          "alcohol_content_text": "45% ALC/VOL",
+          "net_contents": "750 ML",
+          "vintage": null,
+          "government_warning": "present",
+          "notes": "90 proof; long family-history paragraph on back"
+        },
+        "golden": {
+          "brand_name": "match",
+          "alcohol_content": "match",
+          "government_warning": "compliant",
+          "net_contents": "match"
+        },
+        "product_type": "distilled_spirits",
+        "category": "spirits"
+      }
+    },
+    {
+      "id": "cola_25009001000323",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "domestic",
+        "product_type": "distilled_spirits",
+        "brand_name": "MOLOTOV'S",
+        "class_type": "STRAIGHT BOURBON WHISKY",
+        "alcohol_content_pct": 40.0,
+        "alcohol_content_text": "40% ALC/VOL",
+        "net_contents": "750ML",
+        "name_and_address": "Ublendit, Inc., 440 KINGS VILLAGE RD BLDG 8 STE 8-2A & 8-2, , Scotts Valley CA 95066",
+        "serial_number": "250602"
+      },
+      "images": [
+        "25009001000323_0.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "25009001000323"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "MOLOTOV'S",
+          "fanciful_name": null,
+          "class_type": "STRAIGHT BOURBON WHISKY",
+          "origin": "CALIFORNIA",
+          "serial_number": "250602",
+          "permit": "DSP-CA-20189",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "Ublendit, Inc. / 440 KINGS VILLAGE RD BLDG 8 STE 8-2A & 8-2 /  / Scotts Valley CA 95066"
+        },
+        "label_truth": {
+          "printed_brand": "MOLOTOV'S",
+          "alcohol_content_pct": 40.0,
+          "alcohol_content_text": "40% ALC/VOL",
+          "net_contents": "750ML",
+          "vintage": null,
+          "government_warning": "present",
+          "notes": "(80 proof); illustrated GTA-style art behind text"
+        },
+        "golden": {
+          "brand_name": "match",
+          "alcohol_content": "match",
+          "government_warning": "compliant",
+          "net_contents": "match"
+        },
+        "product_type": "distilled_spirits",
+        "category": "spirits"
+      }
+    },
+    {
+      "id": "cola_25009001000342",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "domestic",
+        "product_type": "distilled_spirits",
+        "brand_name": "SOCIETY",
+        "class_type": "AMERICAN SINGLE MALT WHISKEY",
+        "alcohol_content_pct": 52.9,
+        "alcohol_content_text": "52.9% ALC/VOL",
+        "net_contents": "700ml",
+        "name_and_address": "Corning & Company, Corning & Company Distillers, LLC, 5535 STATE FARM DR, , ROHNERT PARK CA 94928",
+        "serial_number": "250004",
+        "fanciful_name": "133.3"
+      },
+      "images": [
+        "25009001000342_0.jpg",
+        "25009001000342_1.jpg",
+        "25009001000342_2.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "25009001000342"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "SOCIETY",
+          "fanciful_name": "133.3",
+          "class_type": "AMERICAN SINGLE MALT WHISKEY",
+          "origin": "CALIFORNIA",
+          "serial_number": "250004",
+          "permit": "DSP-CA-15097",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "Corning & Company, Corning & Company Distillers, LLC / 5535 STATE FARM DR /  / ROHNERT PARK CA 94928"
+        },
+        "label_truth": {
+          "printed_brand": "SMWS",
+          "alcohol_content_pct": 52.9,
+          "alcohol_content_text": "52.9% ALC/VOL",
+          "net_contents": "700ml",
+          "vintage": null,
+          "government_warning": "present",
+          "notes": "filed brand SOCIETY; cask 133.3; 700ml; perspective-skewed scan"
+        },
+        "golden": {
+          "brand_name": "soft_warning",
+          "alcohol_content": "match",
+          "government_warning": "compliant",
+          "net_contents": "match"
+        },
+        "product_type": "distilled_spirits",
+        "category": "spirits"
+      }
+    },
+    {
+      "id": "cola_25010001000207",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "domestic",
+        "product_type": "distilled_spirits",
+        "brand_name": "UNRULY SPIRITS",
+        "class_type": "AGAVE SPIRITS",
+        "alcohol_content_pct": 40.0,
+        "alcohol_content_text": "40% ALCOHOL BY VOLUME",
+        "net_contents": "750 ML",
+        "name_and_address": "Unruly Brewing Company, LLC, 360 W WESTERN AVE, , Muskegon MI 49440",
+        "serial_number": "250025"
+      },
+      "images": [
+        "25010001000207_0.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "25010001000207"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "UNRULY SPIRITS",
+          "fanciful_name": null,
+          "class_type": "AGAVE SPIRITS",
+          "origin": "MICHIGAN",
+          "serial_number": "250025",
+          "permit": "DSP-MI-20205",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "Unruly Brewing Company, LLC / 360 W WESTERN AVE /  / Muskegon MI 49440"
+        },
+        "label_truth": {
+          "printed_brand": "UNRULY SPIRITS",
+          "alcohol_content_pct": 40.0,
+          "alcohol_content_text": "40% ALCOHOL BY VOLUME",
+          "net_contents": "750 ML",
+          "vintage": null,
+          "government_warning": "present",
+          "notes": "(80 proof); agave spirit; for-sale-in-Michigan-only exemption"
+        },
+        "golden": {
+          "brand_name": "match",
+          "alcohol_content": "match",
+          "government_warning": "compliant",
+          "net_contents": "match"
+        },
+        "product_type": "distilled_spirits",
+        "category": "spirits"
+      }
+    },
+    {
+      "id": "cola_25010001000661",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "domestic",
+        "product_type": "distilled_spirits",
+        "brand_name": "LAND RUN DISTILLERY",
+        "class_type": "STRAIGHT BOURBON WHISKY",
+        "alcohol_content_pct": 50.0,
+        "alcohol_content_text": "50 ALC/VOL",
+        "net_contents": "750 ML",
+        "name_and_address": "Land Run Distillery, LLC, 112 N MAIN ST, , Newkirk OK 74647, , LAND RUN DISTILLERY (Used on label)",
+        "serial_number": "251002",
+        "fanciful_name": "SMALL BATCH ELITE"
+      },
+      "images": [
+        "25010001000661_0.jpg",
+        "25010001000661_1.jpg",
+        "25010001000661_2.jpg",
+        "25010001000661_3.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "25010001000661"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "LAND RUN DISTILLERY",
+          "fanciful_name": "SMALL BATCH ELITE",
+          "class_type": "STRAIGHT BOURBON WHISKY",
+          "origin": "OKLAHOMA",
+          "serial_number": "251002",
+          "permit": "DSP-OK-21027",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "Land Run Distillery, LLC / 112 N MAIN ST /  / Newkirk OK 74647 /  / LAND RUN DISTILLERY (Used on label)"
+        },
+        "label_truth": {
+          "printed_brand": "LAND RUN",
+          "alcohol_content_pct": 50.0,
+          "alcohol_content_text": "50 ALC/VOL",
+          "net_contents": "750 ML",
+          "vintage": null,
+          "government_warning": "present",
+          "notes": "PROOF 100; front label artwork is rotated 90deg in the filing; warning on bottle photo"
+        },
+        "golden": {
+          "brand_name": "soft_warning",
+          "alcohol_content": "match",
+          "government_warning": "compliant",
+          "net_contents": "match"
+        },
+        "product_type": "distilled_spirits",
+        "category": "spirits"
+      }
+    },
+    {
+      "id": "cola_25013001000307",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "domestic",
+        "product_type": "distilled_spirits",
+        "brand_name": "FACTORY SELECT",
+        "class_type": "STRAIGHT BOURBON WHISKY",
+        "alcohol_content_pct": 50.0,
+        "alcohol_content_text": "50% ALC/VOL",
+        "net_contents": "750ML",
+        "name_and_address": "The Spirits of Detroit, Detroit City Distillery, LLC, 2462 RIOPELLE ST, , Detroit MI 48207",
+        "serial_number": "250032"
+      },
+      "images": [
+        "25013001000307_0.jpg",
+        "25013001000307_1.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "25013001000307"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "FACTORY SELECT",
+          "fanciful_name": null,
+          "class_type": "STRAIGHT BOURBON WHISKY",
+          "origin": "MICHIGAN",
+          "serial_number": "250032",
+          "permit": "DSP-MI-20010",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "The Spirits of Detroit, Detroit City Distillery, LLC / 2462 RIOPELLE ST /  / Detroit MI 48207"
+        },
+        "label_truth": {
+          "printed_brand": "Detroit City Distillery",
+          "alcohol_content_pct": 50.0,
+          "alcohol_content_text": "50% ALC/VOL",
+          "net_contents": "750ML",
+          "vintage": null,
+          "government_warning": "present",
+          "notes": "100 Proof; FACTORY SELECT; ornate engraved style"
+        },
+        "golden": {
+          "brand_name": "soft_warning",
+          "alcohol_content": "match",
+          "government_warning": "compliant",
+          "net_contents": "match"
+        },
+        "product_type": "distilled_spirits",
+        "category": "spirits"
+      }
+    },
+    {
+      "id": "cola_26008001000604",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "domestic",
+        "product_type": "malt_beverage",
+        "brand_name": "BEACH BALL BREWING",
+        "class_type": "BEER",
+        "alcohol_content_pct": 5.1,
+        "alcohol_content_text": "5.1% ABV",
+        "net_contents": null,
+        "name_and_address": "Beach Ball Brewing, Beach Ball Brewing LLC, 936 WALDRON RD UNIT D, , Corpus Christi TX 78418",
+        "serial_number": "262502",
+        "fanciful_name": "NAUTI AMERICAN LAGER BEER"
+      },
+      "images": [
+        "26008001000604_0.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "26008001000604"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "BEACH BALL BREWING",
+          "fanciful_name": "NAUTI AMERICAN LAGER BEER",
+          "class_type": "BEER",
+          "origin": "TEXAS",
+          "serial_number": "262502",
+          "permit": "BR-TX-20684",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "Beach Ball Brewing, Beach Ball Brewing LLC / 936 WALDRON RD UNIT D /  / Corpus Christi TX 78418"
+        },
+        "label_truth": {
+          "printed_brand": "Beach Ball Brewing",
+          "alcohol_content_pct": 5.1,
+          "alcohol_content_text": "5.1% ABV",
+          "net_contents": null,
+          "vintage": null,
+          "government_warning": "present",
+          "notes": "keg collar; brand+style handwritten-font; Nauti American Lager"
+        },
+        "golden": {
+          "brand_name": "soft_warning",
+          "alcohol_content": "match",
+          "government_warning": "compliant"
+        },
+        "product_type": "malt_beverage",
+        "category": "malt"
+      }
+    },
+    {
+      "id": "cola_26016001000083",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "domestic",
+        "product_type": "malt_beverage",
+        "brand_name": "ONE FAMILY BREWING CO.",
+        "class_type": "BEER",
+        "alcohol_content_pct": 5.0,
+        "alcohol_content_text": "5.0% ABV",
+        "net_contents": null,
+        "name_and_address": "DC BRAU BREWING, DC BRAU BREWING, LLC, 3178 B BLADENSBURG RD NE, , WASHINGTON DC 20018, , ONE FAMILY BREWING CO. (Used on label)",
+        "serial_number": "26OFSH",
+        "fanciful_name": "SHANKALICIOUS CLASSIC PILSNER"
+      },
+      "images": [
+        "26016001000083_0.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "26016001000083"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "ONE FAMILY BREWING CO.",
+          "fanciful_name": "SHANKALICIOUS CLASSIC PILSNER",
+          "class_type": "BEER",
+          "origin": "DISTRICT OF COLUMBIA",
+          "serial_number": "26OFSH",
+          "permit": "BR-DC-BRA-15000",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "DC BRAU BREWING, DC BRAU BREWING, LLC / 3178 B BLADENSBURG RD NE /  / WASHINGTON DC 20018 /  / ONE FAMILY BREWING CO. (Used on label)"
+        },
+        "label_truth": {
+          "printed_brand": "ONE FAMILY BREWING",
+          "alcohol_content_pct": 5.0,
+          "alcohol_content_text": "5.0% ABV",
+          "net_contents": null,
+          "vintage": null,
+          "government_warning": "present",
+          "notes": "Shankalicious can wrap; script font over busy golf art"
+        },
+        "golden": {
+          "brand_name": "soft_warning",
+          "alcohol_content": "match",
+          "government_warning": "compliant"
+        },
+        "product_type": "malt_beverage",
+        "category": "malt"
+      }
+    },
+    {
+      "id": "cola_26016001000296",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "domestic",
+        "product_type": "malt_beverage",
+        "brand_name": "LEINENKUGEL'S",
+        "class_type": "BEER",
+        "alcohol_content_pct": 4.7,
+        "alcohol_content_text": "4.7% ALC/VOL",
+        "net_contents": "1/2 barrel",
+        "name_and_address": "Molson Coors Beverage Company USA LLC, 4000 W STATE ST, , MILWAUKEE WI 53208, , JACOB LEINENKUGEL BREWING CO (Used on label)",
+        "serial_number": "260003",
+        "fanciful_name": "LOS BRAVOS"
+      },
+      "images": [
+        "26016001000296_0.jpg",
+        "26016001000296_1.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "26016001000296"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "LEINENKUGEL'S",
+          "fanciful_name": "LOS BRAVOS",
+          "class_type": "BEER",
+          "origin": "COLORADO",
+          "serial_number": "260003",
+          "permit": "BR-WI-MIL-1",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "Molson Coors Beverage Company USA LLC / 4000 W STATE ST /  / MILWAUKEE WI 53208 /  / JACOB LEINENKUGEL BREWING CO (Used on label)"
+        },
+        "label_truth": {
+          "printed_brand": "Leinenkugel's",
+          "alcohol_content_pct": 4.7,
+          "alcohol_content_text": "4.7% ALC/VOL",
+          "net_contents": "1/2 barrel",
+          "vintage": null,
+          "government_warning": "present",
+          "notes": "keg collar; LOS BRAVOS; warning on separate Molson Coors collar"
+        },
+        "golden": {
+          "brand_name": "soft_warning",
+          "alcohol_content": "match",
+          "government_warning": "compliant",
+          "net_contents": "match"
+        },
+        "product_type": "malt_beverage",
+        "category": "malt"
+      }
+    },
+    {
+      "id": "cola_26016001000418",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "domestic",
+        "product_type": "malt_beverage",
+        "brand_name": "OVER THE MOON",
+        "class_type": "BEER",
+        "alcohol_content_pct": 5.0,
+        "alcohol_content_text": "5% ALC/VOL",
+        "net_contents": "ONE PINT",
+        "name_and_address": "TALEA Beer Inc., 87 RICHARDSON ST UNIT 1, , Brooklyn NY 11211, , TALEA BEER CO. (Used on label)",
+        "serial_number": "260041"
+      },
+      "images": [
+        "26016001000418_0.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "26016001000418"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "OVER THE MOON",
+          "fanciful_name": null,
+          "class_type": "BEER",
+          "origin": "NEW YORK",
+          "serial_number": "260041",
+          "permit": "BR-NY-21514",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "TALEA Beer Inc. / 87 RICHARDSON ST UNIT 1 /  / Brooklyn NY 11211 /  / TALEA BEER CO. (Used on label)"
+        },
+        "label_truth": {
+          "printed_brand": "TALEA",
+          "alcohol_content_pct": 5.0,
+          "alcohol_content_text": "5% ALC/VOL",
+          "net_contents": "ONE PINT",
+          "vintage": null,
+          "government_warning": "present",
+          "notes": "filed brand OVER THE MOON; vertical/rotated type on can wrap"
+        },
+        "golden": {
+          "brand_name": "soft_warning",
+          "alcohol_content": "match",
+          "government_warning": "compliant",
+          "net_contents": "match"
+        },
+        "product_type": "malt_beverage",
+        "category": "malt"
+      }
+    },
+    {
+      "id": "cola_26019001000340",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "domestic",
+        "product_type": "malt_beverage",
+        "brand_name": "LOWER EAST SIDE",
+        "class_type": "BEER",
+        "alcohol_content_pct": 3.0,
+        "alcohol_content_text": "3% ALC/VOL",
+        "net_contents": "12 FL. OZ",
+        "name_and_address": "TUPPS Brewery, LLC, TUPPs Brewery, LLC, 402 E LOUISIANA ST BLDG 4, , McKinney TX 75069, , TUPPS BREWERY, LLC (Used on label)",
+        "serial_number": "26LESC"
+      },
+      "images": [
+        "26019001000340_0.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "26019001000340"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "LOWER EAST SIDE",
+          "fanciful_name": null,
+          "class_type": "BEER",
+          "origin": "TEXAS",
+          "serial_number": "26LESC",
+          "permit": "BR-TX-20094",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "TUPPS Brewery, LLC, TUPPs Brewery, LLC / 402 E LOUISIANA ST BLDG 4 /  / McKinney TX 75069 /  / TUPPS BREWERY, LLC (Used on label)"
+        },
+        "label_truth": {
+          "printed_brand": "TUPPS",
+          "alcohol_content_pct": 3.0,
+          "alcohol_content_text": "3% ALC/VOL",
+          "net_contents": "12 FL. OZ",
+          "vintage": null,
+          "government_warning": "present",
+          "notes": "filed brand LOWER EAST SIDE; genuine 3% lager; rotated warning"
+        },
+        "golden": {
+          "brand_name": "soft_warning",
+          "alcohol_content": "match",
+          "government_warning": "compliant",
+          "net_contents": "match"
+        },
+        "product_type": "malt_beverage",
+        "category": "malt"
+      }
+    },
+    {
+      "id": "cola_26020001000048",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "domestic",
+        "product_type": "malt_beverage",
+        "brand_name": "SCHNUCKI",
+        "class_type": "BEER",
+        "alcohol_content_pct": 5.3,
+        "alcohol_content_text": "5.3% Alcohol by Volume",
+        "net_contents": "15.5 U.S. Gallons",
+        "name_and_address": "MOBA, Moba Brewing Company LLC, 9600 PLOOF RD SE UNIT 7, , Leland NC 28451",
+        "serial_number": "260014"
+      },
+      "images": [
+        "26020001000048_0.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "26020001000048"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "SCHNUCKI",
+          "fanciful_name": null,
+          "class_type": "BEER",
+          "origin": "NORTH CAROLINA",
+          "serial_number": "260014",
+          "permit": "BR-NC-21650",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "MOBA, Moba Brewing Company LLC / 9600 PLOOF RD SE UNIT 7 /  / Leland NC 28451"
+        },
+        "label_truth": {
+          "printed_brand": "Schnucki",
+          "alcohol_content_pct": 5.3,
+          "alcohol_content_text": "5.3% Alcohol by Volume",
+          "net_contents": "15.5 U.S. Gallons",
+          "vintage": null,
+          "government_warning": "present",
+          "notes": "PHOTOGRAPH of a keg collar with real handwriting (Marzen Lager, MOBA Brewing)"
+        },
+        "golden": {
+          "brand_name": "soft_warning",
+          "alcohol_content": "match",
+          "government_warning": "compliant",
+          "net_contents": "match"
+        },
+        "product_type": "malt_beverage",
+        "category": "malt"
+      }
+    },
+    {
+      "id": "cola_26021001000305",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "domestic",
+        "product_type": "malt_beverage",
+        "brand_name": "HAZY INDIA PALE ALE",
+        "class_type": "BEER",
+        "alcohol_content_pct": 5.9,
+        "alcohol_content_text": "5.9% Alc/Vol",
+        "net_contents": "1 Pint",
+        "name_and_address": "CoStar Brewing, Inc., 919 N SAINT CLAIR ST, , Pittsburgh PA 15206, , COSTAR BREWING (Used on label)",
+        "serial_number": "260001"
+      },
+      "images": [
+        "26021001000305_0.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "26021001000305"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "HAZY INDIA PALE ALE",
+          "fanciful_name": null,
+          "class_type": "BEER",
+          "origin": "PENNSYLVANIA",
+          "serial_number": "260001",
+          "permit": "BR-PA-20017",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "CoStar Brewing, Inc. / 919 N SAINT CLAIR ST /  / Pittsburgh PA 15206 /  / COSTAR BREWING (Used on label)"
+        },
+        "label_truth": {
+          "printed_brand": "CoStar Brewing",
+          "alcohol_content_pct": 5.9,
+          "alcohol_content_text": "5.9% Alc/Vol",
+          "net_contents": "1 Pint",
+          "vintage": null,
+          "government_warning": "present",
+          "notes": "filed brand HAZY INDIA PALE ALE; tie-dye can wrap, rotated text"
+        },
+        "golden": {
+          "brand_name": "soft_warning",
+          "alcohol_content": "match",
+          "government_warning": "compliant",
+          "net_contents": "match"
+        },
+        "product_type": "malt_beverage",
+        "category": "malt"
+      }
+    },
+    {
+      "id": "cola_26021001000539",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "domestic",
+        "product_type": "malt_beverage",
+        "brand_name": "BERT'S BREWING",
+        "class_type": "BEER",
+        "alcohol_content_pct": 5.0,
+        "alcohol_content_text": "5.0% ALC. BY VOL",
+        "net_contents": "1 PINT",
+        "name_and_address": "Prost Brewing Company, Prost Northglenn LLC, 351 W 104TH AVE STE A & B, , Northglenn CO 80234",
+        "serial_number": "26BRCZ",
+        "fanciful_name": "CZECH STYLE DARK LAGER"
+      },
+      "images": [
+        "26021001000539_0.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "26021001000539"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "BERT'S BREWING",
+          "fanciful_name": "CZECH STYLE DARK LAGER",
+          "class_type": "BEER",
+          "origin": "COLORADO",
+          "serial_number": "26BRCZ",
+          "permit": "BR-CO-21566",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "Prost Brewing Company, Prost Northglenn LLC / 351 W 104TH AVE STE A & B /  / Northglenn CO 80234"
+        },
+        "label_truth": {
+          "printed_brand": "BERT'S BREWING",
+          "alcohol_content_pct": 5.0,
+          "alcohol_content_text": "5.0% ALC. BY VOL",
+          "net_contents": "1 PINT",
+          "vintage": null,
+          "government_warning": "present",
+          "notes": "Czech Style Dark Lager; rotated warning"
+        },
+        "golden": {
+          "brand_name": "match",
+          "alcohol_content": "match",
+          "government_warning": "compliant",
+          "net_contents": "match"
+        },
+        "product_type": "malt_beverage",
+        "category": "malt"
+      }
+    },
+    {
+      "id": "cola_26022001000421",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "domestic",
+        "product_type": "malt_beverage",
+        "brand_name": "SCHWARZBIER LAGER",
+        "class_type": "BEER",
+        "alcohol_content_pct": 4.8,
+        "alcohol_content_text": "4.8% alc/vol",
+        "net_contents": "15.5 U.S. Gallons",
+        "name_and_address": "HELICON BREWING, BRUNETTI BREWING COMPANY, 102 UNION AVE, , OAKDALE PA 15071",
+        "serial_number": "26SCHW"
+      },
+      "images": [
+        "26022001000421_0.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "26022001000421"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "SCHWARZBIER LAGER",
+          "fanciful_name": null,
+          "class_type": "BEER",
+          "origin": "PENNSYLVANIA",
+          "serial_number": "26SCHW",
+          "permit": "BR-PA-BRU-15000",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "HELICON BREWING, BRUNETTI BREWING COMPANY / 102 UNION AVE /  / OAKDALE PA 15071"
+        },
+        "label_truth": {
+          "printed_brand": "HELICON BREWING",
+          "alcohol_content_pct": 4.8,
+          "alcohol_content_text": "4.8% alc/vol",
+          "net_contents": "15.5 U.S. Gallons",
+          "vintage": null,
+          "government_warning": "present",
+          "notes": "keg collar with calendar ring; Schwarzbier Lager"
+        },
+        "golden": {
+          "brand_name": "soft_warning",
+          "alcohol_content": "match",
+          "government_warning": "compliant",
+          "net_contents": "match"
+        },
+        "product_type": "malt_beverage",
+        "category": "malt"
+      }
+    },
+    {
+      "id": "cola_26023001000320",
+      "use_cases": [
+        "cola_golden"
+      ],
+      "application": {
+        "source": "domestic",
+        "product_type": "malt_beverage",
+        "brand_name": "GIRO SPLENDIDO",
+        "class_type": "BEER",
+        "alcohol_content_pct": 5.2,
+        "alcohol_content_text": "5.2% ALC./VOL.",
+        "net_contents": "1/2 BBL (15.5 GALLONS)",
+        "name_and_address": "Familiar Ventures, LLC, 351 W 104TH AVE STE A&B, , Northglenn CO 80234, , THE LEOPARD MARK BREWING CO. (Used on label)",
+        "serial_number": "260001",
+        "fanciful_name": "ITALIAN PILZNER"
+      },
+      "images": [
+        "26023001000320_0.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry",
+        "ttbid": "26023001000320"
+      },
+      "cola_golden": {
+        "registry": {
+          "brand_name": "GIRO SPLENDIDO",
+          "fanciful_name": "ITALIAN PILZNER",
+          "class_type": "BEER",
+          "origin": "COLORADO",
+          "serial_number": "260001",
+          "permit": "BR-CO-21643",
+          "date_issued": "",
+          "status": "APPROVED",
+          "applicant": "Familiar Ventures, LLC / 351 W 104TH AVE STE A&B /  / Northglenn CO 80234 /  / THE LEOPARD MARK BREWING CO. (Used on label)"
+        },
+        "label_truth": {
+          "printed_brand": "Giro Splendido",
+          "alcohol_content_pct": 5.2,
+          "alcohol_content_text": "5.2% ALC./VOL.",
+          "net_contents": "1/2 BBL (15.5 GALLONS)",
+          "vintage": null,
+          "government_warning": "present",
+          "notes": "keg collar; white-on-blue; Leopard Mask Brewing"
+        },
+        "golden": {
+          "brand_name": "soft_warning",
+          "alcohol_content": "match",
+          "government_warning": "compliant",
+          "net_contents": "match"
+        },
+        "product_type": "malt_beverage",
+        "category": "malt"
+      }
+    },
+    {
+      "id": "ocr_jack_daniels_eu_spirit",
+      "use_cases": [
+        "ocr_stress"
+      ],
+      "application": {
+        "brand_name": "Jack Daniel's",
+        "class_type": "Tennessee Sour Mash Whiskey",
+        "alcohol_content_pct": 40.0,
+        "alcohol_content_text": "40% Vol.",
+        "net_contents": "70cl",
+        "name_and_address": "Jack Daniel Distillery, Lynchburg, Tennessee 37352 U.S.A.",
+        "product_type": "distilled_spirits"
+      },
+      "images": [
+        "jack_daniels_eu_spirit.jpg"
+      ],
+      "provenance": {
+        "source": "wikimedia_commons",
+        "commons_file": "Jack Daniels bottle.jpg",
+        "license": "CC BY-SA 3.0",
+        "author": "Clément Bucco-Lechat",
+        "notes": "Ornate white-on-black label, curved 'Old No. 7' emblem, glass glare; EU 70cl bottle (no US Govt Warning)."
+      },
+      "ocr_expect": {
+        "ground_truth": {
+          "brand_name": "Jack Daniel's",
+          "class_type": "Tennessee Sour Mash Whiskey",
+          "alcohol_content_pct": 40.0,
+          "alcohol_content_text": "40% Vol.",
+          "net_contents": "70cl",
+          "name_and_address": "Jack Daniel Distillery, Lynchburg, Tennessee 37352 U.S.A."
+        },
+        "expect": {
+          "quality": "ok",
+          "brand_status": [
+            "match",
+            "soft_warning"
+          ],
+          "abv_reads": true
+        },
+        "category": "spirit"
+      }
+    },
+    {
+      "id": "ocr_samuel_adams_beer",
+      "use_cases": [
+        "ocr_stress"
+      ],
+      "application": {
+        "brand_name": "Samuel Adams",
+        "product_type": "malt_beverage"
+      },
+      "images": [
+        "samuel_adams_beer.jpg"
+      ],
+      "provenance": {
+        "source": "wikimedia_commons",
+        "commons_file": "Samuel Adams Summer Ale (5914190156).jpg",
+        "license": "CC BY 2.0",
+        "author": "Erik Cleves Kristensen",
+        "notes": "Classic beer label, decent photo."
+      },
+      "ocr_expect": {
+        "ground_truth": {
+          "brand_name": "Samuel Adams"
+        },
+        "expect": {
+          "quality": "ok",
+          "brand_status": [
+            "match",
+            "soft_warning"
+          ],
+          "abv_reads": false
+        },
+        "category": "beer"
+      }
+    },
+    {
+      "id": "ocr_sierra_nevada_beer",
+      "use_cases": [
+        "ocr_stress"
+      ],
+      "application": {
+        "brand_name": "Sierra Nevada",
+        "product_type": "malt_beverage"
+      },
+      "images": [
+        "sierra_nevada_beer.jpeg"
+      ],
+      "provenance": {
+        "source": "wikimedia_commons",
+        "commons_file": "28 105 Sierra Nevada Beer Camp Tropical Ipa 2016 (145093527).jpeg",
+        "license": "CC BY-SA 3.0",
+        "author": "Matthew Bellemare",
+        "notes": "Busy seasonal label, lots of text."
+      },
+      "ocr_expect": {
+        "ground_truth": {
+          "brand_name": "Sierra Nevada"
+        },
+        "expect": {
+          "quality": "ok",
+          "brand_status": [
+            "match",
+            "soft_warning"
+          ],
+          "abv_reads": false
+        },
+        "category": "beer"
+      }
+    },
+    {
+      "id": "ocr_jim_beam_bourbon",
+      "use_cases": [
+        "ocr_stress"
+      ],
+      "application": {
+        "brand_name": "Jim Beam",
+        "class_type": "Kentucky Straight Bourbon Whiskey",
+        "product_type": "distilled_spirits"
+      },
+      "images": [
+        "jim_beam_bourbon.jpg"
+      ],
+      "provenance": {
+        "source": "wikimedia_commons",
+        "commons_file": "Jim Beam White Label New.jpg",
+        "license": "CC BY-SA 4.0",
+        "author": "Okkornj",
+        "notes": "Stylised brand script; OCR reads 'JIMBEAN' (1-char slip) -> fuzzy match."
+      },
+      "ocr_expect": {
+        "ground_truth": {
+          "brand_name": "Jim Beam",
+          "class_type": "Kentucky Straight Bourbon Whiskey"
+        },
+        "expect": {
+          "quality": "ok",
+          "brand_status": [
+            "match",
+            "soft_warning"
+          ],
+          "abv_reads": false
+        },
+        "category": "spirit"
+      }
+    },
+    {
+      "id": "ocr_titos_vodka",
+      "use_cases": [
+        "ocr_stress"
+      ],
+      "application": {
+        "brand_name": "Tito's Handmade Vodka",
+        "product_type": "distilled_spirits"
+      },
+      "images": [
+        "titos_vodka.jpg"
+      ],
+      "provenance": {
+        "source": "wikimedia_commons",
+        "commons_file": "Tito's Vodka bottle 1.75L size.jpg",
+        "license": "CC BY-SA 4.0",
+        "author": "Kenneth C. Zirkel",
+        "notes": "Handmade vodka, clear label."
+      },
+      "ocr_expect": {
+        "ground_truth": {
+          "brand_name": "Tito's Handmade Vodka"
+        },
+        "expect": {
+          "quality": "ok",
+          "brand_status": [
+            "match",
+            "soft_warning"
+          ],
+          "abv_reads": false
+        },
+        "category": "spirit"
+      }
+    },
+    {
+      "id": "ocr_barefoot_wine",
+      "use_cases": [
+        "ocr_stress"
+      ],
+      "application": {
+        "brand_name": "Barefoot",
+        "class_type": "White Zinfandel",
+        "product_type": "wine"
+      },
+      "images": [
+        "barefoot_wine.jpg"
+      ],
+      "provenance": {
+        "source": "wikimedia_commons",
+        "commons_file": "Bottle and glass of Barefoot white zinfandel wine, 2012.jpg",
+        "license": "CC0",
+        "author": "DimiTalen",
+        "notes": null
+      },
+      "ocr_expect": {
+        "ground_truth": {
+          "brand_name": "Barefoot",
+          "class_type": "White Zinfandel"
+        },
+        "expect": {
+          "quality": "ok",
+          "brand_status": [
+            "match",
+            "soft_warning"
+          ],
+          "abv_reads": false
+        },
+        "category": "wine"
+      }
+    },
+    {
+      "id": "ocr_beringer_wine",
+      "use_cases": [
+        "ocr_stress"
+      ],
+      "application": {
+        "brand_name": "Beringer",
+        "class_type": "White Zinfandel",
+        "net_contents": "750ml",
+        "vintage": "2004",
+        "product_type": "wine"
+      },
+      "images": [
+        "beringer_wine.jpg"
+      ],
+      "provenance": {
+        "source": "wikimedia_commons",
+        "commons_file": "Beringer White Zinfandel.jpg",
+        "license": "CC BY-SA 2.0",
+        "author": "ceasol",
+        "notes": "Reads brand, 750ml, vintage 2004, 'PRODUCT OF USA'."
+      },
+      "ocr_expect": {
+        "ground_truth": {
+          "brand_name": "Beringer",
+          "class_type": "White Zinfandel",
+          "net_contents": "750ml",
+          "vintage": "2004"
+        },
+        "expect": {
+          "quality": "ok",
+          "brand_status": [
+            "match",
+            "soft_warning"
+          ],
+          "abv_reads": false
+        },
+        "category": "wine"
+      }
+    },
+    {
+      "id": "ocr_four_loko_chaos",
+      "use_cases": [
+        "ocr_stress"
+      ],
+      "application": {
+        "brand_name": "Four Loko",
+        "alcohol_content_pct": 12.0,
+        "alcohol_content_text": "12.0% ALC/VOL"
+      },
+      "images": [
+        "four_loko_chaos.jpg"
+      ],
+      "provenance": {
+        "source": "wikimedia_commons",
+        "commons_file": "Four Loko, 2010.jpg",
+        "license": "Public domain",
+        "author": "U.S. Food and Drug Administration",
+        "notes": "Rainbow graffiti can. OCR reads '12.0%' but the 'ALC/VOL' anchor is split off, so the (deliberately anchor-requiring) extractor doesn't confirm the ABV, and the graffiti brand doesn't match — a documented hard case, quality still 'ok'."
+      },
+      "ocr_expect": {
+        "ground_truth": {
+          "brand_name": "Four Loko",
+          "alcohol_content_pct": 12.0,
+          "alcohol_content_text": "12.0% ALC/VOL"
+        },
+        "expect": {
+          "quality": "ok",
+          "brand_status": null,
+          "abv_reads": false
+        },
+        "category": "chaos"
+      }
+    },
+    {
+      "id": "ocr_buzzballz_chaos",
+      "use_cases": [
+        "ocr_stress"
+      ],
+      "application": {
+        "brand_name": "BuzzBallz",
+        "alcohol_content_pct": 15.0
+      },
+      "images": [
+        "buzzballz_chaos.jpg"
+      ],
+      "provenance": {
+        "source": "wikimedia_commons",
+        "commons_file": "BuzzBallz Lime 'Rita Cocktail.jpg",
+        "license": "CC BY-SA 4.0",
+        "author": "TaurusEmerald",
+        "notes": "Curved spherical can; reads brand+flavor, but the small ABV line on the curve is missed."
+      },
+      "ocr_expect": {
+        "ground_truth": {
+          "brand_name": "BuzzBallz",
+          "alcohol_content_pct": 15.0
+        },
+        "expect": {
+          "quality": "ok",
+          "brand_status": [
+            "match",
+            "soft_warning"
+          ],
+          "abv_reads": false
+        },
+        "category": "chaos"
+      }
+    },
+    {
+      "id": "ocr_makers_mark_bad_photo",
+      "use_cases": [
+        "ocr_stress"
+      ],
+      "application": {
+        "brand_name": "Maker's Mark"
+      },
+      "images": [
+        "makers_mark_bad_photo.jpg"
+      ],
+      "provenance": {
+        "source": "wikimedia_commons",
+        "commons_file": "Maker's Mark 750 090PF.jpg",
+        "license": "CC BY-SA 3.0",
+        "author": "Bbadgett",
+        "notes": "Bottle tilted/foreshortened on a counter, in shadow — OCR recovers ~10 chars. Should flag retake."
+      },
+      "ocr_expect": {
+        "ground_truth": {
+          "brand_name": "Maker's Mark"
+        },
+        "expect": {
+          "quality": "low",
+          "brand_status": null,
+          "abv_reads": false
+        },
+        "category": "bad_photo"
+      }
+    },
+    {
+      "id": "ocr_shelf_far_bad_photo",
+      "use_cases": [
+        "ocr_stress"
+      ],
+      "application": {
+        "brand_name": "Four Loko"
+      },
+      "images": [
+        "shelf_far_bad_photo.jpg"
+      ],
+      "provenance": {
+        "source": "wikimedia_commons",
+        "commons_file": "Joose, Tilt, Four Loko for sale (2010).jpg",
+        "license": "CC BY-SA 2.0",
+        "author": "Kyle James",
+        "notes": "Far, cluttered shelf of many cans — too distant to read. Should flag retake."
+      },
+      "ocr_expect": {
+        "ground_truth": {
+          "brand_name": "Four Loko"
+        },
+        "expect": {
+          "quality": "low",
+          "brand_status": null,
+          "abv_reads": false
+        },
+        "category": "bad_photo"
+      }
+    },
+    {
+      "id": "ocr_corona_beer",
+      "use_cases": [
+        "ocr_stress"
+      ],
+      "application": {
+        "brand_name": "Corona Extra",
+        "class_type": "Cerveza",
+        "product_type": "malt_beverage"
+      },
+      "images": [
+        "corona_beer.jpg"
+      ],
+      "provenance": {
+        "source": "wikimedia_commons",
+        "commons_file": "Corona Extra beer bottle (2019).png",
+        "license": "CC BY-SA 4.0",
+        "author": "Bruce The Deus",
+        "notes": "Front of a Corona Extra bottle — imported lager, clear glass."
+      },
+      "ocr_expect": {
+        "ground_truth": {
+          "brand_name": "Corona Extra",
+          "class_type": "Cerveza"
+        },
+        "expect": {
+          "quality": "ok",
+          "brand_status": [
+            "match",
+            "soft_warning"
+          ],
+          "abv_reads": false
+        },
+        "category": "beer"
+      }
+    },
+    {
+      "id": "ocr_gallo_cabernet",
+      "use_cases": [
+        "ocr_stress"
+      ],
+      "application": {
+        "brand_name": "Gallo Family",
+        "class_type": "Cabernet Sauvignon",
+        "product_type": "wine"
+      },
+      "images": [
+        "gallo_cabernet.jpg"
+      ],
+      "provenance": {
+        "source": "wikimedia_commons",
+        "commons_file": "Gallo Family Cabernet (OFF 8500000005002)",
+        "license": "CC BY-SA",
+        "author": "Open Food Facts contributors",
+        "notes": "Gallo Family Vineyards Cabernet Sauvignon front label."
+      },
+      "ocr_expect": {
+        "ground_truth": {
+          "brand_name": "Gallo Family",
+          "class_type": "Cabernet Sauvignon"
+        },
+        "expect": {
+          "quality": "ok",
+          "brand_status": [
+            "match",
+            "soft_warning"
+          ],
+          "abv_reads": false
+        },
+        "category": "wine"
+      }
+    },
+    {
+      "id": "ocr_jameson_whiskey",
+      "use_cases": [
+        "ocr_stress"
+      ],
+      "application": {
+        "brand_name": "Jameson",
+        "class_type": "Irish Whiskey",
+        "product_type": "distilled_spirits"
+      },
+      "images": [
+        "jameson_whiskey.jpg"
+      ],
+      "provenance": {
+        "source": "wikimedia_commons",
+        "commons_file": "Jameson Irish Whiskey (11898467796).jpg",
+        "license": "CC BY 2.0",
+        "author": "Michael Bentley",
+        "notes": "Jameson Irish Whiskey front label."
+      },
+      "ocr_expect": {
+        "ground_truth": {
+          "brand_name": "Jameson",
+          "class_type": "Irish Whiskey"
+        },
+        "expect": {
+          "quality": "ok",
+          "brand_status": [
+            "match",
+            "soft_warning"
+          ],
+          "abv_reads": false
+        },
+        "category": "spirit"
+      }
+    },
+    {
+      "id": "ocr_seven_deadly_zins",
+      "use_cases": [
+        "ocr_stress"
+      ],
+      "application": {
+        "brand_name": "7 Deadly Zins",
+        "class_type": "Zinfandel",
+        "vintage": "2017",
+        "product_type": "wine"
+      },
+      "images": [
+        "seven_deadly_zins.jpg"
+      ],
+      "provenance": {
+        "source": "wikimedia_commons",
+        "commons_file": "7 Deadly Zins (OFF 0652935100012)",
+        "license": "CC BY-SA",
+        "author": "Open Food Facts contributors",
+        "notes": "7 Deadly Zins Lodi Old Vine Zinfandel — brand, varietal and vintage all print clearly."
+      },
+      "ocr_expect": {
+        "ground_truth": {
+          "brand_name": "7 Deadly Zins",
+          "class_type": "Zinfandel",
+          "vintage": "2017"
+        },
+        "expect": {
+          "quality": "ok",
+          "brand_status": [
+            "match",
+            "soft_warning"
+          ],
+          "abv_reads": false
+        },
+        "category": "wine"
+      }
+    },
+    {
+      "id": "ocr_smirnoff_vodka",
+      "use_cases": [
+        "ocr_stress"
+      ],
+      "application": {
+        "brand_name": "Smirnoff",
+        "class_type": "Vodka",
+        "product_type": "distilled_spirits"
+      },
+      "images": [
+        "smirnoff_vodka.jpg"
+      ],
+      "provenance": {
+        "source": "wikimedia_commons",
+        "commons_file": "Smirnoff Vodka bottle front.jpg",
+        "license": "CC BY-SA 4.0",
+        "author": "Alex P. Kok",
+        "notes": "Smirnoff vodka front label; net contents 'ONE LITER' reads."
+      },
+      "ocr_expect": {
+        "ground_truth": {
+          "brand_name": "Smirnoff",
+          "class_type": "Vodka"
+        },
+        "expect": {
+          "quality": "ok",
+          "brand_status": [
+            "match",
+            "soft_warning"
+          ],
+          "abv_reads": false
+        },
+        "category": "spirit"
+      }
+    },
+    {
+      "id": "ocr_crown_royal",
+      "use_cases": [
+        "ocr_stress"
+      ],
+      "application": {
+        "brand_name": "Crown Royal",
+        "product_type": "distilled_spirits"
+      },
+      "images": [
+        "crown_royal.jpg"
+      ],
+      "provenance": {
+        "source": "wikimedia_commons",
+        "commons_file": "Crown Royal Cask No. 16 whiskey.jpg",
+        "license": "CC BY 2.0",
+        "author": "Flickr user @joefoodie",
+        "notes": "Crown Royal — ornate gold-on-purple script; OCR garbles it, so it flags low/retake."
+      },
+      "ocr_expect": {
+        "ground_truth": {
+          "brand_name": "Crown Royal"
+        },
+        "expect": {
+          "quality": "low",
+          "brand_status": null,
+          "abv_reads": false
+        },
+        "category": "spirit"
+      }
+    },
+    {
+      "id": "ocr_yellowtail_wine",
+      "use_cases": [
+        "ocr_stress"
+      ],
+      "application": {
+        "brand_name": "yellow tail",
+        "class_type": "Shiraz",
+        "product_type": "wine"
+      },
+      "images": [
+        "yellowtail_wine.jpg"
+      ],
+      "provenance": {
+        "source": "wikimedia_commons",
+        "commons_file": "Yellowtail.jpg",
+        "license": "CC BY-SA 3.0",
+        "author": "Byung do jung",
+        "notes": "[yellow tail] Shiraz — the all-lowercase stylised logo is hard; the brand is recovered fuzzily."
+      },
+      "ocr_expect": {
+        "ground_truth": {
+          "brand_name": "yellow tail",
+          "class_type": "Shiraz"
+        },
+        "expect": {
+          "quality": "ok",
+          "brand_status": [
+            "match",
+            "soft_warning"
+          ],
+          "abv_reads": false
+        },
+        "category": "wine"
+      }
+    },
+    {
+      "id": "corpus_old_tom_clean_pass",
+      "use_cases": [
+        "corpus_golden",
+        "base_seed"
+      ],
+      "application": {
+        "serial_number": "24-001",
+        "source": "domestic",
+        "product_type": "distilled_spirits",
+        "brand_name": "OLD TOM DISTILLERY",
+        "class_type": "Kentucky Straight Bourbon Whiskey",
+        "alcohol_content_pct": 45.0,
+        "alcohol_content_text": "45% Alc./Vol. (90 Proof)",
+        "net_contents": "750 mL",
+        "name_and_address": "Bottled by Old Tom Distillery, Bardstown, KY"
+      },
+      "images": [
+        "old_tom_clean_pass.png"
+      ],
+      "provenance": {
+        "source": "synthetic"
+      },
+      "corpus_golden": {
+        "title": "OLD TOM DISTILLERY — clean pass",
+        "description": "The brief's example distilled-spirits label. Every field on the label matches the application and the government warning is exact, so the engine should return a clean pass.",
+        "label": {
+          "brand_name": "OLD TOM DISTILLERY",
+          "class_type": "Kentucky Straight Bourbon Whiskey",
+          "alcohol_content_text": "45% Alc./Vol. (90 Proof)",
+          "net_contents": "750 mL",
+          "name_and_address": "Bottled by Old Tom Distillery, Bardstown, KY",
+          "government_warning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems."
+        },
+        "golden": {
+          "overall": "pass",
+          "fields": {
+            "brand_name": "match",
+            "class_type": "match",
+            "alcohol_content": "match",
+            "net_contents": "match",
+            "name_and_address": "match"
+          },
+          "government_warning": "compliant",
+          "rationale": "All fields match and the warning is verbatim and all-caps."
+        }
+      },
+      "decision": {
+        "decision": "approve",
+        "note": "All checks green. Approved for demo."
+      }
+    },
+    {
+      "id": "corpus_coastal_vines_wine_pass",
+      "use_cases": [
+        "corpus_golden",
+        "base_seed"
+      ],
+      "application": {
+        "serial_number": "24-118",
+        "source": "imported",
+        "product_type": "wine",
+        "brand_name": "COASTAL VINES",
+        "class_type": "Cabernet Sauvignon",
+        "alcohol_content_pct": 13.5,
+        "alcohol_content_text": "13.5% Alc./Vol.",
+        "net_contents": "750 mL",
+        "vintage": "2021",
+        "country_of_origin": "Product of France",
+        "name_and_address": "Imported by Coastal Vines Selections, New York, NY"
+      },
+      "images": [
+        "coastal_vines_wine_pass.png"
+      ],
+      "provenance": {
+        "source": "synthetic"
+      },
+      "corpus_golden": {
+        "title": "COASTAL VINES — imported wine, clean pass",
+        "description": "A second product type (wine) and source (imported) so the corpus exercises vintage, appellation, and country-of-origin fields. Everything matches; clean pass.",
+        "label": {
+          "brand_name": "COASTAL VINES",
+          "class_type": "Cabernet Sauvignon",
+          "alcohol_content_text": "13.5% Alc./Vol.",
+          "net_contents": "750 mL",
+          "vintage": "2021",
+          "country_of_origin": "Product of France",
+          "name_and_address": "Imported by Coastal Vines Selections, New York, NY",
+          "government_warning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems."
+        },
+        "golden": {
+          "overall": "pass",
+          "fields": {
+            "brand_name": "match",
+            "class_type": "match",
+            "alcohol_content": "match",
+            "net_contents": "match",
+            "vintage": "match",
+            "country_of_origin": "match",
+            "name_and_address": "match"
+          },
+          "government_warning": "compliant",
+          "rationale": "All wine fields match and the warning is compliant."
+        }
+      },
+      "decision": {
+        "decision": "approve",
+        "note": null
+      }
+    },
+    {
+      "id": "corpus_stones_throw_case_diff",
+      "use_cases": [
+        "corpus_golden",
+        "base_seed"
+      ],
+      "application": {
+        "serial_number": "24-203",
+        "source": "domestic",
+        "product_type": "distilled_spirits",
+        "brand_name": "Stone's Throw",
+        "class_type": "London Dry Gin",
+        "alcohol_content_pct": 40.0,
+        "alcohol_content_text": "40% Alc./Vol. (80 Proof)",
+        "net_contents": "750 mL",
+        "name_and_address": "Distilled by Stone's Throw Spirits, Portland, OR"
+      },
+      "images": [
+        "stones_throw_case_diff.png"
+      ],
+      "provenance": {
+        "source": "synthetic"
+      },
+      "corpus_golden": {
+        "title": "STONE'S THROW — case-only brand difference (soft warning)",
+        "description": "Dave's nuance: the label reads 'STONE'S THROW' in all caps while the application has 'Stone's Throw'. Obviously the same brand, so this is a soft warning, not a hard mismatch.",
+        "label": {
+          "brand_name": "STONE'S THROW",
+          "class_type": "London Dry Gin",
+          "alcohol_content_text": "40% Alc./Vol. (80 Proof)",
+          "net_contents": "750 mL",
+          "name_and_address": "Distilled by Stone's Throw Spirits, Portland, OR",
+          "government_warning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems."
+        },
+        "golden": {
+          "overall": "warning",
+          "fields": {
+            "brand_name": "soft_warning",
+            "class_type": "match",
+            "alcohol_content": "match",
+            "net_contents": "match",
+            "name_and_address": "match"
+          },
+          "government_warning": "compliant",
+          "rationale": "Brand differs only by letter case; flag as a soft warning for a human glance rather than failing the label."
+        }
+      }
+    },
+    {
+      "id": "corpus_abv_mismatch",
+      "use_cases": [
+        "corpus_golden",
+        "base_seed"
+      ],
+      "application": {
+        "serial_number": "24-077",
+        "source": "domestic",
+        "product_type": "distilled_spirits",
+        "brand_name": "SILVER CREEK",
+        "class_type": "Tennessee Whiskey",
+        "alcohol_content_pct": 45.0,
+        "alcohol_content_text": "45% Alc./Vol. (90 Proof)",
+        "net_contents": "750 mL",
+        "name_and_address": "Bottled by Silver Creek Distillers, Lynchburg, TN"
+      },
+      "images": [
+        "abv_mismatch.png"
+      ],
+      "provenance": {
+        "source": "synthetic"
+      },
+      "corpus_golden": {
+        "title": "Silver Creek — ABV mismatch (fail)",
+        "description": "The most common data-entry error: the application says 45% but the label prints 40%. A genuine numeric mismatch the agent must catch.",
+        "label": {
+          "brand_name": "SILVER CREEK",
+          "class_type": "Tennessee Whiskey",
+          "alcohol_content_text": "40% Alc./Vol. (80 Proof)",
+          "net_contents": "750 mL",
+          "name_and_address": "Bottled by Silver Creek Distillers, Lynchburg, TN",
+          "government_warning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems."
+        },
+        "golden": {
+          "overall": "fail",
+          "fields": {
+            "brand_name": "match",
+            "class_type": "match",
+            "alcohol_content": "mismatch",
+            "net_contents": "match",
+            "name_and_address": "match"
+          },
+          "government_warning": "compliant",
+          "rationale": "Label ABV (40%) does not match the application (45%)."
+        }
+      },
+      "decision": {
+        "decision": "request_changes",
+        "note": "Label prints a different ABV than the application. Returned for correction."
+      }
+    },
+    {
+      "id": "corpus_altered_warning_titlecase",
+      "use_cases": [
+        "corpus_golden"
+      ],
+      "application": {
+        "serial_number": "24-149",
+        "source": "domestic",
+        "product_type": "malt_beverage",
+        "brand_name": "HIGHLAND MIST",
+        "class_type": "India Pale Ale",
+        "alcohol_content_pct": 6.5,
+        "alcohol_content_text": "6.5% Alc./Vol.",
+        "net_contents": "12 FL OZ",
+        "name_and_address": "Brewed by Highland Mist Brewing, Asheville, NC"
+      },
+      "images": [
+        "altered_warning_titlecase.png"
+      ],
+      "provenance": {
+        "source": "synthetic"
+      },
+      "corpus_golden": {
+        "title": "Highland Mist — title-case government warning (fail)",
+        "description": "Jenny's catch: every field matches, but the warning reads 'Government Warning:' in title case instead of the required all-caps 'GOVERNMENT WARNING:'. The exact-match warning path must fail it.",
+        "label": {
+          "brand_name": "HIGHLAND MIST",
+          "class_type": "India Pale Ale",
+          "alcohol_content_text": "6.5% Alc./Vol.",
+          "net_contents": "12 FL OZ",
+          "name_and_address": "Brewed by Highland Mist Brewing, Asheville, NC",
+          "government_warning": "Government Warning: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems."
+        },
+        "golden": {
+          "overall": "fail",
+          "fields": {
+            "brand_name": "match",
+            "class_type": "match",
+            "alcohol_content": "match",
+            "net_contents": "match",
+            "name_and_address": "match"
+          },
+          "government_warning": "altered",
+          "rationale": "'GOVERNMENT WARNING:' must be all caps; title case is a non-compliant alteration regardless of other fields matching."
+        }
+      }
+    },
+    {
+      "id": "corpus_missing_warning",
+      "use_cases": [
+        "corpus_golden",
+        "base_seed"
+      ],
+      "application": {
+        "serial_number": "24-256",
+        "source": "domestic",
+        "product_type": "wine",
+        "brand_name": "CEDAR RIDGE",
+        "class_type": "Chardonnay",
+        "alcohol_content_pct": 12.5,
+        "alcohol_content_text": "12.5% Alc./Vol.",
+        "net_contents": "750 mL",
+        "vintage": "2022",
+        "name_and_address": "Produced and bottled by Cedar Ridge Vineyards, Sonoma, CA"
+      },
+      "images": [
+        "missing_warning.png"
+      ],
+      "provenance": {
+        "source": "synthetic"
+      },
+      "corpus_golden": {
+        "title": "Cedar Ridge — missing government warning (fail)",
+        "description": "Fields match but the mandatory government warning is absent from the label entirely. The warning is required on all alcohol beverages, so this fails.",
+        "label": {
+          "brand_name": "CEDAR RIDGE",
+          "class_type": "Chardonnay",
+          "alcohol_content_text": "12.5% Alc./Vol.",
+          "net_contents": "750 mL",
+          "vintage": "2022",
+          "name_and_address": "Produced and bottled by Cedar Ridge Vineyards, Sonoma, CA",
+          "government_warning": null
+        },
+        "golden": {
+          "overall": "fail",
+          "fields": {
+            "brand_name": "match",
+            "class_type": "match",
+            "alcohol_content": "match",
+            "net_contents": "match",
+            "vintage": "match",
+            "name_and_address": "match"
+          },
+          "government_warning": "missing",
+          "rationale": "The mandatory government health warning is absent."
+        }
+      }
+    },
+    {
+      "id": "corpus_craft_ipa_us_beer_pass",
+      "use_cases": [
+        "corpus_golden",
+        "base_seed"
+      ],
+      "application": {
+        "serial_number": "24-101",
+        "source": "domestic",
+        "product_type": "malt_beverage",
+        "brand_name": "Hopworks Brewing",
+        "class_type": "India Pale Ale",
+        "alcohol_content_pct": 5.5,
+        "alcohol_content_text": "ALC. 5.5% BY VOL",
+        "net_contents": "1 PT 9.4 FL OZ",
+        "name_and_address": "Brewed and bottled by Hopworks Brewing Co., Portland, OR"
+      },
+      "images": [
+        "craft_ipa_us_beer_pass.png"
+      ],
+      "provenance": {
+        "source": "synthetic"
+      },
+      "corpus_golden": {
+        "title": "HOPWORKS BREWING IPA — clean malt-beverage pass",
+        "description": "A craft beer whose ABV is printed in the anchor-before 'ALC. 5.5% BY VOL' form with a US-style 'PT/FL OZ' net contents — surface forms the distilled-spirits examples don't exercise. Everything matches.",
+        "label": {
+          "brand_name": "Hopworks Brewing",
+          "class_type": "India Pale Ale",
+          "alcohol_content_text": "ALC. 5.5% BY VOL",
+          "net_contents": "1 PT 9.4 FL OZ",
+          "name_and_address": "Brewed and bottled by Hopworks Brewing Co., Portland, OR",
+          "government_warning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems."
+        },
+        "golden": {
+          "overall": "pass",
+          "fields": {
+            "brand_name": "match",
+            "class_type": "match",
+            "alcohol_content": "match",
+            "net_contents": "match",
+            "name_and_address": "match"
+          },
+          "government_warning": "compliant",
+          "rationale": "All fields match across alternate ABV/net-contents surface forms."
+        }
+      }
+    },
+    {
+      "id": "corpus_class_all_caps_soft_warning",
+      "use_cases": [
+        "corpus_golden"
+      ],
+      "application": {
+        "serial_number": "24-104",
+        "source": "domestic",
+        "product_type": "wine",
+        "brand_name": "Harbor Mist",
+        "class_type": "Cabernet Sauvignon",
+        "alcohol_content_pct": 14.0,
+        "alcohol_content_text": "14% Alc./Vol.",
+        "net_contents": "750 mL",
+        "vintage": "2019",
+        "name_and_address": "Produced and bottled by Harbor Mist Cellars, Napa, CA"
+      },
+      "images": [
+        "class_all_caps_soft_warning.png"
+      ],
+      "provenance": {
+        "source": "synthetic"
+      },
+      "corpus_golden": {
+        "title": "HARBOR MIST — all-caps class, otherwise clean",
+        "description": "The class/type is printed in all caps ('CABERNET SAUVIGNON') while the application files it title-case — a cosmetic difference that should be a soft warning (review), not a mismatch, mirroring the brand-case rule.",
+        "label": {
+          "brand_name": "Harbor Mist",
+          "class_type": "CABERNET SAUVIGNON",
+          "alcohol_content_text": "14% Alc./Vol.",
+          "net_contents": "750 mL",
+          "vintage": "2019",
+          "name_and_address": "Produced and bottled by Harbor Mist Cellars, Napa, CA",
+          "government_warning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems."
+        },
+        "golden": {
+          "overall": "warning",
+          "fields": {
+            "brand_name": "match",
+            "class_type": "soft_warning",
+            "alcohol_content": "match",
+            "net_contents": "match",
+            "vintage": "match",
+            "name_and_address": "match"
+          },
+          "government_warning": "compliant",
+          "rationale": "Class differs only in casing — a soft warning, not a mismatch."
+        }
+      }
+    },
+    {
+      "id": "corpus_reworded_warning_dropped_clause",
+      "use_cases": [
+        "corpus_golden"
+      ],
+      "application": {
+        "serial_number": "24-105",
+        "source": "domestic",
+        "product_type": "distilled_spirits",
+        "brand_name": "Cedar Hollow",
+        "class_type": "Straight Bourbon Whiskey",
+        "alcohol_content_pct": 45.0,
+        "alcohol_content_text": "45% Alc./Vol.",
+        "net_contents": "750 mL",
+        "name_and_address": "Distilled by Cedar Hollow Distillery, Loretto, KY"
+      },
+      "images": [
+        "reworded_warning_dropped_clause.png"
+      ],
+      "provenance": {
+        "source": "synthetic"
+      },
+      "corpus_golden": {
+        "title": "CEDAR HOLLOW — warning missing the (2) clause",
+        "description": "All product fields match, but the printed government warning drops the entire '(2) Consumption…' sentence — a wording alteration (not just casing) the engine must flag as altered.",
+        "label": {
+          "brand_name": "Cedar Hollow",
+          "class_type": "Straight Bourbon Whiskey",
+          "alcohol_content_text": "45% Alc./Vol.",
+          "net_contents": "750 mL",
+          "name_and_address": "Distilled by Cedar Hollow Distillery, Loretto, KY",
+          "government_warning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects."
+        },
+        "golden": {
+          "overall": "fail",
+          "fields": {
+            "brand_name": "match",
+            "class_type": "match",
+            "alcohol_content": "match",
+            "net_contents": "match",
+            "name_and_address": "match"
+          },
+          "government_warning": "altered",
+          "rationale": "The warning omits the mandatory (2) consumption clause."
+        }
+      }
+    },
+    {
+      "id": "corpus_vintage_mismatch_wine",
+      "use_cases": [
+        "corpus_golden"
+      ],
+      "application": {
+        "serial_number": "24-106",
+        "source": "domestic",
+        "product_type": "wine",
+        "brand_name": "Laurel Creek",
+        "class_type": "Pinot Noir",
+        "alcohol_content_pct": 13.5,
+        "alcohol_content_text": "13.5% Alc./Vol.",
+        "net_contents": "750 mL",
+        "vintage": "2021",
+        "name_and_address": "Produced and bottled by Laurel Creek Winery, Salem, OR"
+      },
+      "images": [
+        "vintage_mismatch_wine.png"
+      ],
+      "provenance": {
+        "source": "synthetic"
+      },
+      "corpus_golden": {
+        "title": "LAUREL CREEK — 2021 filed, 2020 printed",
+        "description": "A wine whose declared vintage (2021) does not match the printed vintage (2020). Everything else matches; the vintage discrepancy is a fail.",
+        "label": {
+          "brand_name": "Laurel Creek",
+          "class_type": "Pinot Noir",
+          "alcohol_content_text": "13.5% Alc./Vol.",
+          "net_contents": "750 mL",
+          "vintage": "2020",
+          "name_and_address": "Produced and bottled by Laurel Creek Winery, Salem, OR",
+          "government_warning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems."
+        },
+        "golden": {
+          "overall": "fail",
+          "fields": {
+            "brand_name": "match",
+            "class_type": "match",
+            "alcohol_content": "match",
+            "net_contents": "match",
+            "vintage": "mismatch",
+            "name_and_address": "match"
+          },
+          "government_warning": "compliant",
+          "rationale": "Declared vintage 2021 does not match printed 2020."
+        }
+      }
+    },
+    {
+      "id": "base_jb_kirk_cola",
+      "use_cases": [
+        "base_seed"
+      ],
+      "application": {
+        "serial_number": "250067",
+        "source": "domestic",
+        "product_type": "distilled_spirits",
+        "brand_name": "J.B. KIRK",
+        "class_type": "Straight Bourbon Whiskey",
+        "alcohol_content_pct": 45.0,
+        "alcohol_content_text": "45% ALC/VOL",
+        "net_contents": "750 ML",
+        "name_and_address": "Produced and bottled by J.B. Kirk, Clarksville, TN"
+      },
+      "images": [
+        "jb_kirk_cola.jpg"
+      ],
+      "provenance": {
+        "source": "ttb_cola_registry"
+      }
+    }
+  ]
+}

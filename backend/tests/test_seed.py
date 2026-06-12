@@ -1,16 +1,16 @@
-"""Tests for the demo seeder (`app.seed`)."""
+"""Tests for the demo seeder (`app.seed`), a filtered view over the data pool."""
 
 from __future__ import annotations
 
-import json
-from importlib import resources
+from pathlib import Path
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.audit import AuditEvent
 from app.models.submission import Submission
-from app.seed import _case_images, seed_demo
+from app.pool import load_pool, record_images
+from app.seed import seed_demo
 from app.verify import GOVERNMENT_WARNING_TEXT
 from tests.test_api_verify import _FakeOcr
 
@@ -21,12 +21,10 @@ from tests.test_api_verify import _FakeOcr
 # one of the COLA set's images — the seeder exercises plumbing, not OCR.
 _LINES = ["OLD TOM DISTILLERY", "45% Alc./Vol.", "750 mL", GOVERNMENT_WARNING_TEXT]
 
-# 7 curated corpus cases + 30 real COLA cases.
-_TOTAL = 37
-
-
-def _manifest_cases(name: str) -> list[dict]:
-    return json.loads((resources.files("app.seed") / "data" / name).read_text())["cases"]
+# Every distinct pool record seeds one submission: 30 real COLA + 18 OCR-stress
+# + 10 synthetic corpus (6 of which double as the base demo set) + 1 base-only
+# real COLA (jb_kirk) = 59. The base/corpus reuse is deduped, not double-seeded.
+_TOTAL = 59
 
 
 def test_seed_populates_empty_database(db_session: Session, tmp_path) -> None:
@@ -37,7 +35,8 @@ def test_seed_populates_empty_database(db_session: Session, tmp_path) -> None:
     assert len(submissions) == _TOTAL
     assert all(s.result is not None and s.application is not None for s in submissions)
 
-    # Decisions recorded on the curated cases that declare one (2 approve, 1 changes).
+    # Decisions recorded on the curated corpus cases that declare one
+    # (2 approve, 1 request_changes) so the queue demos the full workflow.
     decided = [s for s in submissions if s.decision]
     assert sorted(s.decision for s in decided) == ["approve", "approve", "request_changes"]
     assert all(s.decided_at is not None for s in decided)
@@ -50,10 +49,11 @@ def test_seed_populates_empty_database(db_session: Session, tmp_path) -> None:
 
 def test_seed_preserves_multi_image_filings(db_session: Session, tmp_path) -> None:
     # A COLA filing is its full label set (warning on the back, ABV on the
-    # front); the seed must mirror the eval_cola set, not flatten to front-only.
-    cola_cases = _manifest_cases("cola_manifest.json")
-    multi = {c["images"][0]: c["images"] for c in cola_cases if len(_case_images(c)) > 1}
-    assert multi, "expected multi-image COLA cases in the seed manifest"
+    # front); the seed must mirror the multi-image pool records, not flatten.
+    multi = {
+        record_images(r)[0]: record_images(r) for r in load_pool() if len(record_images(r)) > 1
+    }
+    assert multi, "expected multi-image records in the pool"
 
     seed_demo(db_session, _FakeOcr(_LINES), upload_dir=str(tmp_path))
     by_front = {s.image_filename: s for s in db_session.scalars(select(Submission))}
@@ -64,12 +64,10 @@ def test_seed_preserves_multi_image_filings(db_session: Session, tmp_path) -> No
         sub = by_front[front]
         assert [img.image_filename for img in sub.images] == files
         assert [img.position for img in sub.images] == list(range(len(files)))
-        from pathlib import Path
-
         assert all(Path(img.image_ref).is_file() for img in sub.images)
 
     # Single-image cases stay legacy rows (image on ``image_ref``, no image set).
-    single_front = next(c["images"][0] for c in cola_cases if len(_case_images(c)) == 1)
+    single_front = next(record_images(r)[0] for r in load_pool() if len(record_images(r)) == 1)
     assert by_front[single_front].images == []
 
 
@@ -95,8 +93,6 @@ def test_seed_tops_up_after_partial(db_session: Session, tmp_path) -> None:
 def test_seed_heals_missing_image_files(db_session: Session, tmp_path) -> None:
     # Rows survive but their image files are wiped (a redeploy with no uploads
     # volume): reseeding creates nothing new but restores every file on disk.
-    from pathlib import Path
-
     seed_demo(db_session, _FakeOcr(_LINES), upload_dir=str(tmp_path))
     submissions = db_session.scalars(select(Submission)).all()
     # Wipe every file: the front (image_ref) plus each label of multi-image rows.

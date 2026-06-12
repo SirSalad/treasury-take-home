@@ -2,22 +2,19 @@
 
 ``python -m app.seed`` (or ``SEED_DEMO=1`` on the container) populates the
 database with labels run through the real verification pipeline so the queue,
-stat cards, and audit trail all demo with realistic data:
+stat cards, and audit trail all demo with realistic data.
 
-* a curated set of synthetic corpus labels spanning pass/warning/fail, with
-  reviewer decisions recorded on a few (``data/manifest.json``); and
-* 30 real COLA filings scraped from the TTB Public COLA Registry — the **full
-  label set** filed with each application (front + back/neck where the filing
-  carries them) plus the filed application fields (``data/cola_manifest.json``).
-
-The COLA set mirrors the ``tests/eval_cola`` golden eval one-for-one (same TTB
-IDs, same image sets), so a seeded filing is the *same* multi-image submission
-the eval scores: a COLA is the set of affixed labels (warning on the back, ABV
-on the front), and the demo queue shows it that way rather than front-only.
+The seed is a **filtered view over the canonical data pool** (:mod:`app.pool`):
+it seeds *every* pool record — the 30 real TTB COLA filings (the same multi-image
+sets the golden eval scores), the 18 out-of-distribution OCR-stress photos, and
+the 10 synthetic golden-corpus labels (6 of which carry a recorded reviewer
+decision so the queue demos the full approve/flag/pending workflow) — for 59 live
+submissions. There is no seed-private copy of the data: the pool is the single
+source of truth, shared with the evals.
 
 Seeding is **idempotent per case**: a case whose front image is already present
 as a submission is skipped, so it is safe to run on every container boot and to
-re-run after adding new cases (it tops up rather than duplicating). It also
+re-run after adding new pool records (it tops up rather than duplicating). It also
 **self-heals** — if a seeded row's image files are missing (e.g. a redeploy
 recreated the container and its uploads were not on a persistent volume), they
 are restored from the packaged bytes so the review screen renders again.
@@ -25,9 +22,7 @@ are restored from the packaged bytes so the review screen renders again.
 
 from __future__ import annotations
 
-import json
 from datetime import UTC, datetime
-from importlib import resources
 from importlib.resources.abc import Traversable
 from pathlib import Path
 from typing import Protocol, cast
@@ -43,13 +38,8 @@ from app.models.enums import SubmissionStatus
 from app.models.submission import Submission
 from app.models.submission_image import SubmissionImage
 from app.ocr.service import ImageInput, OcrResult, OcrService
+from app.pool import load_pool, pool_images, record_images
 from app.verify import verify_label_images
-
-# Each entry: (manifest filename, sub-directory holding that manifest's images).
-_MANIFESTS: list[tuple[str, str]] = [
-    ("manifest.json", "."),
-    ("cola_manifest.json", "cola"),
-]
 
 
 class SupportsExtract(Protocol):
@@ -66,16 +56,6 @@ class SupportsExtract(Protocol):
     def extract(self, image: ImageInput, *, max_side: int | None = None) -> OcrResult: ...
 
 
-def _case_images(case: dict) -> list[str]:
-    """The filenames of a case's label set, front first.
-
-    Multi-image filings list every label under ``images``; single-image cases
-    (the synthetic corpus) carry a lone ``image``.
-    """
-    images = case.get("images")
-    return list(images) if images else [case["image"]]
-
-
 def _content_type(filename: str) -> str:
     return "image/jpeg" if filename.endswith((".jpg", ".jpeg")) else "image/png"
 
@@ -85,12 +65,12 @@ def _seed_case(
     ocr: SupportsExtract,
     upload_dir: str,
     image_dir: Traversable,
-    case: dict,
+    record: dict,
 ) -> None:
-    """Run one filing's full label set through the pipeline and persist it."""
-    filenames = _case_images(case)
+    """Run one pool record's full label set through the pipeline and persist it."""
+    filenames = record_images(record)
     datas = [(image_dir / name).read_bytes() for name in filenames]
-    application = ApplicationInput(**case["application"])
+    application = ApplicationInput(**record["application"])
 
     started = datetime.now(UTC)
     # The same adaptive, multi-image pipeline the API uses: each label is read,
@@ -144,10 +124,13 @@ def _seed_case(
             "overall": result.overall.value,
             "error": None,
             "seeded": True,
+            # Which pool view this row came from — flags the OCR-stress set and
+            # the corpus/COLA sets without a schema change.
+            "use_cases": list(record["use_cases"]),
         },
     )
 
-    decision = case.get("decision")
+    decision = record.get("decision")
     if decision:
         submission.decision = decision["decision"]
         submission.decision_note = decision.get("note")
@@ -165,12 +148,12 @@ def _seed_case(
 
 
 def seed_demo(db: Session, ocr: SupportsExtract, upload_dir: str = "uploads") -> int:
-    """Seed demo submissions through the real pipeline; returns rows created.
+    """Seed every pool record through the real pipeline; returns rows created.
 
     Idempotent per case: any case whose front image is already a submission is
     skipped, so re-running tops the queue up rather than duplicating.
     """
-    data = resources.files("app.seed") / "data"
+    image_dir = pool_images()
     # Existing seeded rows, keyed by front-image filename, so we can both skip
     # already-seeded cases and heal ones whose image files have gone missing
     # (e.g. a redeploy recreated the container before uploads were on a volume).
@@ -181,17 +164,14 @@ def seed_demo(db: Session, ocr: SupportsExtract, upload_dir: str = "uploads") ->
     }
 
     created = 0
-    for manifest_name, subdir in _MANIFESTS:
-        manifest = json.loads((data / manifest_name).read_text())
-        image_dir = data if subdir == "." else data / subdir
-        for case in manifest["cases"]:
-            filenames = _case_images(case)
-            prior = existing.get(filenames[0])
-            if prior is None:
-                _seed_case(db, ocr, upload_dir, image_dir, case)
-                created += 1
-            else:
-                _heal_missing_files(prior, upload_dir, image_dir)
+    for record in load_pool():
+        filenames = record_images(record)
+        prior = existing.get(filenames[0])
+        if prior is None:
+            _seed_case(db, ocr, upload_dir, image_dir, record)
+            created += 1
+        else:
+            _heal_missing_files(prior, upload_dir, image_dir)
 
     db.commit()
     return created

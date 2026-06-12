@@ -38,6 +38,7 @@ import pytest
 from app.api.schemas import ApplicationInput
 from app.ocr.quality import assess_image_quality
 from app.ocr.service import get_ocr_service
+from app.pool import OCR_STRESS, pool_images, records_for
 from app.verify.engine import verify_label
 from app.verify.schemas import FieldStatus
 
@@ -49,7 +50,27 @@ _UA = {"User-Agent": "ttb-label-verify-ocr-eval/1.0 (research)"}
 
 
 def _load_cases() -> list[dict]:
-    return json.loads((_HERE / "manifest.json").read_text())["cases"]
+    """The OOD OCR-stress cases as a filtered view over the canonical pool.
+
+    Each ``ocr_stress`` pool record is projected to the case shape this eval
+    expects: the committed pool image (offline), its Commons provenance for the
+    refetch fallback, and the ``ground_truth`` / ``expect`` assertions.
+    """
+    images = pool_images()
+    cases: list[dict] = []
+    for record in records_for(OCR_STRESS):
+        annotation = record["ocr_expect"]
+        cases.append(
+            {
+                "id": record["id"].removeprefix("ocr_"),
+                "category": annotation["category"],
+                "image": str(images / record["images"][0]),
+                "commons_file": record["provenance"]["commons_file"],
+                "ground_truth": annotation["ground_truth"],
+                "expect": annotation["expect"],
+            }
+        )
+    return cases
 
 
 def _fetch(commons_file: str) -> Path | None:
@@ -96,7 +117,7 @@ def test_ocr_robustness_out_of_distribution(capsys: pytest.CaptureFixture[str]) 
 
     for case in cases:
         # Committed image first (offline); fall back to Commons only if missing.
-        local = _HERE / case["image"]
+        local = Path(case["image"])
         path = local if local.exists() else _fetch(case["commons_file"])
         if path is None:
             skipped += 1
